@@ -1,0 +1,26 @@
+version: '3'
+services:
+  apple_watch:
+    build: .
+    ports:
+      - "700:700"
+    depends_on: # other containers it needs in order to run
+      - databaseapple
+    environment:
+      - PYTHONUNBUFFERED=1
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_DB=example
+      - POSTGRES_PORT=5432
+      - POSTGRES_HOST=databaseapple
+    restart: always
+
+  databaseapple:
+    image: postgres
+    ports:
+      - "5425:5432"
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_DB=example
+    restart: always

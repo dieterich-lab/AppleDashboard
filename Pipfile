@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+numpy = "*"
+pandas = "*"
+waitress = "*"
+plotly= "*"
+dash = "*"
+gunicorn="*"
+dash_bootstrap_components = "*"
+xmltodict = "*"
+psycopg2 = "*"
+
+[dev-packages]
+pylint = "*"
+
+[requires]
+python_version = "3.7"
