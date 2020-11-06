@@ -14,6 +14,7 @@ gunicorn="*"
 dash_bootstrap_components = "*"
 xmltodict = "*"
 psycopg2 = "*"
+matplotlib = "*"
 
 [dev-packages]
 pylint = "*"
