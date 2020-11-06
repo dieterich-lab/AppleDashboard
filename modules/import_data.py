@@ -3,40 +3,53 @@ import xmltodict
 import psycopg2
 import io
 import pytz
-import os
+from os import listdir
+from os.path import isfile, join
 
 user = 'test'
 password = 'test'
 host = 'localhost'
 database = 'example'
-port = 5425
+port = 5424
 DATABASE_URL= f'postgresql://{user}:{password}@{host}:{port}/{database}'
 
 
 try:
-    rdb = psycopg2.connect("dbname='example' user='test' host='localhost' port='5425' password='test'")
+    rdb = psycopg2.connect("dbname='example' user='test' host='localhost' port='5424' password='test'")
 except:
     print ("I am unable to connect to the database 0")
 
 
 
 """Remove tables from database if exists and create new name_type and examination tables in the PostgreSQL database"""
-sql1 = "DROP TABLE IF EXISTS AppleWatch"
+sql1 = "DROP TABLE IF EXISTS AppleWatch,ECG,name,AppleWatch_numeric,AppleWatch_categorical"
 
 statment_examination = """CREATE TABLE AppleWatch (
                                 "@type" text,
                                 "@sourceName" text,
                                 "@sourceVersion" text,
                                 "@unit" text,
-                                "@creationDate" text,
-                                "@startDate" text,
-                                "@endDate" text,
+                                "@creationDate" timestamp,
+                                "@startDate" timestamp,
+                                "@endDate" timestamp,
                                 "@Value" text)"""
+
+statment_examination2 = """CREATE TABLE ECG (
+                                "Name" text,
+                                "Date" text,
+                                "Classification" text,
+                                "Value" integer [])"""
+
+statment_examination3 = """CREATE TABLE name (
+                                "name" text,
+                                "@type" text)"""
 
 try:
     cur = rdb.cursor()
     cur.execute(sql1)
     cur.execute(statment_examination)
+    cur.execute(statment_examination2)
+    cur.execute(statment_examination3)
     rdb.commit()
 except Exception:
     print("Problem with connection with database 1")
@@ -46,7 +59,7 @@ except Exception:
 
 
 
-input_path = '/home/magda/Apple_Watch/qs_ledger/qs_ledger/apple_health/data/export.xml'
+input_path = '/home/magda/__git__/new/AppleDashboard/import/export.xml'
 with open(input_path, 'r') as xml_file:
     input_data = xmltodict.parse(xml_file.read())
 
@@ -72,5 +85,54 @@ cur.copy_from(output, 'AppleWatch', null="", sep=',')  # null values become ''
 rdb.commit()
 
 
+
+onlyfiles = [f for f in listdir('/home/magda/__git__/new/AppleDashboard/import/electrocardiograms')
+            if isfile(join('/home/magda/__git__/new/AppleDashboard/import/electrocardiograms', f))]
+
+for name in onlyfiles:
+    path = '/home/magda/__git__/new/AppleDashboard/import/electrocardiograms/{}'.format(name)
+    ECG = pd.read_csv(path, error_bad_lines=False,warn_bad_lines=False)
+    ECG.reset_index(level=0, inplace=True)
+    name = name.replace('ecg_','')
+    name = name.replace('.csv', '')
+    if '_' not in name:
+        name=name+'_1'
+
+    data =pd.to_numeric(ECG['index'][8:]).to_list()
+    line =[]
+    line.append(name)
+    line.append(pd.to_datetime(ECG['Name'][1]))
+    line.append(ECG['Name'][2])
+    line.append(data)
+    cur.execute("INSERT INTO ECG VALUES (%s,%s,%s,%s)", line)
+    rdb.commit()
+
+
+name='/home/magda/__git__/new/AppleDashboard/import/name.csv'
+cur = rdb.cursor()
+with open(name, 'r') as in_file:
+    for row in in_file:
+        row = row.replace("\n", "").split(",")
+        cur.execute("INSERT INTO name VALUES (%s, %s)", row)
+rdb.commit()
+in_file.close()
+
+#changes
+
+sql1="""Alter table AppleWatch add column name text"""
+sql2="""UPDATE AppleWatch t2 SET name = t1.name FROM name t1 WHERE t2."@type" = t1."@type" """
+sql3 = """CREATE TABLE AppleWatch_numeric AS SELECT "@type","name","@sourceName","@sourceVersion","@unit","@creationDate","@startDate","@endDate",
+            ("@Value"::double precision) as "@Value" from AppleWatch where "@Value" ~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
+sql4 = """CREATE TABLE AppleWatch_categorical AS SELECT "@type","name","@sourceName","@sourceVersion","@unit",
+        "@creationDate","@startDate","@endDate","@Value" from AppleWatch where "@Value" !~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
+try:
+    cur = rdb.cursor()
+    cur.execute(sql1)
+    cur.execute(sql2)
+    cur.execute(sql3)
+    cur.execute(sql4)
+    rdb.commit()
+except Exception:
+    print("Problem with connection with database")
 
 
