@@ -3,7 +3,7 @@ services:
   apple_watch:
     build: .
     ports:
-      - "700:700"
+      - "600:600"
     depends_on: # other containers it needs in order to run
       - databaseapple
     environment:
@@ -18,7 +18,7 @@ services:
   databaseapple:
     image: postgres
     ports:
-      - "5425:5432"
+      - "5424:5432"
     environment:
       - POSTGRES_USER=test
       - POSTGRES_PASSWORD=test

@@ -16,7 +16,7 @@ ENV FLASK_RUN_HOST 0.0.0.0
 ENV TZ=Europe/Berlin
 
 
-EXPOSE 5425
-EXPOSE 700
+EXPOSE 5424
+EXPOSE 600
 
-CMD [ "waitress-serve","--port", "700", "app:server" ]
+CMD [ "waitress-serve","--port", "600", "app:server" ]
