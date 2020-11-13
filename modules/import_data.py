@@ -11,7 +11,7 @@ password = 'test'
 host = 'localhost'
 database = 'example'
 port = 5424
-DATABASE_URL= f'postgresql://{user}:{password}@{host}:{port}/{database}'
+
 
 
 try:
@@ -53,10 +53,6 @@ try:
     rdb.commit()
 except Exception:
     print("Problem with connection with database 1")
-
-
-
-
 
 
 input_path = '/home/magda/__git__/new/AppleDashboard/import/export.xml'

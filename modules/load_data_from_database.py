@@ -2,7 +2,6 @@ import pandas as pd
 import psycopg2
 import time
 import os
-from flask import g
 
 
 user = os.environ['POSTGRES_USER']
@@ -11,14 +10,6 @@ host = os.environ['POSTGRES_HOST']
 database = os.environ['POSTGRES_DB']
 port = os.environ['POSTGRES_PORT']
 DATABASE_URL= f'postgresql://{user}:{password}@{host}:{port}/{database}'
-
-#try:
-#    rdb = psycopg2.connect("dbname='example' user='test' host='localhost' port='5425' password='test'")
-#except:
-#    rdb ="I am unable to connect to the database 0"
-
-
-
 
 # Connection with database
 def connect_db():
@@ -57,33 +48,21 @@ def basic_values(rdb):
     return df1, df2, df3
 
 
-def Card(rdb):
+def Card (rdb):
+    """
 
-    sql="""SELECT "@creationDate","@type","name", "@Value" FROM applewatch_numeric """
+    :param rdb: connection with database
+    :return: df: DataFrame with all values
+    """
+
+    sql = """SELECT "@creationDate",to_char(date_trunc('month', "@creationDate"),'YYYY-MM') as month,
+                                    extract('week' from "@creationDate") as week,
+                                    extract('ISODOW' from "@creationDate") as "DOW",
+                                    date_trunc('day', "@creationDate") as date,
+                                    extract('hour' from "@creationDate") as hour,"@type","name", "@Value" FROM applewatch_numeric """
 
     df = pd.read_sql(sql, rdb)
 
     return df
 
-def graphs(rdb):
 
-    sql1 = """SELECT "@creationDate","@Value" FROM AppleWatch WHERE "@type"='HKQuantityTypeIdentifierHeartRate'"""
-    sql2 = """SELECT "@creationDate","@Value" FROM AppleWatch WHERE "@type"='HKQuantityTypeIdentifierActiveEnergyBurned'"""
-    sql3 = """SELECT "@creationDate","@type","@Value" FROM AppleWatch """
-    try:
-        df1 = pd.read_sql(sql1, rdb)
-        df2 = pd.read_sql(sql2, rdb)
-        df3 = pd.read_sql(sql3, rdb)
-    except Exception:
-        return None, "Problem with load data from database","Problem with load data from database"
-    return df1,df2,df3
-
-def graphs2(rdb):
-
-    sql1 = """SELECT "@creationDate","@Value" FROM AppleWatch """
-    try:
-        df = pd.read_sql(sql1, rdb)
-        df['@Value'] = pd.to_numeric(df['@Value'])
-    except Exception:
-        return None, "Problem with load data from database"
-    return df
