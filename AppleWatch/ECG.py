@@ -3,10 +3,11 @@ import plotly.express as px
 import numpy as np
 
 
-def figur_ECG(date):
-    date=str(date)+'_1'
+def figur_ECG(date,num,patient1):
+    date=str(date)
+    df = ldd.ECG_data(ldd.rdb, date,patient1,num)
 
-    df = ldd.ECG_data(ldd.rdb, date)
+
     if len(df) == 0:
         fig={}
     else:
@@ -17,6 +18,12 @@ def figur_ECG(date):
 
 
         fig = px.line(x=time, y=data, template='plotly_white')
+        fig.update_layout(title={
+        'text': '30 sec ECG {}'.format(df['Classification'].values[0]),
+        'y':0.9,
+        'x':0.5,
+        'xanchor': 'center',
+        'yanchor': 'top'})
         fig.update_xaxes(showgrid=True, gridwidth=0.5, gridcolor='LightPink',showticklabels=False)
         fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightPink')
         fig.update_yaxes(nticks=20)

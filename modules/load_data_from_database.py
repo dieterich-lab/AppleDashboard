@@ -24,15 +24,39 @@ def connect_db():
 rdb = connect_db()
 
 
+def ECG_number(rdb,date):
+    """
 
+    :param rdb: connection with database
+    :param date:
+    :return: df: list of ECG records from date
+    """
+    sql = """SELECT distinct number from ECG where "Day"='{}' order by number""".format(str(date))
+    df = pd.read_sql(sql,rdb)
+    df = df['number'].to_list()
+    return df
 
-def ECG_data(rdb,date):
-    sql="""SELECT * from ECG where "Name"='{}'""".format(date)
+def ECG_data(rdb,date,patient1,num):
+    """
+
+    :param rdb:
+    :param date:
+    :param patient1:
+    :param num:
+    :return:
+    """
+
+    sql="""SELECT * from ECG where "Day"='{0}' and "Patient"='{1}' and number='{2}' """.format(date,patient1,num)
     df = pd.read_sql(sql,rdb)
     return df
 
 
 def basic_values(rdb):
+    """
+
+    :param rdb:
+    :return:
+    """
     sql1 = """SELECT min("@creationDate") FROM AppleWatch """
     sql2 = """SELECT max("@creationDate") FROM AppleWatch"""
     sql3 = """SELECT Distinct("@type") FROM AppleWatch"""
@@ -55,11 +79,11 @@ def Card (rdb):
     :return: df: DataFrame with all values
     """
 
-    sql = """SELECT "@creationDate",to_char(date_trunc('month', "@creationDate"),'YYYY-MM') as month,
+    sql = """SELECT "@sourceName","@creationDate",to_char(date_trunc('month', "@creationDate"),'YYYY-MM') as month,
                                     extract('week' from "@creationDate") as week,
                                     extract('ISODOW' from "@creationDate") as "DOW",
                                     date_trunc('day', "@creationDate") as date,
-                                    extract('hour' from "@creationDate") as hour,"@type","name", "@Value" FROM applewatch_numeric """
+                                    extract('hour' from "@creationDate") as hour,"@type","name", "@Value" FROM applewatch_numeric order by "@type","@creationDate" """
 
     df = pd.read_sql(sql, rdb)
 

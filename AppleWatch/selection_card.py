@@ -11,13 +11,12 @@ def selection():
             [
             "Select Patient:",
             dcc.Dropdown(
-                id ='patients',
-                options=[{'label': 'Patient 1', 'value': '1'},
-                         {'label': 'Patient 2', 'value': '2'},
-                         {'label': 'Patient 3', 'value': '3'}],
-                value='1'
+                id ='patients1',
+                options=[{'label': 'Patient 1', 'value': 'Patient1'},
+                         {'label': 'Patient 2', 'value': 'Patient2'},
+                         {'label': 'Patient 3', 'value': 'Patient3'}],
+                value='Patient1',
             ),], ), ]),
-
         html.Br(),
         dbc.Row([dbc.Col(
             ["Plot:",
@@ -40,7 +39,7 @@ def selection():
                 id='linear plot',
                 options=[{'label': 'Heart Rate', 'value': 'Heart Rate'},
                          {'label': 'Heart Rate Variability SDNN', 'value': 'Heart Rate Variability SDNN'},
-                         {'label': 'Resting Heart Rate', 'value': 'Resting Heart Rate'},
+                         {'label': "Resting Heart Rate'", 'value': "Resting Heart Rate'"},
                          {'label': 'VO2Max', 'value': 'VO2Max'},
                          {'label': 'Walking Heart Rate Average', 'value': 'Walking Heart Rate Average'},
                          ],
@@ -68,7 +67,15 @@ def selection():
                     html.Div(id='dropdown-container', children=[]), ],
             ), ], ),
         html.Br(),
+        dbc.Col(dcc.RadioItems(
+            id='choice',
+            options=[
+                {'label': 'Sum', 'value': 'sum'},
+                {'label': 'Mean', 'value': 'mean'},
+            ],
+            value='sum',
 
+        ))
 
     ]
     return selection
