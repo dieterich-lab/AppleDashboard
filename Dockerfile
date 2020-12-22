@@ -19,4 +19,4 @@ ENV TZ=Europe/Berlin
 EXPOSE 5424
 EXPOSE 600
 
-CMD [ "waitress-serve","--port", "600", "app:server" ]
+CMD [ "waitress-serve","--port", "600", "index:app.server" ]

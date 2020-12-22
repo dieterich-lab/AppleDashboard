@@ -15,7 +15,7 @@ colors = {
 app.layout = html.Div([
 
     # Rendering after open the program
-    dcc.Location(id='url', refresh=False,pathname='/apps/AppleWatch',href='/apps/Medicaldata'),
+    dcc.Location(id='url', refresh=False,pathname='/apps/Medicaldata',href='/apps/Medicaldata'),
 
     dbc.Container(
     style={'backgroundColor': colors['background']},
