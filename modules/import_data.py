@@ -15,6 +15,7 @@ port = 5424
 
 
 try:
+    print('start')
     rdb = psycopg2.connect("dbname='example' user='test' host='localhost' port='5424' password='test'")
 
 except:
@@ -39,7 +40,6 @@ statment_examination2 = """CREATE TABLE ECG (
                                 "Name" text,
                                 "Day" text,
                                 "number" text,
-                                "Date" text,
                                 "Classification" text,
                                 "Value" integer [])"""
 
@@ -54,12 +54,13 @@ try:
     cur.execute(statment_examination2)
     cur.execute(statment_examination3)
     rdb.commit()
+    print('done')
 except Exception:
     print("Problem with connection with database 1")
 
 
 appended_data = []
-for i in range(1, 2):
+for i in range(1, 3):
     # export data from xml file
     input_path = '/home/magda/__git__/new/AppleDashboard/import/export{}.xml'.format(i)
     with open(input_path, 'r') as xml_file:
@@ -67,7 +68,7 @@ for i in range(1, 2):
 
     records_list = input_data['HealthData']['Record']
     df = pd.DataFrame(records_list)
-    df['@sourceName'] = df['@sourceName'].apply(lambda x: 'Patient1')
+    df['@sourceName'] = df['@sourceName'].apply(lambda x: 'Patient{}'.format(i))
     xml_file.close()
 
     appended_data.append(df)
@@ -94,9 +95,9 @@ output.seek(0)
 cur = rdb.cursor()
 cur.copy_from(output, 'AppleWatch', null="", sep=',')  # null values become ''
 rdb.commit()
-
+print('done')
 # Loading ECG data to database
-for i in range(1, 2):
+for i in range(1, 3):
     onlyfiles = [f for f in listdir('/home/magda/__git__/new/AppleDashboard/import/electrocardiograms{}'.format(i))
                 if isfile(join('/home/magda/__git__/new/AppleDashboard/import/electrocardiograms{}'.format(i), f))]
 
@@ -113,10 +114,18 @@ for i in range(1, 2):
 
         day, number = name[:10], name[-1]
         line =[]
-        line.append([patient, name, day, number, pd.to_datetime(ECG['Name'][1]), ECG['Name'][2], data])
-        cur.execute("INSERT INTO ECG VALUES (%s,%s,%s,%s,%s,%s,%s)", line)
-    rdb.commit()
+        line.append(patient)
+        line.append(name)
+        line.append(day)
+        line.append(number)
+        line.append(ECG['Name'][2])
+        #line.append([patient, name, day, number, ECG['Name'][2],data])
+        line.append(data)
 
+
+        cur.execute("INSERT INTO ECG VALUES (%s,%s,%s,%s,%s,%s)", line)
+    rdb.commit()
+    print('done')
 
 # create table with name for Apple Watch entities
 name = '/home/magda/__git__/new/AppleDashboard/import/name.csv'
@@ -143,6 +152,7 @@ try:
     cur.execute(sql3)
     cur.execute(sql4)
     rdb.commit()
+    print('done')
 except Exception:
     print("Problem with connection with database")
 

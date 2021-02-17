@@ -4,24 +4,106 @@ import time
 import os
 
 
-user = os.environ['POSTGRES_USER']
-password = os.environ['POSTGRES_PASSWORD']
-host = os.environ['POSTGRES_HOST']
-database = os.environ['POSTGRES_DB']
-port = os.environ['POSTGRES_PORT']
-DATABASE_URL= f'postgresql://{user}:{password}@{host}:{port}/{database}'
-
-# Connection with database
-def connect_db():
-    """ connects to database """
-    try:
-        db = psycopg2.connect(DATABASE_URL)
-        return db
-    except Exception:
-        time.sleep(0.1)
 
 
-rdb = connect_db()
+#rdb = connect_db()
+
+
+def patient(rdb):
+    """
+
+    :param rdb: connection with database
+    :param date:
+    :return: df: list of ECG records from date
+    """
+    sql = """SELECT distinct "@sourceName" from applewatch """
+    df = pd.read_sql(sql,rdb)
+    df = df["@sourceName"].values.tolist()
+    return df
+
+
+def min_max_date(rdb):
+    """
+
+    :param rdb: connection with database
+    :param date:
+    :return: df: list of ECG records from date
+    """
+    sql = """SELECT MIN("@creationDate"),MAX("@creationDate") from applewatch_numeric """
+    df = pd.read_sql(sql,rdb)
+    return df
+
+
+def weight_and_height(rdb):
+    """
+
+    :param rdb: connection with database
+    :param date:
+    :return: df: list of ECG records from date
+    """
+    sql = """SELECT * from applewatch_numeric where "@type" in ('HKQuantityTypeIdentifierHeight',
+            'HKQuantityTypeIdentifierBodyMass')"""
+    df = pd.read_sql(sql,rdb)
+
+    return df
+
+
+def irregular_ecg(rdb):
+    """
+
+    :param rdb: connection with database
+    :param date:
+    :return: df: list of ECG records from date
+    """
+    sql0 = """SELECT "Patient",count(*) from ecg where "Classification" = 'Irregular' group by "Patient" """
+    sql1 = """SELECT "Patient",count(*) from ecg where "Classification" = 'Inconclusive' group by "Patient" """
+    sql2 = """SELECT "Patient",count(*) from ecg where "Classification" = 'Heart Rate over 120' group by "Patient" """
+    sql3 = """SELECT "Patient",count(*) from ecg where "Classification" = 'Heart Rate Under 50' group by "Patient" """
+    sql = """SELECT "Patient","Classification",count(*) from ecg group by "Patient","Classification" """
+    sql4 = """ select "Day", "number", "Classification" from ecg """
+
+    df0 = pd.read_sql(sql0, rdb)
+    df1 = pd.read_sql(sql1, rdb)
+    df2 = pd.read_sql(sql2, rdb)
+    df3 = pd.read_sql(sql3, rdb)
+    df4 = pd.read_sql(sql4, rdb)
+
+    return df0, df1, df2, df3, df4
+
+def Card (rdb):
+    """
+
+    :param rdb: connection with database
+    :return: df: DataFrame with all values
+    """
+
+    sql = """SELECT "@sourceName","@creationDate",to_char(date_trunc('month', "@creationDate"),'YYYY-MM') as month,
+                                    extract('week' from "@creationDate") as week,
+                                    extract('ISODOW' from "@creationDate") as "DOW",
+                                    date_trunc('day', "@creationDate") as date,
+                                    extract('hour' from "@creationDate") as hour,"@type","name", "@Value" 
+                                    FROM applewatch_numeric order by "@type","@creationDate" """
+
+    sql2 = """SELECT "@sourceName","@creationDate",to_char(date_trunc('month', "@creationDate"),'YYYY-MM') as month,
+                                    extract('week' from "@creationDate") as week,
+                                    extract('ISODOW' from "@creationDate") as "DOW",
+                                    date_trunc('day', "@creationDate") as date,
+                                    extract('hour' from "@creationDate") as hour,"@type","name", "@Value" 
+                                    FROM applewatch_numeric where "name" in 
+                                    ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                                    'Walking Heart Rate Average') order by "@type","@creationDate" """
+
+    """
+    where "name" in ('Active Energy Burned', 'Apple Exercise Time', 'Apple Stand Time',
+        'Basal Energy Burned', 'Distance Cycling', 'Distance Walking Running',
+        'Sleep Analysis', 'Step Count')
+    """
+
+    df = pd.read_sql(sql, rdb)
+    df2 = pd.read_sql(sql2, rdb)
+
+    return df,df2
+
 
 
 def ECG_number(rdb,date):
@@ -72,21 +154,6 @@ def basic_values(rdb):
     return df1, df2, df3
 
 
-def Card (rdb):
-    """
 
-    :param rdb: connection with database
-    :return: df: DataFrame with all values
-    """
-
-    sql = """SELECT "@sourceName","@creationDate",to_char(date_trunc('month', "@creationDate"),'YYYY-MM') as month,
-                                    extract('week' from "@creationDate") as week,
-                                    extract('ISODOW' from "@creationDate") as "DOW",
-                                    date_trunc('day', "@creationDate") as date,
-                                    extract('hour' from "@creationDate") as hour,"@type","name", "@Value" FROM applewatch_numeric order by "@type","@creationDate" """
-
-    df = pd.read_sql(sql, rdb)
-
-    return df
 
 

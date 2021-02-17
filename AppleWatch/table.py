@@ -1,36 +1,51 @@
 import pandas as pd
 import numpy as np
 
-def table(df,group):
+
+def table(df, patient, group, linear, bar):
 
 
+    df['date'] = pd.to_datetime(df['date']).dt.date
+    df = df.loc[df["@sourceName"] == patient]
+    df_linear = df[df.name.isin([linear])]
+    df_bar = df[df.name.isin([bar])]
 
     if group == 'M':
-        df = df.groupby(["@sourceName",'month', 'date', 'name'])['@Value'].sum().reset_index()
-        df3 = df.groupby(["@sourceName",'month', 'name'])['@Value'].mean().reset_index()
-        df2 = df.groupby(["@sourceName", 'month', 'name'])['@Value'].sum().reset_index()
+        df2 = df_bar.groupby(["@sourceName", 'month', 'name'])['@Value'].sum().reset_index()
+        df3 = df_linear.groupby(["@sourceName", 'month', 'name'])['@Value'].mean().reset_index()
+        #df = df.groupby(["@sourceName", 'month', 'date', '@type'])['@Value'].sum().reset_index()
+        #df3 = df.groupby(["@sourceName", 'month', '@type'])['@Value'].mean().reset_index()
+
+        result = df2.append(df3)
+        table = pd.pivot_table(result, index=['month'], columns='name', values='@Value',
+                               aggfunc=np.sum).reset_index()
 
     elif group == 'W':
-        df = df.groupby(["@sourceName",'week', 'date', 'name'])['@Value'].sum().reset_index()
-        df2 = df.groupby(["@sourceName", 'week', 'name'])['@Value'].sum().reset_index()
-        df3 = df.groupby(["@sourceName",'week', 'name'])['@Value'].mean().reset_index()
+        df2 = df_bar.groupby(["@sourceName", 'week', 'name'])['@Value'].sum().reset_index()
+        df3 = df_linear.groupby(["@sourceName", 'week', 'name'])['@Value'].mean().reset_index()
+        #df = df.groupby(["@sourceName", 'month', 'date', '@type'])['@Value'].sum().reset_index()
+        #df3 = df.groupby(["@sourceName", 'month', '@type'])['@Value'].mean().reset_index()
+
+        result = df2.append(df3)
+        table = pd.pivot_table(result, index=['week'], columns='name', values='@Value',
+                               aggfunc=np.sum).reset_index()
 
     elif group == 'DOW':
-        df = df.groupby(["@sourceName",'DOW', 'date', 'name'])['@Value'].sum().reset_index()
-        df3 = df.groupby(["@sourceName",'DOW', 'name'])['@Value'].mean().reset_index()
-        df2 = df.groupby(["@sourceName",'DOW', 'name'])['@Value'].sum().reset_index()
+        df2 = df_bar.groupby(["@sourceName", 'DOW', 'name'])['@Value'].sum().reset_index()
+        df3 = df_linear.groupby(["@sourceName", 'DOW', 'name'])['@Value'].mean().reset_index()
+        #df = df.groupby(["@sourceName", 'month', 'date', '@type'])['@Value'].sum().reset_index()
+        #df3 = df.groupby(["@sourceName", 'month', '@type'])['@Value'].mean().reset_index()
+        result = df2.append(df3)
+        table = pd.pivot_table(result, index=['DOW'], columns='name', values='@Value',
+                               aggfunc=np.sum).reset_index()
 
     else:
-        df3 = df.groupby(["@sourceName",'date', 'name'])['@Value'].mean().reset_index()
-        df2 = df.groupby(["@sourceName",'date', 'name'])['@Value'].sum().reset_index()
-
-    #result = pd.merge(df1, df2, on=["@sourceName", 'month', 'name'])
-    #result = pd.merge(result, df3, on=["@sourceName", 'month', 'name'])
-    try:
-        table = pd.pivot_table(df2,index=['date','@sourceName'],columns='name',values='@Value', aggfunc=np.sum).reset_index()
-    except:
-        table = pd.pivot_table(df2, index=['month', '@sourceName'], columns='name', values='@Value',
-                               aggfunc=np.sum).reset_index()
+        df2 = df_bar.groupby(["@sourceName", 'date', 'name'])['@Value'].sum().reset_index()
+        df3 = df_linear.groupby(["@sourceName", 'date', 'name'])['@Value'].mean().reset_index()
+        #df = df.groupby(["@sourceName", 'month', 'date', '@type'])['@Value'].sum().reset_index()
+        #df3 = df.groupby(["@sourceName", 'month', '@type'])['@Value'].mean().reset_index()
+        result = df2.append(df3)
+        table = pd.pivot_table(result,index=['date'],columns='name',values='@Value', aggfunc=np.sum).reset_index()
 
     return table
 

@@ -1,27 +1,38 @@
-.tab {
-  border-style: solid;
-  border-color: rgba(0, 0, 0, 0.2);
-  border-bottom-style: none;
-  border-top-style: none;
-  border-right-style: none;
-  color: black;
-  padding: 10px 14px;
-  text-align: center;
+.tabs {
+  border-top: 1px solid lightgrey;
+  display: none;
+  flex-direction: column;
+  padding: 1rem 5%;
+  margin-bottom: 1rem;
+  margin: 5px;
+  background-color: white;
+}
+.tabs > a {
   text-decoration: none;
-  display: inline-block;
+  color: #333333;
+  font-size: 1.5rem;
+  text-align: center;
+}
+.tabs {
+    display: flex;
+    flex-direction: row;
 }
 
-/* Change background color of buttons on hover */
-.tab button:hover {
-  background-color: #ddd;
+.tabs > a {
+    width: 40%;
 }
 
-/* Create an active/current tablink class */
-.tab button.active {
-  background-color: #ccc;
+.tabs > a:first-child {
+    border-right: 1px solid lightgrey;
 }
 
+.tabs > a:last-child {
+    border-left: 1px solid lightgrey;
+}
 .dash-table-container .row {
   display: block;
-  margin: 0;
+  margin: 5px;
+}
+.DateInput_input, .DateInput_input_1 {
+  Height: 40px;
 }

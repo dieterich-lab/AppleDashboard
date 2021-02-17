@@ -1,11 +1,12 @@
 import modules.load_data_from_database as ldd
 import plotly.express as px
 import numpy as np
+from db import connect_db
+rdb = connect_db()
 
-
-def figur_ECG(date,num,patient1):
+def figur_ECG(date,patient):
     date=str(date)
-    df = ldd.ECG_data(ldd.rdb, date,patient1,num)
+    df = ldd.ECG_data(rdb, date,patient,0)
 
 
     if len(df) == 0:
