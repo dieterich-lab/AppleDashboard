@@ -1,93 +1,89 @@
 import pandas as pd
 import plotly.express as px
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
+import dateutil.relativedelta
+import datetime
 
 
-
-
-def figur_trend(date, date1, input_value, group,patient1,df):
-    if len(patient1)==0:
-        figa={}
+def figure_trend(date, date1, input_value, group, patient, df):
+    if len(patient) == 0:
+        fig = {}
     else:
-        df = df.loc[df["@sourceName"] == patient1]
+        df = df.loc[df["@sourceName"] == patient]
         df = df.loc[df['@type'] == 'HKQuantityTypeIdentifierHeartRate']
         if group == 'M':
-            if int(date1) < 10:
-                dateu='2020-0{}'.format(date1)
-            else:
-                dateu='2020-0{}'.format(date1)
-            if dateu in df['month'].values:
-                if int(date1) > 3:
-                    if date1 < 10:
-                        start_date,end_date ='2020-0{}'.format(int(date1) - 4), '2020-0{}'.format(int(date1) + 1)
-                    else:
-                        start_date, end_date = '2020-{}'.format(int(date1) - 4), '2020-{}'.format(int(date1) + 1)
-                    df = df.loc[(df['month'] > start_date) & (df['month'] < end_date)]
+            trend = 'months'
+            if date1 in df['month'].values:
+                start_date,end_date = pd.to_datetime(date1) - dateutil.relativedelta.relativedelta(months=4),pd.to_datetime(date1)+ dateutil.relativedelta.relativedelta(months=1)
+                if len(str(end_date.month)) == 1:
+                    start_date = str(start_date.year)+'-0'+str(start_date.month)
+                    end_date = str(end_date.year)+'-0'+ str(end_date.month)
                 else:
-                    start_date, end_date = '2020-0{}'.format(int(date1) + 12 - 4), '2020-0{}'.format(int(date1) + 1)
-                    df = df.loc[(df['month'] > start_date) | (df['month'] < end_date)]
+                    start_date = str(start_date.year)+'-'+str(start_date.month)
+                    end_date = str(end_date.year)+'-'+ str(end_date.month)
+                df = df.loc[(df['month'] > start_date) & (df['month'] < end_date)]
                 df = df.groupby(['month', 'hour'])['@Value'].mean().reset_index()
-                df['month'] = df['month'].astype(str)
-                figa = px.line(x=df['hour'], y=df['@Value'], color=df['month'])
+                fig = px.line(x=df['hour'], y=df['@Value'], color=df['month'])
             else :
-                figa={}
+                fig={}
 
         elif group == 'W':
-            if int(date1) in df['week'].values:
+            trend = 'weeks'
+
+            if date1 in df['week'].values:
+                date1 = date1[-2:]
                 if int(date1) > 3:
                     start_date, end_date = int(date1) - 4, int(date1) + 1
-                    df = df.loc[(df['week'] > start_date) & (df['week'] < end_date)]
+                    df = df.loc[(df['week_num'] > start_date) & (df['week_num'] < end_date)]
                 else:
                     start_date, end_date = int(date1) + 53 - 4, int(date1) + 1
-                    df = df.loc[(df['week'] > start_date) | (df['week'] < end_date)]
-                df = df.groupby(['week', 'hour'])['@Value'].mean().reset_index()
-                df['week'] = df['week'].astype(str)
-                figa = px.line(x=df['hour'], y=df['@Value'], color=df['week'])
+                    df = df.loc[(df['week_num'] > start_date) | (df['week_num'] < end_date)]
+                df = df.groupby(['week_num','week', 'hour'])['@Value'].mean().reset_index()
+                fig = px.line(x=df['hour'], y=df['@Value'], color=df['week'])
             else:
-                figa={}
+                fig={}
 
         elif group == 'DOW':
-            if int(date1) in df['DOW'].values:
-                if int(date1) > 3:
-                    start_date, end_date = int(date1) - 4, int(date1) + 1
-                    df = df.loc[(df['DOW'] > start_date) & (df['DOW'] < end_date)]
+            trend ='days'
+            df = df.groupby(['DOW','DOW_number', 'hour'])['@Value'].mean().reset_index()
+            days_of_week={"Monday": 1, "Tuesday": 2, "Wednesday":3, "Thursday":4, "Friday":5, "Saturday":6, "Sunday":7}
+            if days_of_week[date1] in df['DOW_number'].values:
+                if int(days_of_week[date1]) > 3:
+                    start_date, end_date = int(days_of_week[date1]) - 4, int(days_of_week[date1]) + 1
+                    df = df.loc[(df['DOW_number'] > start_date) & (df['DOW_number'] < end_date)]
                 else:
-                    start_date, end_date = int(date1) + 7 - 4, int(date1) + 1
-                    df = df.loc[(df['DOW'] > start_date) | (df['DOW'] < end_date)]
+                    start_date, end_date = int(days_of_week[date1]) + 7 - 4, int(days_of_week[date1]) + 1
+                    df = df.loc[(df['DOW_number'] > start_date) | (df['DOW_number'] < end_date)]
 
-                df = df.groupby(['DOW', 'hour'])['@Value'].mean().reset_index()
-                df['DOW'] = df['DOW'].astype(str)
-                figa = px.line(x=df['hour'], y=df['@Value'], color=df['DOW'])
+                fig = px.line(x=df['hour'], y=df['@Value'], color=df['DOW'])
             else:
-                figa={}
+                fig = {}
 
         else:
+            trend = 'days'
             if pd.to_datetime(date) in df['date'].values:
                 start_date, end_date = (pd.to_datetime(date) - pd.to_timedelta(4, unit='d')), (pd.to_datetime(date) + pd.to_timedelta(1, unit='d'))
                 df = df.loc[(df['date'] > start_date) & (df['date'] < end_date)]
                 df = df.groupby(['date', 'hour'])['@Value'].mean().reset_index()
                 df['date'] = df['date'].astype(str)
-                figa = px.line(x=df['hour'], y=df['@Value'], color=df['date'])
+                fig = px.line(x=df['hour'], y=df['@Value'], color=df['date'])
             else:
-                figa={}
+                fig = {}
 
-    if figa:
-        figa.update_layout(
+    if fig:
+        fig.update_layout(
             height=400,
-            title='Trend from last 4 days',
+            title='Trend from last 4 {}'.format(trend),
             template='plotly_white',
             legend=dict(
-                orientation="h",
                 yanchor="bottom",
-                y=1.02,
+                y=0.9,
                 xanchor="right",
                 x=1
             ))
-        figa.update_xaxes(title_text="hour")
-        figa.update_yaxes(title_text='Heart Rate')
+        fig.update_xaxes(title_text="Hour")
+        fig.update_yaxes(title_text='Heart Rate')
     else:
-        figa = {
+        fig = {
             "layout": {
             "xaxis": {"visible": 'false'},
             "yaxis": {"visible": 'false'},
@@ -102,5 +98,4 @@ def figur_trend(date, date1, input_value, group,patient1,df):
                             ]
                     }
             }
-
-    return figa
+    return fig

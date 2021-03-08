@@ -3,46 +3,64 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 from app import app
-from apps import AppleWatch,Medicaldata,Questionnaire
+from apps import AppleWatch,Medicaldata
+import dash_daq as daq
+
 
 # change color of background
-colors = {
-    'background': '#e7e7e7',
-    'text': '#7FDBFF'
-}
+colors = {'background': '#f4f4f2', 'text': '#7FDBFF'}
+
+
 
 # Creating layout
 app.layout = html.Div([
 
-    # Rendering after open the program
-    dcc.Location(id='url', refresh=False,pathname='/apps/Medicaldata',href='/apps/Medicaldata'),
-
     dbc.Container(
     style={'backgroundColor': colors['background']},
     children =[
-        dbc.Row(dbc.Col(html.H1('HiGHmed patient dashboard',style={'textAlign': 'center',}),)),
+        dbc.Card(html.Div(
+        className="row header",
+        children = [html.Img(src=app.get_asset_url("logo.jpg"),style={'height':'5%', 'width':'5%','margin-left': '15px'}),
+                html.H1('HiGHmed Patient Dashboard',style={"font-size": "3rem", "margin-top": "15px","margin-left": "25px"}),
+                    ])),
 
-        html.Div([
-            dcc.Link('Apple Watch', href='/apps/AppleWatch', className="tab", ),
-            dcc.Link('Medical data', href='/apps/Medicaldata', className="tab ", ),
-            dcc.Link('Questionnaire', href='/apps/Questionnaire', className="tab ", )],),
+        dbc.Card(html.Div(
+            id="tabs",
+            className="row tabs",
+            children=[
+            dcc.Link('Dashboard for individual Patient', href='/'),
+            dcc.Link('Patient statistics', href='/',)])),
+        dcc.Location(id='url', refresh=False),
         # content will be rendered in this element
-        html.Div(id='page-content')],
+        html.Div(id='page_content')],
         fluid=True)
 ])
 
-# calllback for rendering pages
-@app.callback(Output('page-content', 'children'),
-              [Input('url', 'pathname')])
+
+@app.callback(
+    [
+        Output("page_content", "children"),
+        Output("tabs", "children"),
+    ],
+    [Input("url", "pathname")],
+)
 def display_page(pathname):
-    if pathname == '/apps/AppleWatch':
-        return AppleWatch.layout
-    elif pathname == '/apps/Questionnaire':
-        return Questionnaire.layout
-    elif pathname == '/apps/Medicaldata':
-        return Medicaldata.layout
-    else:
-        return '404'
+    tabs = [
+        dcc.Link("Dashboard for individual Patient", href='/apps/AppleWatch'),
+        dcc.Link("Patient statistics", href='http://0.0.0.0:800/scatter_plot'),
+    ]
+    if pathname == "http://0.0.0.0:800/scatter_plot":
+        tabs[1] = dcc.Link(
+            dcc.Markdown("**&#9632 Patient statistics**"), href="http://0.0.0.0:800/scatter_plot"
+        )
+
+        return Medicaldata.layout, tabs
+
+    tabs[0] = dcc.Link(
+            dcc.Markdown("**&#9632 Dashboard for individual Patient**"),
+            href='/apps/AppleWatch',
+        )
+    return AppleWatch.layout, tabs
 
 
 if __name__ == '__main__':
