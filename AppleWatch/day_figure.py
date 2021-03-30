@@ -39,7 +39,7 @@ def day_figure_update(date, value, group, patient, bar_value, df):
             if pd.to_datetime(date) in df['date'].values:
                 df = df.loc[df['date'] == date]
             else:
-                df=pd.DataFrame(columns = ['@type', 'name'])
+                df = pd.DataFrame(columns = ['@type', 'name'])
 
         df1 = df.loc[df['@type'] == 'HKQuantityTypeIdentifierHeartRate']
         df2 = df.loc[df['name'] == bar_value]

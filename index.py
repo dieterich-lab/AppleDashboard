@@ -5,6 +5,11 @@ import dash_bootstrap_components as dbc
 from app import app
 from apps import AppleWatch,Medicaldata
 import dash_daq as daq
+from db import connect_db
+from modules.import_scheduler import Scheduler
+import os
+
+
 
 
 # change color of background

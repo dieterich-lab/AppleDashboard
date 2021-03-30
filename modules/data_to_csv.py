@@ -8,10 +8,14 @@ for i in range(1, 3):
     input_path = '/home/magda/__git__/new/AppleDashboard/import/export{}.xml'.format(i)
     with open(input_path, 'r') as xml_file:
         input_data = xmltodict.parse(xml_file.read())
-
+    workouts_list = input_data['HealthData']['Workout']
+    df_workouts = pd.DataFrame(workouts_list)
+    df_workouts.to_csv('apple_workout.csv', index=False)
     records_list = input_data['HealthData']['Record']
     df = pd.DataFrame(records_list)
     df['@sourceName'] = df['@sourceName'].apply(lambda x: 'Patient{}'.format(i))
+
+    print(df_workouts)
 
     xml_file.close()
 

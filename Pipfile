@@ -17,6 +17,7 @@ psycopg2 = "*"
 matplotlib = "*"
 visdcc = "*"
 dash_daq= "*"
+apscheduler = "*"
 
 [dev-packages]
 pylint = "*"
