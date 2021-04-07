@@ -7,12 +7,7 @@ import modules.load_data_from_database as ldd
 # connection with database
 rdb = connect_db()
 patient = ldd.patient(rdb)
-min_max_date = ldd.min_max_date(rdb)
-min_date = min_max_date['min'].iloc[0]
-min_date = min_date.date()
-max_date = min_max_date['max'].iloc[0]
-max_date = max_date.date()
-
+min_date, max_date = ldd.min_max_date(rdb)
 
 # selction for first dropdowns
 def selection():
@@ -24,7 +19,7 @@ def selection():
                     style={'height': '40px'},
                     id='patient',
                     options=[{'label': name, 'value': name} for name in patient],
-                    value='Patient1',
+                    value='Patient 1',
                 )]),
             dbc.Col([
                 dcc.Dropdown(

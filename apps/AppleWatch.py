@@ -1,22 +1,26 @@
 from app import app
+from dash.dependencies import Input, Output, ALL
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output, ALL
-import pandas as pd
 import dash_table
+
+from flask import send_file
+import pandas as pd
+import io
+
 import modules.load_data_from_database as ldd
 from db import connect_db
+
 from AppleWatch.Card import card_update, cards_view
 from AppleWatch.trend_figure import figure_trend
-from AppleWatch.summary_figure import figure_summary_update
-from AppleWatch.day_figure import day_figure_update
+from AppleWatch.summary_figure import update_figure
+from AppleWatch.day_figure import day_figure_update,day_date_update
 from AppleWatch.ECG import update_ecg_figure
 from AppleWatch.selection_card import selection
 from AppleWatch.table import table, table2
 from AppleWatch.patient_information import patient_information, info
-from flask import send_file
-import io
+from AppleWatch.grouping import grouping1,grouping2
 
 class DataStore():
 
@@ -41,16 +45,13 @@ rdb = connect_db()
 
 # get data from database
 weight_and_height = ldd.weight_and_height(rdb)
-min_max_date = ldd.min_max_date(rdb)
-min_date = min_max_date['min'].iloc[0]
-min_date = min_date.date()
-max_date = min_max_date['max'].iloc[0]
-max_date = max_date.date()
+min_date, max_date = ldd.min_max_date(rdb)
+
 
 dfr4, df_ECG = ldd.irregular_ecg(rdb)
 df, df2 = ldd.Card(rdb)
 df_time = ldd.number_of_days_more_6(rdb)
-df_summary = df[["@sourceName", "@startDate", "name", "@Value"]]
+df_summary = df[["Name", "Date", "name", "Value"]]
 data_store.csv_apple = df_summary.to_csv(index=False)
 month = df['month'].unique()
 month.sort()
@@ -66,7 +67,7 @@ layout = html.Div([
     dbc.Row([dbc.Col(selection)]),
     html.Br(),
     dbc.Row([
-        dbc.Col(dbc.Card(information,style={'height':'100%'}), lg=4),
+        dbc.Col(dbc.Card(information, style={'height': '100%'}), lg=4),
         dbc.Col([dbc.Row([dbc.Col([card for card in cards])])], lg=8)]),
     html.Br(),
     dbc.Row([
@@ -88,12 +89,13 @@ layout = html.Div([
                     'backgroundColor': 'rgb(230, 230, 230)',
                     'fontWeight': 'bold'
                 }
-            ),style={'height':'100%'}), lg=4),
-        dbc.Col(dbc.Card(dcc.Graph(id='figure_summary'),style={'height':'100%'}), lg=8)]),
+            ), style={'height': '100%'}), lg=4),
+        dbc.Col(dbc.Card(dcc.Graph(id='figure_summary'), style={'height': '100%'}), lg=8)]),
     html.Br(),
     dbc.Row([
-        dbc.Col(dbc.Card(dcc.Graph(id='figure_day', hoverData={'points': [{'customdata': '1'}]}),style={'height':'100%'}), lg=6),
-        dbc.Col(dbc.Card(dcc.Graph(id='figure_trend'),style={'height':'100%'}), lg=6)
+        dbc.Col(dbc.Card(dcc.Graph(id='figure_day', hoverData={'points': [{'customdata': '1'}]}),
+                         style={'height': '100%'}), lg=6),
+        dbc.Col(dbc.Card(dcc.Graph(id='figure_trend'), style={'height': '100%'}), lg=6)
     ]),
     html.Br(),
     dbc.Row([
@@ -115,9 +117,9 @@ layout = html.Div([
                 'fontWeight': 'bold'
             }
 
-        ),style={'height':'100%'}), lg=3),
-        dbc.Col(dbc.Card([html.A('Download ECG', id = 'my-link'),
-            dcc.Graph(id='figure_ecg')],style={'height':'100%'}), lg=9)
+        ), style={'height': '100%'}), lg=3),
+        dbc.Col(dbc.Card([html.A('Download ECG', id='my-link'),
+        dcc.Graph(id='figure_ecg')], style={'height': '100%'}), lg=9)
     ]),
     html.Br(),
 
@@ -198,44 +200,37 @@ def update_information(patient):
      Input({"index": ALL, 'type': 'filter-drop_down'}, 'date'),
      Input({"index": ALL, 'type': 'filter-drop_down'}, 'value')],
 )
-def update_card(patient, group, date,value):
+def update_card(patient, group, date, value):
     if not date:
         resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary =\
             0, 0, 0, 0, 0, 0
     else:
+        df_u = grouping1(df, patient, group)
+        #df_sum_mean = grouping2(df, patient, group)
         resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary =\
-            card_update(df, patient, group, date,value)
+            card_update(df_u,group, date,value)
     return resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary
 
 
 # update table1 depends what values are chosen in selector
 @app.callback(
-    [Output('table1', 'data'),
+    [Output('figure_summary', 'figure'),
+    Output('table1', 'data'),
      Output('table1', 'columns')],
     [Input('group by', "value"),
      Input("patient", "value"),
      Input('linear plot', 'value'),
      Input('Bar chart', 'value')]
 )
-def update_table(value, patient, linear, bar):
-    result = table(df, patient, value, linear, bar)
+def update_table(group, patient, linear, bar):
+    df_a = df[df.name.isin([linear,bar])]
+    df_u = grouping1(df_a, patient, group)
+    result = table(df_u, group, linear, bar)
     data = result.to_dict('records')
-    columns = [{"name": i, "id": i} for i in result.columns]
-    return data, columns
+    columns = [{"name": str(i), "id": str(i)} for i in result.columns]
+    fig = update_figure(df_u,linear, bar, group)
+    return fig, data, columns
 
-
-# update summary graph
-@app.callback(
-    Output('figure_summary', 'figure'),
-    [Input('linear plot', 'value'),
-     Input('Bar chart', 'value'),
-     Input("group by", "value"),
-     Input("patient", "value")]
-)
-def update_summary_figure(input_value1, input_value2, group, patient):
-    fig = figure_summary_update(input_value1, input_value2, group, patient, df)
-
-    return fig
 
 
 # update selector depend from the summary graph
@@ -268,6 +263,7 @@ def update_bar_selector(value, click_data, group):
         holder = ['2020-02-27']
     return list(set(holder)), list(set(holder2))
 
+
 # update day figure
 @app.callback(
     Output('figure_day', 'figure'),
@@ -281,8 +277,8 @@ def update_figure_day(date, value, group, bar_value, patient):
     if not date and not value:
         fig3 = {}
     else:
-        fig3 = day_figure_update(date, value, group, patient, bar_value, df)
-    #fig3.show(renderer="browser")
+        df_linear, df_bar=day_date_update(date, value, group, patient, bar_value, df)
+        fig3 = day_figure_update(df_linear, df_bar, bar_value)
     return fig3
 
 
@@ -357,7 +353,6 @@ def download_csv():
                      mimetype='text/csv',
                      attachment_filename='data.csv',
                      as_attachment=True)
-
 
 
 @app.server.route('/dash/Download2')

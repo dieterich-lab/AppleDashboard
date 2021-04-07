@@ -32,7 +32,6 @@ def add_minor_grid(fig, x_range, y_range, major_step_x=1, major_step_y=500, mino
     fig.layout.yaxis.range = y_range
 
 
-
 def update_ecg_figure(day, number, patient):
     df = ldd.ECG_data(rdb, day, patient, number)
 

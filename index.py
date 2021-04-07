@@ -3,18 +3,11 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 from app import app
-from apps import AppleWatch,Medicaldata
-import dash_daq as daq
-from db import connect_db
-from modules.import_scheduler import Scheduler
-import os
-
-
+from apps import AppleWatch
 
 
 # change color of background
 colors = {'background': '#f4f4f2', 'text': '#7FDBFF'}
-
 
 
 # Creating layout
@@ -59,7 +52,7 @@ def display_page(pathname):
             dcc.Markdown("**&#9632 Patient statistics**"), href="http://0.0.0.0:800/scatter_plot"
         )
 
-        return Medicaldata.layout, tabs
+        return AppleWatch.layout, tabs
 
     tabs[0] = dcc.Link(
             dcc.Markdown("**&#9632 Dashboard for individual Patient**"),

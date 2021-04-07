@@ -6,7 +6,6 @@ from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 
 
-
 class ImportSettings():
     """
     Class which create file dev_import necessary to import data.
@@ -51,6 +50,7 @@ class ImportSettings():
             return False
         return True
 
+
 def start_import(rdb):
     """ Import data from entities and dataset files"""
     files = []
@@ -68,12 +68,13 @@ def start_import(rdb):
     if not files:
         return print("Could not import to database missing export file", file=sys.stderr)
 
-
-    # use function from import_dataset_postgre.py to create tables in database
+    # use function from import_dataset to create tables in database
     print("Start import data")
-    id.import_data(rdb, files, directories)
-
-
+    id.create_database_data(rdb)
+    id.load_health_data_to_database(rdb, files)
+    id.load_ecg_data_to_database(rdb, directories)
+    id.load_data_to_name_table(rdb)
+    id.alter_tables(rdb)
     print("End load data")
 
 

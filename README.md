@@ -45,10 +45,14 @@ Not recommended for pure deployment.
 
 
 ## Data Import ##
-* To add new data, add the `export.xml` files and `electrocardiogram` directories downloaded from iPhone to the import folder.
+* To add new data, add the `export.xml` files and `electrocardiogram` directories downloaded from iPhone to the `.import` folder.
 
 In case of load data from more than one device, each `export.xml` file and `electrocardiogram` directory should be 
 numbered at the end, example:
 * `export1.xml`,`export2.xml`,`export3.xml` etc.
 * `eclectrocardiogram1`,`electrocardiogram2`,`electrocardiogram3` etc.
+
+To work the files should have the same format as the current example files that are already in the `dataset_examples` directory.
+The examples files look like the files downloaded from Apple Watch without any modifications.
+
 

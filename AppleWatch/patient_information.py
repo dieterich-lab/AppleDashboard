@@ -19,8 +19,8 @@ def patient_information():
 
 # change value in card depend from this what is chosen in selector
 def info(df, df2, df_time, patient):
-    height = df[df['@sourceName'] == patient].iloc[0]['@Value']
-    days = df_time[df_time['@sourceName'] == patient].iloc[0]['count']
+    height = df[df['Name'] == patient].iloc[0]['Value']
+    days = df_time[df_time['Name'] == patient].iloc[0]['count']
 
     height = height
     df2 = df2[df2['Patient'] == patient]
@@ -41,7 +41,7 @@ def info(df, df2, df_time, patient):
     else:
         under_50 = df2[(df2['Patient'] == patient) & (df2['Classification'] == 'Heart Rate Under 50')].iloc[0]['count']
 
-    if patient == 'Patient1':
+    if patient == 'Patient 1':
         age = '26'
         sex = 'female'
     else:
@@ -49,7 +49,7 @@ def info(df, df2, df_time, patient):
         sex = 'male'
 
     text = html.Br(),'Age: {}'.format(age), html.Br(), 'Sex: {}'.format(sex), html.Br(),\
-           'Height:{}'.format(height), html.Br(), 'Patient disease: None', \
+           'Height: {}'.format(height), html.Br(), 'Patient disease: None', \
            html.Br(), 'Number of inconclusive ECG: {}'.format(inconclusive_ecg), html.Br(),\
            'Number of irregular ECG: {}'.format(irregular_ecg), html.Br(),\
            'Over 120: {}'.format(over_150), html.Br(), 'Under 50: {}'.format(under_50), html.Br(),\

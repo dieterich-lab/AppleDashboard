@@ -1,120 +1,65 @@
-import pandas as pd
-import xmltodict
-import psycopg2
+from modules import export_data as ed
 import io
-import pytz
-from os import listdir
-from os.path import isfile, join
 
-
-def import_data(rdb, files, directories):
+def create_database_data(rdb):
     # Remove tables from database if exists and create new name_type and examination tables in the PostgreSQL database
-    sql1 = "DROP TABLE IF EXISTS AppleWatch,ECG,name,AppleWatch_numeric,AppleWatch_categorical"
+    drop_all_tables = "DROP TABLE IF EXISTS AppleWatch,ECG,name,AppleWatch_numeric,AppleWatch_categorical"
 
-    statment_examination = """CREATE TABLE AppleWatch (
-                                    "@type" text,
-                                    "@sourceName" text,
-                                    "@sourceVersion" text,
-                                    "@unit" text,
-                                    "@creationDate" timestamp,
-                                    "@startDate" timestamp,
-                                    "@endDate" timestamp,
-                                    "@Value" text)"""
-
-    statment_examination2 = """CREATE TABLE ECG (
-                                    "Patient" text,
+    table_apple_watch = """CREATE TABLE AppleWatch (
+                                    "type" text,
                                     "Name" text,
+                                    "unit" text,
+                                    "Date" timestamp,
+                                    "Value" text)"""
+
+    table_ecg = """CREATE TABLE ECG (
+                                    "Patient" text,
+                                    "Date" text,
                                     "Day" text,
                                     "number" text,
                                     "Classification" text,
                                     "Value" integer [])"""
 
-    statment_examination3 = """CREATE TABLE name (
+    table_name = """CREATE TABLE name (
                                     "name" text,
-                                    "@type" text)"""
+                                    "type" text)"""
 
     try:
         cur = rdb.cursor()
-        cur.execute(sql1)
-        cur.execute(statment_examination)
-        cur.execute(statment_examination2)
-        cur.execute(statment_examination3)
+        cur.execute(drop_all_tables)
+        cur.execute(table_apple_watch)
+        cur.execute(table_ecg)
+        cur.execute(table_name)
         rdb.commit()
-        print('done')
-    except Exception:
-        print("Problem with connection with database 1")
+        return print('done create_database_data')
+    except (ValueError, Exception):
+        return print("Problem with connection with database 1")
 
 
-    appended_data = []
-    for i in files:
-        # export data from xml file
-        input_path = './import/{}'.format(i)
-        with open(input_path, 'r') as xml_file:
-            input_data = xmltodict.parse(xml_file.read())
-
-        records_list = input_data['HealthData']['Record']
-        df = pd.DataFrame(records_list)
-        n = int(''.join(filter(str.isdigit, i)))
-        df['@sourceName'] = df['@sourceName'].apply(lambda x: 'Patient {}'.format(n))
-        xml_file.close()
-
-        appended_data.append(df)
-
-    df = pd.concat(appended_data)
-
-    # convert time to you time zone
-    convert_tz = lambda x: x.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT+1'))
-    format = '%Y-%m-%d %H:%M:%S %z'
-
-    df['@creationDate'] = pd.to_datetime(df['@creationDate']).map(convert_tz)
-    df['@startDate'] = pd.to_datetime(df['@startDate']).map(convert_tz)
-    df['@endDate'] = pd.to_datetime(df['@endDate']).map(convert_tz)
-
-    # Remove not necessary data
-    df = df.drop(['@device','MetadataEntry', 'HeartRateVariabilityMetadataList'], axis=1)
-
-
-    # load data to SQL database by copy csv file
+def load_health_data_to_database(rdb, files):
+    df = ed.export_health_data_from_apple_watch(files)
     output = io.StringIO()
-    df.to_csv(output,index=False,header=False)
+    df.to_csv(output, index=False, header=False)
     output.seek(0)
-
     cur = rdb.cursor()
     cur.copy_from(output, 'AppleWatch', null="", sep=',')  # null values become ''
     rdb.commit()
-    print('done')
-    # Loading ECG data to database
-    for i in directories:
-        onlyfiles = [f for f in listdir('./import/{}/'.format(i))
-                    if isfile(join('./import/{}/'.format(i), f))]
-        n = int(''.join(filter(str.isdigit, i)))
-        patient = 'Patient{}'.format(n)
-        for ecg_file in onlyfiles:
-            path = './import/{0}/{1}'.format(i,ecg_file)
-            ECG = pd.read_csv(path, error_bad_lines=False,warn_bad_lines=False)
-            ECG.reset_index(level=0, inplace=True)
-            data = pd.to_numeric(ECG['index'][8:]).to_list()
-            ecg_file = ecg_file.replace('ecg_','').replace('.csv', '')
 
-            if '_' not in ecg_file:
-                ecg_file = ecg_file+'_0'
-
-            day, number = ecg_file[:10], ecg_file[-1]
-            line =[]
-            line.append(patient)
-            line.append(ecg_file)
-            line.append(day)
-            line.append(number)
-            line.append(ECG['Name'][2])
-            #line.append([patient, name, day, number, ECG['Name'][2],data])
-            line.append(data)
+    return print('done load_health_data_to_database')
 
 
-            cur.execute("INSERT INTO ECG VALUES (%s,%s,%s,%s,%s,%s)", line)
-        rdb.commit()
-        print('done')
+def load_ecg_data_to_database(rdb, directories):
+    df = ed.export_ecg_data_from_apple_watch(directories)
+    cur = rdb.cursor()
+    for index, row in df.iterrows():
+        cur.execute("INSERT INTO ECG VALUES (%s,%s,%s,%s,%s,%s)", row)
+    rdb.commit()
 
-    # create table with name for Apple Watch entities
+    return print('done load_ecg_data_to_database')
+
+
+def load_data_to_name_table(rdb):
+    cur = rdb.cursor()
     name = './import/name.csv'
     with open(name, 'r') as in_file:
         for row in in_file:
@@ -123,24 +68,28 @@ def import_data(rdb, files, directories):
     rdb.commit()
     in_file.close()
 
+    return print('done load_data_to_name_table')
+
+
+def alter_tables(rdb):
+
     # Alters in database
-    sql1 = """Alter table AppleWatch add column name text"""
-    sql2 = """UPDATE AppleWatch t2 SET name = t1.name FROM name t1 WHERE t2."@type" = t1."@type" """
-    sql3 = """CREATE TABLE AppleWatch_numeric AS SELECT "@type","name","@sourceName","@sourceVersion","@unit",
-                "@creationDate","@startDate","@endDate",("@Value"::double precision) as "@Value" from AppleWatch 
-                where "@Value" ~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
-    sql4 = """CREATE TABLE AppleWatch_categorical AS SELECT "@type","name","@sourceName","@sourceVersion","@unit",
-            "@creationDate","@startDate","@endDate","@Value" from AppleWatch 
-            where "@Value" !~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
+    add_column_name_to_table_apple_watch = """Alter table AppleWatch add column name text"""
+    update_column_name = """UPDATE AppleWatch t2 SET name = t1.name FROM name t1 WHERE t2."type" = t1."type" """
+    create_table_apple_watch_numeric = """CREATE TABLE AppleWatch_numeric AS SELECT "type","name","Name","unit",
+    "Date",("Value"::double precision) as "Value" from AppleWatch where 
+    "Value" ~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
+    create_table_apple_watch_categorical = """CREATE TABLE AppleWatch_categorical AS SELECT "type","name","Name",
+    "unit","Date","Value" from AppleWatch where "Value" !~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
     try:
         cur = rdb.cursor()
-        cur.execute(sql1)
-        cur.execute(sql2)
-        cur.execute(sql3)
-        cur.execute(sql4)
+        cur.execute(add_column_name_to_table_apple_watch)
+        cur.execute(update_column_name)
+        cur.execute(create_table_apple_watch_numeric)
+        cur.execute(create_table_apple_watch_categorical)
         rdb.commit()
-        print('done')
-    except Exception:
-        print("Problem with connection with database")
+        return print('done alter_tables')
+    except (ValueError, Exception):
+        return print("Problem with connection with database")
 
 

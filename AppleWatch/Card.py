@@ -64,7 +64,11 @@ def cards_view():
     return cards
 
 
-def card_update(df, patient, group, date, value):
+days_of_week = {"Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6,
+                "Sunday": 7}
+
+
+def card_update(df, group, date, value):
     """
     Change of values on cards depending on what is selected in the selector.
 
@@ -75,88 +79,50 @@ def card_update(df, patient, group, date, value):
     :param date:
     :return: updated values
     """
-
-    df = df.loc[df["@sourceName"] == patient]
-    
     if group == 'M':
         value = value[-1]
-        df2 = df.groupby(["@sourceName", 'month', '@type'])['@Value'].sum().reset_index()
-        df4 = df.groupby(["@sourceName", 'month', '@type'])['@Value'].mean().reset_index()
-        df = df.groupby(["@sourceName", 'month', 'date', '@type'])['@Value'].sum().reset_index()
-        df3 = df.groupby(["@sourceName", 'month', '@type'])['@Value'].mean().reset_index()
-
-        df2 = df2.loc[df2['month'] == value]
-        df3 = df3.loc[df3['month'] == value]
-        df4 = df4.loc[df4['month'] == value]
+        df = df.loc[df['month'] == value]
+        #df_sum_mean = df_sum_mean.loc[df_sum_mean['month'] == value]
 
     elif group == 'W':
         value = value[-1]
-        df2 = df.groupby(["@sourceName", 'week', '@type'])['@Value'].sum().reset_index()
-        df4 = df.groupby(["@sourceName", 'week', '@type'])['@Value'].mean().reset_index()
-        df = df.groupby(["@sourceName", 'week', 'date', '@type'])['@Value'].sum().reset_index()
-        df3 = df.groupby(["@sourceName", 'week', '@type'])['@Value'].mean().reset_index()
-        df2 = df2.loc[df2['week'] == value]
-        df3 = df3.loc[df3['week'] == value]
-        df4 = df4.loc[df4['week'] == value]
+        df = df.loc[df['week'] == value]
+        #df_sum_mean = df_sum_mean.loc[df_sum_mean['week'] == value]
 
     elif group == 'DOW':
         value = value[-1]
-        df2 = df.groupby(["@sourceName", 'DOW','DOW_number', '@type'])['@Value'].sum().reset_index()
-        df4 = df.groupby(["@sourceName", 'DOW','DOW_number', '@type'])['@Value'].mean().reset_index()
-        df = df.groupby(["@sourceName", 'DOW','DOW_number', 'date', '@type'])['@Value'].sum().reset_index()
-        df3 = df.groupby(["@sourceName", 'DOW','DOW_number', '@type'])['@Value'].mean().reset_index()
-        days_of_week = {"Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6,
-                        "Sunday": 7}
-        df2 = df2.loc[df2['DOW_number'] == days_of_week[value]]
-        df3 = df3.loc[df3['DOW_number'] == days_of_week[value]]
-        df4 = df4.loc[df4['DOW_number'] == days_of_week[value]]
+        df = df.loc[df['DOW_number'] == days_of_week[value]]
+        #df_sum_mean = df_sum_mean.loc[df_sum_mean['DOW_number'] == days_of_week[value]]
     else:
         date = pd.to_datetime(date[-1])
-        df4 = df.groupby(["@sourceName", 'date', '@type'])['@Value'].mean().reset_index()
-        df3 = df.groupby(["@sourceName", 'date', '@type'])['@Value'].mean().reset_index()
-        df2 = df.groupby(["@sourceName", 'date', '@type'])['@Value'].sum().reset_index()
-        df2 = df2.loc[df2['date'] == date]
-        df4 = df4.loc[df4['date'] == date]
-        df3 = df3.loc[df3['date'] == date]
+        df = df.loc[df['date'] == date]
 
-    if 'HKQuantityTypeIdentifierRestingHeartRate' not in df4.values:
-        resting_heart_rate = 'Not measured'
-    else:
-        resting_heart_rate = \
-            str(round(df4[df4['@type'] == 'HKQuantityTypeIdentifierRestingHeartRate'].iloc[0]['@Value'], 2))
-    if 'HKQuantityTypeIdentifierWalkingHeartRateAverage' not in df4.values:
-        walking_heart_rate = 'Not measured'
-    else:
-        walking_heart_rate = \
-            str(round(df4.loc[df4['@type'] == 'HKQuantityTypeIdentifierWalkingHeartRateAverage'].iloc[0]['@Value'], 2))
-    if 'HKQuantityTypeIdentifierHeartRate' not in df4.values:
-        heart_rate_mean = 'Not measured'
-    else:
-        heart_rate_mean = str(round(df4.loc[df4['@type'] == 'HKQuantityTypeIdentifierHeartRate'].iloc[0]['@Value'], 2))
-    if 'HKQuantityTypeIdentifierStepCount' not in df4.values:
-        step = 'Not measured'
+    if 'Resting Heart Rate' not in df.values: resting_heart_rate = 'Not measured'
+    else: resting_heart_rate = str(round(df[df['name'] == 'Resting Heart Rate'].iloc[0]['mean'], 2))
+
+    if 'Walking Heart Rate Average' not in df.values: walking_heart_rate = 'Not measured'
+    else: walking_heart_rate = str(round(df.loc[df['name'] == 'Walking Heart Rate Average'].iloc[0]['mean'], 2))
+
+    if 'Heart Rate' not in df.values: heart_rate_mean = 'Not measured'
+    else: heart_rate_mean = str(round(df.loc[df['name'] == 'Heart Rate'].iloc[0]['mean'], 2))
+
+    if 'Step Count' not in df.values: step = 'Not measured'
     else:
         if group == 'D':
-            step = str(round(df2.loc[df2['@type'] == 'HKQuantityTypeIdentifierStepCount'].iloc[0]['@Value'], 2))
+            step = str(round(df.loc[df['name'] == 'Step Count'].iloc[0]['sum'], 2))
         else:
-            step = str(round(df3.loc[df3['@type'] == 'HKQuantityTypeIdentifierStepCount'].iloc[0]['@Value'], 2))
-    if 'HKQuantityTypeIdentifierAppleExerciseTime' not in df4.values:
+            step = str(round(df.loc[df['name'] == 'Step Count'].iloc[0]['sum'], 2))
+    if 'Apple Exercise Time' not in df.values:
         exercise_minute = 'Not measured'
     else:
         if group == 'D':
-            exercise_minute = \
-                str(round(df2.loc[df2['@type'] == 'HKQuantityTypeIdentifierAppleExerciseTime'].iloc[0]['@Value'], 2))
+            exercise_minute = str(round(df.loc[df['name'] == 'Apple Exercise Time'].iloc[0]['sum'], 2))
         else:
-            exercise_minute = \
-                str(round(df3.loc[df3['@type'] == 'HKQuantityTypeIdentifierAppleExerciseTime'].iloc[0]['@Value'], 2))
-    if 'HKQuantityTypeIdentifierActiveEnergyBurned' not in df4.values:
-        activity_summary = 'Not measured'
+            exercise_minute = str(round(df.loc[df['name'] == 'Apple Exercise Time'].iloc[0]['sum'], 2))
+    if 'Active Energy Burned' not in df.values: activity_summary = 'Not measured'
     else:
         if group == 'D':
-            activity_summary = \
-                str(round(df2.loc[df2['@type'] == 'HKQuantityTypeIdentifierActiveEnergyBurned'].iloc[0]['@Value'], 2))
+            activity_summary = str(round(df.loc[df['name'] == 'Active Energy Burned'].iloc[0]['sum'], 2))
         else:
-            activity_summary =\
-                str(round(df3.loc[df3['@type'] == 'HKQuantityTypeIdentifierActiveEnergyBurned'].iloc[0]['@Value'], 2))
-
+            activity_summary = str(round(df.loc[df['name'] == 'Active Energy Burned'].iloc[0]['sum'], 2))
     return resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary

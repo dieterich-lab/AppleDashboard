@@ -4,7 +4,7 @@ from db import connect_db
 from modules.import_scheduler import Scheduler
 import os
 
-rdb=connect_db()
+rdb = connect_db()
 
 # Import data using function scheduler from package modules
 if os.environ.get('IMPORT_DISABLED') is None:
