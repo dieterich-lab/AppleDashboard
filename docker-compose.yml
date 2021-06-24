@@ -13,6 +13,8 @@ services:
       - POSTGRES_DB=example
       - POSTGRES_PORT=5432
       - POSTGRES_HOST=databaseapple
+    volumes:
+      - ./import:/app/import
     restart: always
 
   databaseapple:

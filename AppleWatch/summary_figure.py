@@ -9,7 +9,6 @@ def update_figure(df, bar,linear,  group):
     df_bar = df_bar.rename(columns={"sum": "Value"})
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     if group == 'M':
-
         fig.add_trace(go.Bar(x=df_bar['month'], y=df_bar['Value'], name='{}'.format(bar)), secondary_y=False)
         fig.add_trace(go.Scatter(x=df_linear['month'], y=df_linear['Value'], name='{}'.format(linear)), secondary_y=True)
     elif group == 'W':

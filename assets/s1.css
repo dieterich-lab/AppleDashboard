@@ -41,3 +41,9 @@ a{
     float:right;
     margin: 5px;
 }
+img { display: inline; }
+h1 { display: inline; }
+h2{
+    float:right;
+    margin: 5px;
+}

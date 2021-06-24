@@ -3,11 +3,11 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 from app import app
-from apps import AppleWatch
-
+from apps import AppleWatch, Workouts, Comparison, tutorial
 
 # change color of background
 colors = {'background': '#f4f4f2', 'text': '#7FDBFF'}
+
 
 
 # Creating layout
@@ -17,9 +17,12 @@ app.layout = html.Div([
     style={'backgroundColor': colors['background']},
     children =[
         dbc.Card(html.Div(
+
         className="row header",
         children = [html.Img(src=app.get_asset_url("logo.jpg"),style={'height':'5%', 'width':'5%','margin-left': '15px'}),
-                html.H1('HiGHmed Patient Dashboard',style={"font-size": "3rem", "margin-top": "15px","margin-left": "25px"}),
+                html.H1('HiGHmed Patient Dashboard',style={"font-size": "3rem", "margin-top": "15px"}),
+                dcc.Link(html.H2('Tutorial',style={"font-size": "2rem", "margin-top": "20px","vertical-align": "middle"}),
+                                   href='/apps/tutorial')
                     ])),
 
         dbc.Card(html.Div(
@@ -27,7 +30,10 @@ app.layout = html.Div([
             className="row tabs",
             children=[
             dcc.Link('Dashboard for individual Patient', href='/'),
-            dcc.Link('Patient statistics', href='/',)])),
+            dcc.Link('Patient Workouts', href='/'),
+            dcc.Link('Patient Comparison', href='/'),
+           ])),
+
         dcc.Location(id='url', refresh=False),
         # content will be rendered in this element
         html.Div(id='page_content')],
@@ -43,16 +49,28 @@ app.layout = html.Div([
     [Input("url", "pathname")],
 )
 def display_page(pathname):
+    dcc.Link("back", href='/apps/tutorial'),
     tabs = [
         dcc.Link("Dashboard for individual Patient", href='/apps/AppleWatch'),
-        dcc.Link("Patient statistics", href='http://0.0.0.0:800/scatter_plot'),
+        dcc.Link("Patient Workouts", href='/apps/Workouts'),
+
     ]
-    if pathname == "http://0.0.0.0:800/scatter_plot":
+
+    if pathname == "/apps/Workouts":
         tabs[1] = dcc.Link(
-            dcc.Markdown("**&#9632 Patient statistics**"), href="http://0.0.0.0:800/scatter_plot"
+            dcc.Markdown("**&#9632 Patient Workouts**"), href="/apps/Workouts"
         )
 
-        return AppleWatch.layout, tabs
+        return Workouts.layout, tabs
+    elif pathname == "/apps/Comparison":
+        tabs[2] = dcc.Link(
+            dcc.Markdown("**&#9632 Patient comparison**"), href="/apps/Comparison"
+        )
+
+        return Comparison.layout, tabs
+    elif pathname == "/apps/tutorial":
+
+        return tutorial.layout, tabs
 
     tabs[0] = dcc.Link(
             dcc.Markdown("**&#9632 Dashboard for individual Patient**"),

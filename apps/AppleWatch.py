@@ -20,7 +20,7 @@ from AppleWatch.ECG import update_ecg_figure
 from AppleWatch.selection_card import selection
 from AppleWatch.table import table, table2
 from AppleWatch.patient_information import patient_information, info
-from AppleWatch.grouping import grouping1,grouping2
+from AppleWatch.grouping import grouping1
 
 class DataStore():
 
@@ -119,7 +119,7 @@ layout = html.Div([
 
         ), style={'height': '100%'}), lg=3),
         dbc.Col(dbc.Card([html.A('Download ECG', id='my-link'),
-        dcc.Graph(id='figure_ecg')], style={'height': '100%'}), lg=9)
+        dcc.Graph(id='figure_ecg'),], style={'height':'100%'}), lg=9)
     ]),
     html.Br(),
 
@@ -321,7 +321,7 @@ def update_table2(patient):
     Output('figure_ecg', 'figure'),
     [Input('table2', "selected_rows"),
     Input("patient", "value"),
-    Input("table2",'data')]
+    Input("table2", 'data')]
 )
 def update_ecg2(data, patient,data_tab):
     day = data_tab[data[0]]['Day']

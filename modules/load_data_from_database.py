@@ -56,7 +56,7 @@ def irregular_ecg(rdb):
 
     return df4, df
 
-def Card (rdb):
+def Card(rdb):
     """
 
     :param rdb: connection with database
@@ -92,6 +92,63 @@ def Card (rdb):
 
     return df,df2
 
+def Card(rdb):
+    """
+
+    :param rdb: connection with database
+    :return: df: DataFrame with all values
+    """
+
+    sql = """SELECT "Name","Date",to_char(date_trunc('month', "Date"),'YYYY-MM') as month,
+                                    to_char("Date", 'IYYY/IW') as week,
+                                    extract('week' from "Date") as week_num,
+                                    extract('ISODOW' from "Date") as "DOW_number",
+                                    to_char("Date", 'Day') as "DOW",
+                                    date_trunc('day', "Date") as date,
+                                    extract('hour' from "Date") as hour,"type","name", "Value" 
+                                    FROM applewatch_numeric order by "type","Date" """
+
+    sql2 = """SELECT "Name","Date",extract('month' from  "Date") as month,
+                                    extract('week' from "Date") as week,
+                                    extract('ISODOW' from "Date") as "DOW",
+                                    date_trunc('day', "Date") as date,
+                                    extract('hour' from "Date") as hour,"type","name", "Value" 
+                                    FROM applewatch_numeric where "name" in 
+                                    ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                                    'Walking Heart Rate Average') order by "type","Date" """
+
+    """
+    where "name" in ('Active Energy Burned', 'Apple Exercise Time', 'Apple Stand Time',
+        'Basal Energy Burned', 'Distance Cycling', 'Distance Walking Running',
+        'Sleep Analysis', 'Step Count')
+    """
+
+    df = pd.read_sql(sql, rdb)
+    df2 = pd.read_sql(sql2, rdb)
+
+    return df,df2
+
+def Heart_Rate(rdb):
+    """
+
+    :param rdb: connection with database
+    :return: df: DataFrame with all values
+    """
+
+    sql = """SELECT "Name","Date",to_char(date_trunc('month', "Date"),'YYYY-MM') as month,
+                                    to_char("Date", 'IYYY/IW') as week,
+                                    extract('week' from "Date") as week_num,
+                                    extract('ISODOW' from "Date") as "DOW_number",
+                                    to_char("Date", 'Day') as "DOW",
+                                    date_trunc('day', "Date") as date,
+                                    extract('hour' from "Date") as hour,"type","name", "Value" 
+                                    FROM applewatch_numeric where type='HKQuantityTypeIdentifierHeartRate' order by "Date" """
+
+
+
+    df = pd.read_sql(sql, rdb)
+
+    return df
 
 
 def ECG_number(rdb,date):
@@ -148,6 +205,27 @@ def number_of_days_more_6(rdb):
     date,"type","name" having count(*) > 6 order by "Name",date) as foo group by "Name" """
     df = pd.read_sql(sql, rdb)
     return df
+
+def HKWorkoutActivity(rdb):
+    sql = """select distinct @workoutActivityType FROM workout  """
+    df = pd.read_sql(sql, rdb)
+    return df
+
+def WorkoutActivity_data(rdb):
+    sql = """select *,
+                to_char(date_trunc('month', "Start_Date"),'YYYY-MM') as month,
+                to_char("Start_Date", 'IYYY/IW') as week,
+                extract('week' from "Start_Date") as week_num,
+                extract('ISODOW' from "Start_Date") as "DOW_number",
+                to_char("Start_Date", 'Day') as "DOW",
+                date_trunc('day', "Start_Date") as date
+                FROM workout  order by "type","Start_Date" """
+
+    df = pd.read_sql(sql, rdb)
+    return df
+
+
+
 
 """
 select *,"@startDate"::timestamp - lag("@startDate"::timestamp) over(partition by "@sourceName" order by "@sourceName",

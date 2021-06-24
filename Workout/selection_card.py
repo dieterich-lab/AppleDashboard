@@ -3,13 +3,14 @@ import dash_core_components as dcc
 import dash_html_components as html
 from db import connect_db
 import modules.load_data_from_database as ldd
+from datetime import date
 
 # connection with database
 rdb = connect_db()
 patient = ldd.patient(rdb)
 min_date, max_date = ldd.min_max_date(rdb)
 
-# selction for first dropdowns
+# selection for first drop downs
 def selection():
     selection = [
         html.Br(),
@@ -35,17 +36,23 @@ def selection():
                     dcc.Dropdown(
                         id='Bar chart',
                         style={'height': '40px'},
-                        options=[{'label': 'Active Energy Burned', 'value': 'Active Energy Burned'},
-                                 {'label': 'Apple Exercise Time', 'value': 'Apple Exercise Time'},
-                                 {'label': 'Apple Stand Time', 'value': 'Apple Stand Time'},
-                                 {'label': 'Basal Energy Burned', 'value': 'Basal Energy Burned'},
-                                 {'label': 'Distance Cycling', 'value': 'Distance Cycling'},
-                                 {'label': 'Distance Walking Running', 'value': 'Distance Walking Running'},
-                                 {'label': 'Sleep Analysis', 'value': 'Sleep Analysis'},
-                                 {'label': 'Step Count', 'value': 'Step Count'}
+                        options=[{'label': 'HKWorkoutActivityTypeWalking', 'value': 'HKWorkoutActivityTypeWalking'},
+                                 {'label': 'HKWorkoutActivityTypeCycling', 'value': 'HKWorkoutActivityTypeCycling'},
+                                 {'label': 'HKWorkoutActivityTypeRunning', 'value': 'HKWorkoutActivityTypeRunning'},
+                                 {'label': 'HKWorkoutActivityTypeHiking', 'value': 'HKWorkoutActivityTypeHiking'},
                                  ],
-                        value='Active Energy Burned'
+                        value='HKWorkoutActivityTypeWalking'
                     )),
+            dbc.Col(
+                dcc.Dropdown(
+                    id='what',
+                    style={'height': '40px'},
+                    options=[{'label': 'duration', 'value': 'duration'},
+                             {'label': 'distance', 'value': 'distance'},
+                             {'label': 'totalEnergy', 'value': 'totalEnergy'},
+                             ],
+                    value='HKWorkoutActivityTypeWalking'
+                )),
                 dbc.Col(dcc.Dropdown(
                     id='linear plot',
                     style={'height': '40px'},
@@ -58,10 +65,14 @@ def selection():
                              ],
                     value='Heart Rate'
                 )),
-            dbc.Col([
-                html.Div(id='drop_down-container', children=[])
-            ]),
+            dbc.Col(dcc.DatePickerSingle(
+            style={'height': '40px'},
+            id='filter-drop_down',
+            min_date_allowed=min_date,
+            max_date_allowed=max_date,
+            display_format='D/M/Y',
+            date=date(2020, 5, 20))),
+
         ]),
     ]
     return selection
-

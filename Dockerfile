@@ -1,6 +1,7 @@
 FROM python:stretch
 
 ADD . /app
+COPY . /app
 
 RUN apt-get update && \
     apt-get install swig -y && \
@@ -11,12 +12,11 @@ RUN apt-get update && \
 WORKDIR /app
 
 ENV FLASK_ENV production
-ENV FLASK_APP app.py
-ENV FLASK_RUN_HOST 0.0.0.0
+ENV FLASK_APP index.py
 ENV TZ=Europe/Berlin
 
 
 EXPOSE 5424
 EXPOSE 600
 
-CMD [ "waitress-serve","--port", "600", "index:app.server" ]
+CMD ["waitress-serve","--port", "600","index:app.server" ]

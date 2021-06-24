@@ -12,7 +12,8 @@ def patient_information():
         children=html.Div(className='control-tab', children=[
             html.H4(className='what-is', children='Information about patient'),
             html.A('Download data', id='my-link2'),
-            html.P(id="text", className="card-text")
+            html.P(id="text", className="card-text"),
+
         ]))]
     return information
 

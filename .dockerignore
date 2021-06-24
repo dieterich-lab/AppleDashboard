@@ -1,0 +1,8 @@
+.git
+documentation
+build
+src
+.env
+import/*
+Dockerfile
+docker-compose.yml

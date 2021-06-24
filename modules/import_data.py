@@ -3,7 +3,7 @@ import io
 
 def create_database_data(rdb):
     # Remove tables from database if exists and create new name_type and examination tables in the PostgreSQL database
-    drop_all_tables = "DROP TABLE IF EXISTS AppleWatch,ECG,name,AppleWatch_numeric,AppleWatch_categorical"
+    drop_all_tables = "DROP TABLE IF EXISTS AppleWatch,ECG,name,AppleWatch_numeric,AppleWatch_categorical,workout"
 
     table_apple_watch = """CREATE TABLE AppleWatch (
                                     "type" text,
@@ -11,6 +11,18 @@ def create_database_data(rdb):
                                     "unit" text,
                                     "Date" timestamp,
                                     "Value" text)"""
+
+    table_workout_apple_watch = """CREATE TABLE Workout (
+                                    "type" text,
+                                    "duration" float,
+                                    "duration_unit" text,
+                                    "distance" float,
+                                    "distance_unit" text,
+                                    "EnergyBurned" float,
+                                    "EnergyBurnedUnit" text,
+                                    "Name" text,
+                                    "Start_Date" timestamp,
+                                    "End_Date" timestamp)"""
 
     table_ecg = """CREATE TABLE ECG (
                                     "Patient" text,
@@ -28,6 +40,7 @@ def create_database_data(rdb):
         cur = rdb.cursor()
         cur.execute(drop_all_tables)
         cur.execute(table_apple_watch)
+        cur.execute(table_workout_apple_watch)
         cur.execute(table_ecg)
         cur.execute(table_name)
         rdb.commit()
@@ -44,8 +57,14 @@ def load_health_data_to_database(rdb, files):
     cur = rdb.cursor()
     cur.copy_from(output, 'AppleWatch', null="", sep=',')  # null values become ''
     rdb.commit()
+    df_workout = ed.export_workout_data_from_apple_watch(files)
+    output_workout = io.StringIO()
+    df_workout.to_csv(output_workout, index=False, header=False)
+    output_workout.seek(0)
+    cur.copy_from(output_workout, 'Workout', null="", sep=',')  # null values become ''
+    rdb.commit()
 
-    return print('done load_health_data_to_database')
+    return print('done load health and workout data to database')
 
 
 def load_ecg_data_to_database(rdb, directories):

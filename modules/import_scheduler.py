@@ -27,8 +27,7 @@ class ImportSettings():
         self.config.set('hashes', 'date', "")
 
     def update(self, files):
-        dataset_path = './import/' + files[0]
-        self.config['hashes']['dataset'] = self.get_hash(dataset_path)
+        self.config['hashes']['dataset'] = self.get_hash(files)
         self.config['hashes']['date'] = str(datetime.now())
 
     def save(self):
@@ -40,9 +39,7 @@ class ImportSettings():
             .split(' ')[0]
 
     def is_dataset_changed(self, files):
-
-        path = './import/' + files[0]
-        hash = self.get_hash(path)
+        hash = self.get_hash(files)
         return self.config['hashes']['dataset'] != hash
 
     def is_empty(self):
@@ -56,8 +53,8 @@ def start_import(rdb):
     files = []
     directories = []
     settings = ImportSettings()
+
     print('starting import', datetime.now().strftime('%H:%M:%S'))
-    # r=root, d=directories, f = files
     for r, d, f in os.walk('./import'):
         if d:
             directories = d
@@ -66,16 +63,23 @@ def start_import(rdb):
                 files.append(file)
 
     if not files:
+        print(files)
         return print("Could not import to database missing export file", file=sys.stderr)
-
-    # use function from import_dataset to create tables in database
-    print("Start import data")
-    id.create_database_data(rdb)
-    id.load_health_data_to_database(rdb, files)
-    id.load_ecg_data_to_database(rdb, directories)
-    id.load_data_to_name_table(rdb)
-    id.alter_tables(rdb)
-    print("End load data")
+    elif not settings.is_dataset_changed('./import/'+files[0]):
+        return print("Data set not changed", file=sys.stderr)
+    else:
+        print(files)
+        # use function from import_dataset to create tables in database
+        print("Start import data")
+        id.create_database_data(rdb)
+        id.load_health_data_to_database(rdb, files)
+        id.load_ecg_data_to_database(rdb, directories)
+        id.load_data_to_name_table(rdb)
+        id.alter_tables(rdb)
+        path = './import/' + files[0]
+        settings.update(files=path)
+        settings.save()
+        print("End load data")
 
 
 class Scheduler():
@@ -84,10 +88,10 @@ class Scheduler():
     Importing data check the data. Import data every day at 05.05 if the program see any changes.
     """
 
-    def __init__(self,rdb):
+    def __init__(self,rdb, day_of_week, hour, minute):
         self.bgs = BackgroundScheduler()
         start_import(rdb)
-        self.bgs.add_job(start_import,'cron',[rdb])
+        self.bgs.add_job(start_import,'cron',[rdb], day_of_week=day_of_week, hour=hour, minute=minute)
 
     def start(self):
         self.bgs.start()
