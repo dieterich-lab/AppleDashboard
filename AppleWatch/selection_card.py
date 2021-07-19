@@ -7,9 +7,9 @@ import modules.load_data_from_database as ldd
 # connection with database
 rdb = connect_db()
 patient = ldd.patient(rdb)
-min_date, max_date = ldd.min_max_date(rdb)
+label_linear, label_bar = ldd.label(rdb)
 
-# selction for first dropdowns
+# selection for first dropdowns
 def selection():
     selection = [
         html.Br(),
@@ -19,7 +19,8 @@ def selection():
                     style={'height': '40px'},
                     id='patient',
                     options=[{'label': name, 'value': name} for name in patient],
-                    value='Patient 1',
+                    value=patient[0],
+                    clearable=False
                 )]),
             dbc.Col([
                 dcc.Dropdown(
@@ -29,35 +30,24 @@ def selection():
                              {'label': 'by week', 'value': 'W'},
                              {'label': 'by day of week', 'value': 'DOW'},
                              {'label': 'by day', 'value': 'D'}],
-                    value='D'
+                    value='D',
+                    clearable=False
                     )]),
-            dbc.Col(
+            dbc.Col([
                     dcc.Dropdown(
                         id='Bar chart',
                         style={'height': '40px'},
-                        options=[{'label': 'Active Energy Burned', 'value': 'Active Energy Burned'},
-                                 {'label': 'Apple Exercise Time', 'value': 'Apple Exercise Time'},
-                                 {'label': 'Apple Stand Time', 'value': 'Apple Stand Time'},
-                                 {'label': 'Basal Energy Burned', 'value': 'Basal Energy Burned'},
-                                 {'label': 'Distance Cycling', 'value': 'Distance Cycling'},
-                                 {'label': 'Distance Walking Running', 'value': 'Distance Walking Running'},
-                                 {'label': 'Sleep Analysis', 'value': 'Sleep Analysis'},
-                                 {'label': 'Step Count', 'value': 'Step Count'}
-                                 ],
-                        value='Active Energy Burned'
-                    )),
-                dbc.Col(dcc.Dropdown(
+                        options=[{'label': name, 'value': name} for name in label_bar],
+                        value=label_bar[0],
+                        clearable=False
+                    )]),
+            dbc.Col(dcc.Dropdown(
                     id='linear plot',
                     style={'height': '40px'},
-                    options=[{'label': 'Heart Rate', 'value': 'Heart Rate'},
-                             {'label': 'Heart Rate Variability SDNN', 'value': 'Heart Rate Variability SDNN'},
-                             {'label': 'Resting Heart Rate', 'value': "Resting Heart Rate"},
-                             {'label': 'VO2Max', 'value': 'VO2Max'},
-                             {'label': 'Walking Heart Rate Average', 'value': 'Walking Heart Rate Average'},
-                             {'label': 'Body Mass', 'value': 'Body Mass'},
-                             ],
-                    value='Heart Rate'
-                )),
+                    options=[{'label': name, 'value': name} for name in label_linear],
+                    value=label_linear[1],
+                    clearable = False
+            )),
             dbc.Col([
                 html.Div(id='drop_down-container', children=[])
             ]),

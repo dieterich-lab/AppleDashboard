@@ -1,4 +1,4 @@
-"""
+
 import numpy as np
 def calculate_HRR():
     # HRR
@@ -42,4 +42,3 @@ def calculate_HRR():
 
     return fig
 
-"""

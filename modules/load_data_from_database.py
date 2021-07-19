@@ -1,209 +1,260 @@
 import pandas as pd
+import time
+
 
 
 def patient(rdb):
     """
-
     :param rdb: connection with database
     :return: df: list patients
     """
-    sql = """SELECT distinct "Name" from applewatch """
+    sql = """SELECT "Name" from patient order by index"""
+
     df = pd.read_sql(sql,rdb)
     df = df["Name"].values.tolist()
+
     return df
 
 
-def min_max_date(rdb):
+def age_sex(rdb,patient):
     """
-
     :param rdb: connection with database
-    :return: df: DataFrame with min and maximal data
+    :return: df: list patients
     """
-    sql = """SELECT MIN("Date"),MAX("Date") from applewatch_numeric """
+    sql = """SELECT "Age","Sex" from patient where "Name"='{}' """.format(patient)
+
+    df = pd.read_sql(sql,rdb)
+
+    return df
+
+
+def month(rdb, patient):
+    sql = """ select to_char(month,'YYYY-MM') as month from (SELECT distinct date_trunc('month', "Date")  as month 
+    FROM applewatch_numeric where "Name"='{}' and name ='Resting Heart Rate' order by date_trunc('month', "Date")) 
+    as foo""".format(patient)
+
     df = pd.read_sql(sql, rdb)
-    min_date = df['min'].iloc[0]
-    min_date = min_date.date()
-    max_date = df['max'].iloc[0]
-    max_date = max_date.date()
+    df = df['month'].to_list()
+
+    return df
+
+
+def week(rdb, patient):
+    sql = """ select distinct week from (SELECT to_char("Date", 'IYYY/IW') as week FROM applewatch_numeric 
+    where "Name"='{}' and name ='Resting Heart Rate') as foo order by week """.format(patient)
+
+    df = pd.read_sql(sql, rdb)
+    df = df['week'].to_list()
+
+    return df
+
+
+def min_max_date(rdb, patient):
+
+    sql = """SELECT min_date,max_date from patient where "Name"='{}'""".format(patient)
+
+    df = pd.read_sql(sql, rdb)
+
+    min_date, max_date = df['min_date'].iloc[0].date(), df['max_date'].iloc[0].date()
+
+    return min_date, max_date
+
+def min_max_date_workout(rdb, patient):
+
+    sql = """SELECT MIN("Start_Date"),MAX("End_Date") from workout where "Name" ='{}'""".format(patient)
+
+    df = pd.read_sql(sql, rdb)
+
+    min_date, max_date = df['min'].iloc[0].date(), df['max'].iloc[0].date()
+
     return min_date, max_date
 
 
-def weight_and_height(rdb):
-    """
 
-    :param rdb: connection with database
-    :param date:
-    :return: df: list of ECG records from date
-    """
-    sql = """SELECT * from applewatch_numeric where "type" in ('HKQuantityTypeIdentifierHeight')"""
+def label(rdb):
+    sql = """SELECT distinct name from name where name in ('Heart Rate','Heart Rate Variability SDNN',
+    'Resting Heart Rate','VO2Max','Walking Heart Rate Average')"""
+
+    sql2 = """SELECT distinct name from name where name not in ('None','Heart Rate','Heart Rate Variability SDNN',
+    'Resting Heart Rate','VO2Max','Walking Heart Rate Average')"""
+
+    df, df2 = pd.read_sql(sql, rdb),pd.read_sql(sql2, rdb)
+    df, df2 = df["name"].values.tolist(), df2["name"].values.tolist()
+
+    return df, df2
+
+
+def weight_and_height(rdb, patient):
+
+    sql = """SELECT * from applewatch_numeric where "type" in ('HKQuantityTypeIdentifierHeight') and "Name" = '{}' """.format(patient)
     df = pd.read_sql(sql,rdb)
+    if not df.empty:
+        df = df.iloc[-1]['Value']
+    else:
+        df ='not information'
 
     return df
 
 
-def irregular_ecg(rdb):
-    """
+def irregular_ecg(rdb, patient):
 
-    :param rdb: connection with database
-    :return: df: list of ECG records from date
-    """
-
-    sql = """SELECT "Patient","Classification",count(*) from ecg group by "Patient","Classification" """
-    sql4 = """ select "Patient","Day", "number", "Classification" from ecg order by "Day" """
-
-    df4 = pd.read_sql(sql4, rdb)
-    df = pd.read_sql(sql, rdb)
-
-    return df4, df
-
-def Card(rdb):
-    """
-
-    :param rdb: connection with database
-    :return: df: DataFrame with all values
-    """
-
-    sql = """SELECT "Name","Date",to_char(date_trunc('month', "Date"),'YYYY-MM') as month,
-                                    to_char("Date", 'IYYY/IW') as week,
-                                    extract('week' from "Date") as week_num,
-                                    extract('ISODOW' from "Date") as "DOW_number",
-                                    to_char("Date", 'Day') as "DOW",
-                                    date_trunc('day', "Date") as date,
-                                    extract('hour' from "Date") as hour,"type","name", "Value" 
-                                    FROM applewatch_numeric order by "type","Date" """
-
-    sql2 = """SELECT "Name","Date",extract('month' from  "Date") as month,
-                                    extract('week' from "Date") as week,
-                                    extract('ISODOW' from "Date") as "DOW",
-                                    date_trunc('day', "Date") as date,
-                                    extract('hour' from "Date") as hour,"type","name", "Value" 
-                                    FROM applewatch_numeric where "name" in 
-                                    ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
-                                    'Walking Heart Rate Average') order by "type","Date" """
-
-    """
-    where "name" in ('Active Energy Burned', 'Apple Exercise Time', 'Apple Stand Time',
-        'Basal Energy Burned', 'Distance Cycling', 'Distance Walking Running',
-        'Sleep Analysis', 'Step Count')
-    """
+    sql = """SELECT "Classification",count(*) from ecg where "Patient"='{}' group by "Classification" """.format(patient)
+    sql2 = """ select "Day","number", "Classification" from ecg  where "Patient"='{}' order by "Day" """.format(patient)
 
     df = pd.read_sql(sql, rdb)
     df2 = pd.read_sql(sql2, rdb)
 
-    return df,df2
-
-def Card(rdb):
-    """
-
-    :param rdb: connection with database
-    :return: df: DataFrame with all values
-    """
-
-    sql = """SELECT "Name","Date",to_char(date_trunc('month', "Date"),'YYYY-MM') as month,
-                                    to_char("Date", 'IYYY/IW') as week,
-                                    extract('week' from "Date") as week_num,
-                                    extract('ISODOW' from "Date") as "DOW_number",
-                                    to_char("Date", 'Day') as "DOW",
-                                    date_trunc('day', "Date") as date,
-                                    extract('hour' from "Date") as hour,"type","name", "Value" 
-                                    FROM applewatch_numeric order by "type","Date" """
-
-    sql2 = """SELECT "Name","Date",extract('month' from  "Date") as month,
-                                    extract('week' from "Date") as week,
-                                    extract('ISODOW' from "Date") as "DOW",
-                                    date_trunc('day', "Date") as date,
-                                    extract('hour' from "Date") as hour,"type","name", "Value" 
-                                    FROM applewatch_numeric where "name" in 
-                                    ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
-                                    'Walking Heart Rate Average') order by "type","Date" """
-
-    """
-    where "name" in ('Active Energy Burned', 'Apple Exercise Time', 'Apple Stand Time',
-        'Basal Energy Burned', 'Distance Cycling', 'Distance Walking Running',
-        'Sleep Analysis', 'Step Count')
-    """
-
-    df = pd.read_sql(sql, rdb)
-    df2 = pd.read_sql(sql2, rdb)
-
-    return df,df2
-
-def Heart_Rate(rdb):
-    """
-
-    :param rdb: connection with database
-    :return: df: DataFrame with all values
-    """
-
-    sql = """SELECT "Name","Date",to_char(date_trunc('month', "Date"),'YYYY-MM') as month,
-                                    to_char("Date", 'IYYY/IW') as week,
-                                    extract('week' from "Date") as week_num,
-                                    extract('ISODOW' from "Date") as "DOW_number",
-                                    to_char("Date", 'Day') as "DOW",
-                                    date_trunc('day', "Date") as date,
-                                    extract('hour' from "Date") as hour,"type","name", "Value" 
-                                    FROM applewatch_numeric where type='HKQuantityTypeIdentifierHeartRate' order by "Date" """
+    return df, df2
 
 
+def Card(rdb, patient, group, date, value):
+
+
+    if group == 'M':
+        sql = """ select name,month,sum("Value"),AVG("Value") from (SELECT to_char(date_trunc('month', "Date"),
+        'YYYY-MM') as month,"name", "Value" FROM applewatch_numeric where "Name" = '{}' and "name" in 
+        ('Active Energy Burned','Heart Rate','Walking Heart Rate Average','Resting Heart Rate','Step Count',
+        'Apple Exercise Time') order by "name","Date") as foo where month='{}' group by month,name""".format(patient,value)
+    elif group == 'W':
+        sql = """ select name,week,sum("Value"),AVG("Value") from (SELECT to_char("Date", 'IYYY/IW') as week,"name",
+        "Value" FROM applewatch_numeric where "Name" = '{}' and "name" in ('Active Energy Burned','Heart Rate',
+        'Walking Heart Rate Average','Resting Heart Rate','Step Count','Apple Exercise Time') order by "name","Date")
+         as foo where week='{}' group by week,name""".format(patient,value)
+    elif group == 'DOW' :
+        sql = """ select name,"DOW",sum("Value"),AVG("Value") from (SELECT trim(to_char("Date", 'Day')) as "DOW",
+        "name","Value" FROM applewatch_numeric where "Name" = '{}' and "name" in ('Active Energy Burned',
+        'Heart Rate','Walking Heart Rate Average','Resting Heart Rate','Step Count','Apple Exercise Time') 
+        order by "name","Date") as foo where "DOW"='{}' group by "DOW",name""".format(patient,value)
+    else:
+        sql = """ select name,sum("Value"),AVG("Value") from (SELECT date_trunc('day', "Date") as date,"name",
+                "Value" FROM applewatch_numeric where "Name" = '{}' and "name" in ('Active Energy Burned',
+                'Heart Rate','Walking Heart Rate Average','Resting Heart Rate','Step Count','Apple Exercise Time')
+                 order by "name","Date") as foo where date = '{}' group by date,name""".format(patient,date)
 
     df = pd.read_sql(sql, rdb)
 
     return df
 
 
-def ECG_number(rdb,date):
-    """
 
-    :param rdb: connection with database
-    :param date:
-    :return: df: list of ECG records from date
-    """
+def table(rdb, patient, group, linear, bar):
+    if group == 'M':
+        sql = """ select name,month,
+                case 
+                when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                'Walking Heart Rate Average') Then AVG("Value")
+                ELSE sum("Value")
+                end as "Value"
+                from (SELECT to_char(date_trunc('month', "Date"),
+                'YYYY-MM') as month,"name", "Value" FROM applewatch_numeric where "Name" = '{}' and "name" in 
+                ('{}','{}') order by "name","Date") as foo group by month,name""".format(patient,linear,bar)
+    elif group == 'W':
+        sql = """ select name,week,
+                case 
+                when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                'Walking Heart Rate Average') Then AVG("Value")
+                ELSE sum("Value")
+                end as "Value"
+                from (SELECT to_char("Date", 'IYYY/IW') as week,"name",
+                "Value" FROM applewatch_numeric where "Name" = '{}' and "name" in ('{}','{}') order by "name","Date")
+                as foo group by week,name""".format(patient,linear,bar)
+    elif group == 'DOW' :
+        sql = """ select name,"DOW_number","DOW",
+                case 
+                when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                'Walking Heart Rate Average') Then AVG("Value")
+                ELSE sum("Value")
+                end as "Value"
+                from (SELECT trim(to_char("Date", 'Day')) as "DOW",extract('ISODOW' from "Date") as "DOW_number",
+                "name","Value" FROM applewatch_numeric where "Name" = '{}' and "name" in ('{}','{}') 
+                order by "name","Date") as foo group by "DOW","DOW_number",name order by "DOW_number" """.format(patient,linear,bar)
+    else:
+        sql = """ select name,date,
+                case 
+                when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                'Walking Heart Rate Average') Then AVG("Value")
+                ELSE sum("Value")
+                end as "Value"
+                from (SELECT date_trunc('day', "Date") as date,"name",
+                "Value" FROM applewatch_numeric where "Name" = '{0}' and "name" in ('{1}','{2}')
+                 order by "name","Date") as foo group by date,name""".format(patient,linear,bar)
+
+    df = pd.read_sql(sql, rdb)
+
+    return df
+
+
+def day_figure(rdb, patient, group, linear, bar, date, value):
+    if group == 'M':
+        sql = """ select "Date",name,month,"Value"from (SELECT "Date",to_char(date_trunc('month', "Date"),
+            'YYYY-MM') as month,"name", "Value" FROM applewatch_numeric where "Name" = '{}' and "name" in 
+            ('{}','{}') order by "name","Date") as foo where month='{}' """.format(
+            patient,linear,bar, value)
+    elif group == 'W':
+        sql = """ select "Date",name,week,"Value" from (SELECT "Date",to_char("Date", 'IYYY/IW') as week,"name",
+            "Value" FROM applewatch_numeric where "Name" = '{}' and "name" in ('{}','{}') order by "name","Date")
+             as foo where week='{}' """.format(patient,linear,bar, value)
+    elif group == 'DOW':
+        sql = """ select "Date",date,name,"DOW","Value" from (SELECT "Date",trim(to_char("Date", 'Day')) as "DOW",
+        date_trunc('day', "Date") as date,name,"Value" FROM applewatch_numeric where "Name" = '{}' and "name" in ('{}','{}') 
+            order by "name","Date") as foo where "DOW"='{}' and date = (SELECT Max(date_trunc('day', "Date")) FROM applewatch_numeric) """.format(patient,linear,bar, value)
+    else:
+        sql = """ select "Date",name,"Value" from (SELECT "Date",date_trunc('day', "Date") as date,"name",
+                    "Value" FROM applewatch_numeric where "Name" = '{}' and "name" in ('{}','{}')
+                     order by "name","Date") as foo where date = '{}' """.format(patient,linear,bar, date)
+    s = """ SELECT distinct date_trunc('day', "Date")) FROM applewatch_numeric"""
+
+    df = pd.read_sql(sql, rdb)
+
+    return df
+
+
+def trend_figure(rdb, patient, group, start_date,end_date):
+
+    if group == 'M':
+        sql = """ select month,hour,avg("Value") as "Value" from (SELECT to_char(date_trunc('month', "Date"),
+            'YYYY-MM') as month,extract('hour' from "Date") as hour,"Value" 
+        FROM applewatch_numeric where "Name" = '{}' and "name"= 'Heart Rate' and "Date" > '{}' and "Date" < '{}' 
+        order by "Date") as foo group by month,hour order by month,hour""".format(patient,start_date,end_date)
+    elif group == 'W':
+        sql = """ select week,hour,avg("Value") as "Value" from (SELECT to_char("Date", 'IYYY/IW') as week,extract('hour' from "Date") as hour,
+            "Value" FROM applewatch_numeric where "Name" = '{}' and name='Heart Rate' and "Date" > '{}' and "Date" < '{}' order by "Date")
+             as foo group by week,hour order by week,hour""".format(patient,start_date,end_date)
+    elif group == 'DOW':
+        sql = """ select "DOW","DOW_number",hour,avg("Value") as "Value" from (SELECT trim(to_char("Date", 'Day')) as "DOW",
+        extract('ISODOW' from "Date") as "DOW_number",extract('hour' from "Date") as hour,"Value" FROM applewatch_numeric 
+        where "Name" = '{}' and name='Heart Rate' order by "Date") as foo where "DOW_number" > '{}' and "DOW_number" < '{}' 
+        group by "DOW","DOW_number",hour  """.format(patient, start_date,end_date)
+    else:
+        sql = """ select date,hour,avg("Value") as "Value" from (SELECT "Date",extract('hour' from "Date") as hour,date_trunc('day', "Date") as date,"name",
+                    "Value" FROM applewatch_numeric where "Name" = '{}' and name='Heart Rate' and "Date" > '{}' and "Date" < '{}'
+                     order by "Date") as foo group by date,hour """.format(patient,start_date,end_date)
+    df = pd.read_sql(sql, rdb)
+    return df
+
+
+def ECG_number(rdb, date):
+
     sql = """SELECT distinct number from ECG where "Day"='{}' order by number""".format(str(date))
     df = pd.read_sql(sql,rdb)
     df = df['number'].to_list()
     return df
 
 
-def ECG_data(rdb,date,patient1,num):
-    """
-    :param rdb:
-    :param date:
-    :param patient1:
-    :param num:
-    :return:
-    """
+def ECG_data(rdb,date,patient,num):
 
-    sql="""SELECT * from ECG where "Day"='{0}' and "Patient"='{1}' and number='{2}' """.format(date,patient1,num)
+    sql="""SELECT * from ECG where "Day"='{0}' and "Patient"='{1}' and number='{2}' """.format(date,patient,num)
     df = pd.read_sql(sql,rdb)
     return df
 
 
-def basic_values(rdb):
-    """
-
-    :param rdb:
-    :return:
-    """
-    sql1 = """SELECT min("Date") FROM AppleWatch """
-    sql2 = """SELECT max("Date") FROM AppleWatch"""
-    sql3 = """SELECT Distinct("type") FROM AppleWatch"""
-    #sql4 = """SELECT Distinct("Patient") FROM AppleWatch"""
-
-    df1 = pd.read_sql(sql1, rdb)
-    df1['Value'] = pd.to_numeric(df1['Value'])
-    df2 = pd.read_sql(sql2, rdb)
-    df2['Value'] = pd.to_numeric(df2['Value'])
-    df3 = pd.read_sql(sql3, rdb)
-    df3['Value'] = pd.to_numeric(df3['Value'])
-    #df4 = pd.read_sql(sql4, rdb)
-    return df1, df2, df3
-
-
-def number_of_days_more_6(rdb):
+def number_of_days_more_6(rdb,patient):
     sql = """select "Name",count(*) from(SELECT "Name",date_trunc('day', "Date") as date,"type","name",count(*) 
     as number FROM applewatch_categorical where "type" = 'HKCategoryTypeIdentifierAppleStandHour' group by "Name",
-    date,"type","name" having count(*) > 6 order by "Name",date) as foo group by "Name" """
+    date,"type","name" having count(*) > 6 order by "Name",date) as foo where "Name" = '{}' group by "Name" """.format(patient)
     df = pd.read_sql(sql, rdb)
+    df = df.iloc[0]['count']
+
     return df
 
 def HKWorkoutActivity(rdb):
@@ -211,7 +262,7 @@ def HKWorkoutActivity(rdb):
     df = pd.read_sql(sql, rdb)
     return df
 
-def WorkoutActivity_data(rdb):
+def WorkoutActivity_data(rdb,patient):
     sql = """select *,
                 to_char(date_trunc('month', "Start_Date"),'YYYY-MM') as month,
                 to_char("Start_Date", 'IYYY/IW') as week,
@@ -219,12 +270,46 @@ def WorkoutActivity_data(rdb):
                 extract('ISODOW' from "Start_Date") as "DOW_number",
                 to_char("Start_Date", 'Day') as "DOW",
                 date_trunc('day', "Start_Date") as date
-                FROM workout  order by "type","Start_Date" """
+                FROM workout  where "Name"='{}' order by "type","Start_Date"  """.format(patient)
 
     df = pd.read_sql(sql, rdb)
     return df
 
 
+def WorkoutActivity_pie_chart(rdb,patient,group,date,value):
+    if group == 'M':
+        sql = """select *,
+                    to_char(date_trunc('month', "Start_Date"),'YYYY-MM') as month
+                    FROM workout  where "Name"='{}' and to_char(date_trunc('month', "Start_Date"),'YYYY-MM') ='{}'
+                     order by "type","Start_Date"  """.format(patient,value)
+    elif group == 'W':
+        sql = """select *,
+                    to_char("Start_Date", 'IYYY/IW') as week
+                    FROM workout  where "Name"='{}' and to_char("Start_Date", 'IYYY/IW')='{}'
+                     order by "type","Start_Date"  """.format(patient,value)
+    elif group == 'DOW':
+        sql = """select *,
+                    trim(to_char("Start_Date", 'Day')) as "DOW",
+                    extract('ISODOW' from "Start_Date") as "DOW_number"
+                    FROM workout  where "Name"='{}' and trim(to_char("Start_Date", 'Day'))='{}' order by "type","Start_Date"  """.format(patient,value)
+    else:
+        sql = """select *,
+                    date_trunc('day', "Start_Date") as date
+                    FROM workout  where "Name"='{}' and date_trunc('day', "Start_Date") ='{}'
+                     order by "type","Start_Date"  """.format(patient,date)
+
+    df = pd.read_sql(sql, rdb)
+
+    return df
+
+def Heart_Rate(rdb,date,patient):
+
+    sql = """SELECT "Name","Date",name,"Value" FROM applewatch_numeric where "Name"='{}' and 
+    date_trunc('day', "Date")='{}' and type='HKQuantityTypeIdentifierHeartRate' order by "Date" """.format(patient,date)
+
+    df = pd.read_sql(sql, rdb)
+
+    return df
 
 
 """

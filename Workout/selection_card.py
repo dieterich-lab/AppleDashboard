@@ -8,7 +8,7 @@ from datetime import date
 # connection with database
 rdb = connect_db()
 patient = ldd.patient(rdb)
-min_date, max_date = ldd.min_max_date(rdb)
+
 
 # selection for first drop downs
 def selection():
@@ -51,28 +51,13 @@ def selection():
                              {'label': 'distance', 'value': 'distance'},
                              {'label': 'totalEnergy', 'value': 'totalEnergy'},
                              ],
-                    value='HKWorkoutActivityTypeWalking'
+                    value='duration'
                 )),
-                dbc.Col(dcc.Dropdown(
-                    id='linear plot',
-                    style={'height': '40px'},
-                    options=[{'label': 'Heart Rate', 'value': 'Heart Rate'},
-                             {'label': 'Heart Rate Variability SDNN', 'value': 'Heart Rate Variability SDNN'},
-                             {'label': 'Resting Heart Rate', 'value': "Resting Heart Rate"},
-                             {'label': 'VO2Max', 'value': 'VO2Max'},
-                             {'label': 'Walking Heart Rate Average', 'value': 'Walking Heart Rate Average'},
-                             {'label': 'Body Mass', 'value': 'Body Mass'},
-                             ],
-                    value='Heart Rate'
-                )),
-            dbc.Col(dcc.DatePickerSingle(
-            style={'height': '40px'},
-            id='filter-drop_down',
-            min_date_allowed=min_date,
-            max_date_allowed=max_date,
-            display_format='D/M/Y',
-            date=date(2020, 5, 20))),
+            dbc.Col([
+                html.Div(id='drop_down-container2', children=[])
+            ]),
 
         ]),
+
     ]
     return selection

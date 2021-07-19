@@ -21,17 +21,17 @@ app.layout = html.Div([
         className="row header",
         children = [html.Img(src=app.get_asset_url("logo.jpg"),style={'height':'5%', 'width':'5%','margin-left': '15px'}),
                 html.H1('HiGHmed Patient Dashboard',style={"font-size": "3rem", "margin-top": "15px"}),
-                dcc.Link(html.H2('Tutorial',style={"font-size": "2rem", "margin-top": "20px","vertical-align": "middle"}),
-                                   href='/apps/tutorial')
+                html.A(dcc.Link(html.H2('Tutorial',style={"font-size": "2rem", "margin-top": "20px","vertical-align": "middle"}),
+                                   href='/apps/tutorial'))
                     ])),
 
         dbc.Card(html.Div(
             id="tabs",
             className="row tabs",
             children=[
-            dcc.Link('Dashboard for individual Patient', href='/'),
+            dcc.Link('Patient Health data', href='/'),
             dcc.Link('Patient Workouts', href='/'),
-            dcc.Link('Patient Comparison', href='/'),
+#            dcc.Link('Patient Comparison', href='/'),
            ])),
 
         dcc.Location(id='url', refresh=False),
@@ -51,8 +51,9 @@ app.layout = html.Div([
 def display_page(pathname):
     dcc.Link("back", href='/apps/tutorial'),
     tabs = [
-        dcc.Link("Dashboard for individual Patient", href='/apps/AppleWatch'),
+        dcc.Link("Patient health data", href='/apps/AppleWatch'),
         dcc.Link("Patient Workouts", href='/apps/Workouts'),
+       # dcc.Link("Patient Comparison", href='/apps/Comparison')
 
     ]
 
@@ -62,10 +63,10 @@ def display_page(pathname):
         )
 
         return Workouts.layout, tabs
-    elif pathname == "/apps/Comparison":
-        tabs[2] = dcc.Link(
-            dcc.Markdown("**&#9632 Patient comparison**"), href="/apps/Comparison"
-        )
+#    elif pathname == "/apps/Comparison":
+#        tabs[2] = dcc.Link(
+#            dcc.Markdown("**&#9632 Patient comparison**"), href="/apps/Comparison"
+#        )
 
         return Comparison.layout, tabs
     elif pathname == "/apps/tutorial":
@@ -73,7 +74,7 @@ def display_page(pathname):
         return tutorial.layout, tabs
 
     tabs[0] = dcc.Link(
-            dcc.Markdown("**&#9632 Dashboard for individual Patient**"),
+            dcc.Markdown("**&#9632 Patient health data**"),
             href='/apps/AppleWatch',
         )
     return AppleWatch.layout, tabs

@@ -1,25 +1,35 @@
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+import modules.load_data_from_database as ldd
+from db import connect_db
+import numpy as np
+
+# connection with database
+rdb = connect_db()
 
 
-def update_figure(df, bar,linear,  group):
-    df_linear = df[df['name'] == bar].drop(columns=['sum'])
-    df_bar = df[df['name'] == linear].drop(columns=['mean'])
-    df_linear = df_linear.rename(columns={"mean": "Value"})
-    df_bar = df_bar.rename(columns={"sum": "Value"})
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-    if group == 'M':
-        fig.add_trace(go.Bar(x=df_bar['month'], y=df_bar['Value'], name='{}'.format(bar)), secondary_y=False)
-        fig.add_trace(go.Scatter(x=df_linear['month'], y=df_linear['Value'], name='{}'.format(linear)), secondary_y=True)
-    elif group == 'W':
-        fig.add_trace(go.Bar(x=df_bar['week'], y=df_bar['Value'], name='{}'.format(bar)), secondary_y=False)
-        fig.add_trace(go.Scatter(x=df_linear['week'], y=df_linear['Value'], name='{}'.format(linear)), secondary_y=True)
-    elif group == 'DOW':
-        fig.add_trace(go.Bar(x=df_bar['DOW'], y=df_bar['Value'], name='{}'.format(bar)), secondary_y=False)
-        fig.add_trace(go.Scatter(x=df_linear['DOW'], y=df_linear['Value'], name='{}'.format(linear)), secondary_y=True)
+def update_figure(patient,linear, bar, group):
+    df = ldd.table(rdb, patient, group, linear, bar)
+
+    if group == 'M': index = 'month'
+    elif group == 'W': index = 'week'
+    elif group == 'DOW': index = ['DOW','DOW_number']
+    else: index = 'date'
+
+    if group == 'DOW':
+        df = df.pivot(index=index, columns='name', values='Value') \
+            .reset_index().sort_values(by=['DOW_number']).drop(columns=['DOW_number'])
+        index = 'DOW'
     else:
-        fig.add_trace(go.Bar(x=df_bar['date'], y=df_bar['Value'], name='{}'.format(bar)), secondary_y=False)
-        fig.add_trace(go.Scatter(x=df_linear['date'], y=df_linear['Value'], name='{}'.format(linear)), secondary_y=True)
+        df = df.pivot(index=index, columns='name', values='Value') \
+            .reset_index()
+    df_linear = df[[index,linear]]
+    df_linear = df_linear.replace('', np.nan).dropna(subset=[linear])
+
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(go.Bar(x=df[index], y=df[bar], name='{}'.format(bar)), secondary_y=False)
+    fig.add_trace(go.Scatter(x=df_linear[index], y=df_linear[linear], name='{}'.format(linear),mode='lines+markers'), secondary_y=True)
+
     fig.update_layout(
         height=400,
         template='plotly_white',

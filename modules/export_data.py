@@ -5,73 +5,91 @@ from os import listdir
 from os.path import isfile, join
 
 
-def export_health_data_from_apple_watch(files):
-    appended_data = []
-    for i in files:
-        # export data from xml file
-        input_path = './import/{}'.format(i)
+def export_me_data_from_apple_watch(file):
+    # export data from xml file
+    input_path = './import/{}'.format(file)
 
-        with open(input_path, 'r', errors='ignore') as xml_file:
-            input_data = xmltodict.parse(xml_file.read())
+    with open(input_path, 'r', errors='ignore') as xml_file:
+        input_data = xmltodict.parse(xml_file.read())
 
-        # import health data
-        records_list = input_data['HealthData']['Record']
-        df = pd.DataFrame(records_list)
+    # import health data
+    records_list = input_data['HealthData']['Record']
+    df = pd.DataFrame(records_list)
 
-        n = int(''.join(filter(str.isdigit, i)))
+    n = int(''.join(filter(str.isdigit, file)))
 
-        # rename @sourceName
-        df = df[df['@sourceName'].str.contains("Watch")]
-        df['@sourceName'] = df['@sourceName'].apply(lambda x: 'Patient {}'.format(n))
+    # rename @sourceName
+    df = df[df['@sourceName'].str.contains("Watch")]
+    df['@sourceName'] = df['@sourceName'].apply(lambda x: 'Patient {}'.format(n))
 
-        # Remove not necessary data
-        df = df.drop(['@sourceVersion', '@device', 'MetadataEntry', 'HeartRateVariabilityMetadataList', '@endDate',
-                      '@creationDate'],
-                     axis=1)
+    # Remove not necessary data
+    df = df.drop(['@sourceVersion', '@device', 'MetadataEntry', 'HeartRateVariabilityMetadataList', '@endDate',
+                  '@creationDate'], axis=1)
 
-        # convert time to you time zone
-        df['@startDate'] = pd.to_datetime(df['@startDate']).map(
-            lambda x: x.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT+1')))
-        appended_data.append(df)
-        xml_file.close()
+    # convert time to you time zone
+    df['@startDate'] = pd.to_datetime(df['@startDate']).map(
+        lambda x: x.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT+1')))
+    xml_file.close()
 
-    df = pd.concat(appended_data)
+    return df
+
+def export_health_data_from_apple_watch(file):
+
+     # export data from xml file
+    input_path = './import/{}'.format(file)
+
+    with open(input_path, 'r', errors='ignore') as xml_file:
+        input_data = xmltodict.parse(xml_file.read())
+
+    # import health data
+    records_list = input_data['HealthData']['Record']
+    df = pd.DataFrame(records_list)
+
+    n = int(''.join(filter(str.isdigit, file)))
+
+    # rename @sourceName
+    df = df[df['@sourceName'].str.contains("Watch")]
+    df['@sourceName'] = df['@sourceName'].apply(lambda x: 'Patient {}'.format(n))
+
+    # Remove not necessary data
+    df = df.drop(['@sourceVersion', '@device', 'MetadataEntry', 'HeartRateVariabilityMetadataList', '@endDate',
+                      '@creationDate'],axis=1)
+
+    # convert time to you time zone
+    df['@startDate'] = pd.to_datetime(df['@startDate']).map(
+        lambda x: x.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT+1')))
+    xml_file.close()
 
     return df
 
 
-def export_workout_data_from_apple_watch(files):
-    appended_data = []
-    for i in files:
-        # export data from xml file
-        input_path = './import/{}'.format(i)
+def export_workout_data_from_apple_watch(file):
 
-        with open(input_path, 'r') as xml_file:
-            input_data = xmltodict.parse(xml_file.read())
+    # export data from xml file
+    input_path = './import/{}'.format(file)
 
-        # import health data
-        workouts_list = input_data['HealthData']['Workout']
-        df = pd.DataFrame(workouts_list)
+    with open(input_path, 'r') as xml_file:
+        input_data = xmltodict.parse(xml_file.read())
 
-        n = int(''.join(filter(str.isdigit, i)))
+    # import health data
+    workouts_list = input_data['HealthData']['Workout']
+    df = pd.DataFrame(workouts_list)
 
-        # rename @sourceName
-        df = df[df['@sourceName'].str.contains("Watch")]
-        df['@sourceName'] = df['@sourceName'].apply(lambda x: 'Patient {}'.format(n))
+    n = int(''.join(filter(str.isdigit, file)))
+
+    # rename @sourceName
+    df = df[df['@sourceName'].str.contains("Watch")]
+    df['@sourceName'] = df['@sourceName'].apply(lambda x: 'Patient {}'.format(n))
 
         # Remove not necessary data
-        df = df.drop(['@sourceVersion', '@device', 'WorkoutRoute', 'WorkoutEvent', 'MetadataEntry',
-                      '@creationDate'], axis=1)
+    df = df.drop(['@sourceVersion', '@device', 'WorkoutRoute', 'WorkoutEvent', 'MetadataEntry','@creationDate'], axis=1)
 
-        # convert time to you time zone
-        df['@startDate'] = pd.to_datetime(df['@startDate']).map(
-            lambda x: x.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT+1')))
-        df['@endDate'] = pd.to_datetime(df['@endDate']).map(
-            lambda x: x.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT+1')))
-        appended_data.append(df)
-        xml_file.close()
-
-    df = pd.concat(appended_data)
+    # convert time to you time zone
+    df['@startDate'] = pd.to_datetime(df['@startDate']).map(
+        lambda x: x.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT+1')))
+    df['@endDate'] = pd.to_datetime(df['@endDate']).map(
+        lambda x: x.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT+1')))
+    xml_file.close()
 
     return df
 
