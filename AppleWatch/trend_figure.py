@@ -31,10 +31,13 @@ def figure_trend(date, value, input_value,group, patient):
         start_date, end_date = (pd.to_datetime(date) - pd.to_timedelta(3, unit='d')), \
                                (pd.to_datetime(date) + pd.to_timedelta(1, unit='d'))
     df = ldd.trend_figure(rdb, patient, group, start_date,end_date)
+    if 'date' in df.columns:
+        df['date'] = df['date'].apply(lambda x: x.strftime('%Y-%m-%d'))
     if df.empty:
         fig = {}
     else:
         fig = px.line(x=df['hour'], y=df['Value'], color=df[color])
+
 
 
     if fig:

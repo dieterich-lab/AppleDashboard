@@ -56,14 +56,14 @@ def load_health_data_to_database(rdb, files):
         df.to_csv(output, index=False, header=False)
         output.seek(0)
         cur = rdb.cursor()
-        cur.copy_from(output, 'AppleWatch', null="", sep=',')  # null values become ''
+        cur.copy_from(output, 'applewatch', null="", sep=',')  # null values become ''
         rdb.commit()
     for file in files:
         df_workout = ed.export_workout_data_from_apple_watch(file)
         output_workout = io.StringIO()
         df_workout.to_csv(output_workout, index=False, header=False)
         output_workout.seek(0)
-        cur.copy_from(output_workout, 'Workout', null="", sep=',')  # null values become ''
+        cur.copy_from(output_workout, 'workout', null="", sep=',')  # null values become ''
         rdb.commit()
 
     return print('done load health and workout data to database')
@@ -73,7 +73,7 @@ def load_ecg_data_to_database(rdb, directories):
     df = ed.export_ecg_data_from_apple_watch(directories)
     cur = rdb.cursor()
     for index, row in df.iterrows():
-        cur.execute("INSERT INTO ECG VALUES (%s,%s,%s,%s,%s,%s)", row)
+        cur.execute("INSERT INTO ecg VALUES (%s,%s,%s,%s,%s,%s)", row)
     rdb.commit()
 
     return print('done load_ecg_data_to_database')
@@ -95,18 +95,18 @@ def load_data_to_name_table(rdb):
 def alter_tables(rdb):
 
     # Alters in database
-    add_column_name_to_table_apple_watch = """Alter table AppleWatch add column name text"""
+    add_column_name_to_table_apple_watch = """Alter table applewatch add column name text"""
 
-    update_column_name = """UPDATE AppleWatch t2 SET name = t1.name FROM name t1 WHERE t2."type" = t1."type" """
+    update_column_name = """UPDATE applewatch t2 SET name = t1.name FROM name t1 WHERE t2."type" = t1."type" """
 
-    create_table_apple_watch_numeric = """CREATE TABLE AppleWatch_numeric AS SELECT "type","name","Name","unit",
-    "Date",("Value"::double precision) as "Value" from AppleWatch where 
+    create_table_apple_watch_numeric = """CREATE TABLE applewatch_numeric AS SELECT "type","name","Name","unit",
+    "Date",("Value"::double precision) as "Value" from applewatch where 
     "Value" ~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
 
-    create_table_apple_watch_categorical = """CREATE TABLE AppleWatch_categorical AS SELECT "type","name","Name",
-    "unit","Date","Value" from AppleWatch where "Value" !~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
+    create_table_apple_watch_categorical = """CREATE TABLE applewatch_categorical AS SELECT "type","name","Name",
+    "unit","Date","Value" from applewatch where "Value" !~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
 
-    create_table_patient = """CREATE TABLE patient AS select distinct "Name" from AppleWatch"""
+    create_table_patient = """CREATE TABLE patient AS select distinct "Name" from applewatch"""
 
     sql1="""ALTER TABLE patient ADD "index" integer"""
     sql2="""ALTER TABLE patient ADD "Age" integer"""

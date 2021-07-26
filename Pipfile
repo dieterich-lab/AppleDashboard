@@ -13,10 +13,7 @@ dash = "*"
 gunicorn="*"
 dash_bootstrap_components = "*"
 xmltodict = "*"
-psycopg2 = "*"
-matplotlib = "*"
-visdcc = "*"
-dash_daq= "*"
+psycopg2-binary = "*"
 apscheduler = "*"
 
 [dev-packages]

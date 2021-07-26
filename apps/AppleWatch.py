@@ -69,6 +69,10 @@ layout = html.Div([
                         'backgroundColor': 'rgb(248, 248, 248)'
                     }
                 ],
+                style_cell={
+                    'whiteSpace': 'normal',
+                    'height': 'auto',
+                },
                 style_header={
                     'backgroundColor': 'rgb(230, 230, 230)',
                     'fontWeight': 'bold'

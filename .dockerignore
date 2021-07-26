@@ -1,8 +1,20 @@
-.git
-documentation
-build
-src
+# Environment variables
 .env
-import/*
+
+# Documentation
+scripts
+*.md
+
+# Git file
+.git
+
+# Folder
+src
+import
+dataset_examples
+images
+test.py
+
+# Docker file
 Dockerfile
 docker-compose.yml

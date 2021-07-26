@@ -1,4 +1,4 @@
-FROM python:stretch
+FROM python:slim
 
 ADD . /app
 COPY . /app
