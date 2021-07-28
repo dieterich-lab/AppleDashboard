@@ -1,9 +1,11 @@
 version: '3'
 services:
   apple_watch:
+    image: watch_monitor
+    container_name: apple_watch
     build: .
     ports:
-      - "600:600"
+      - "127.0.0.1:600:600"
     depends_on: # other containers it needs in order to run
       - databaseapple
     environment:
@@ -19,6 +21,7 @@ services:
 
   databaseapple:
     image: postgres
+    container_name: database_apple
     ports:
       - "5424:5432"
     environment:

@@ -108,11 +108,11 @@ def alter_tables(rdb):
 
     create_table_patient = """CREATE TABLE patient AS select distinct "Name" from applewatch"""
 
-    sql1="""ALTER TABLE patient ADD "index" integer"""
-    sql2="""ALTER TABLE patient ADD "Age" integer"""
-    sql3="""ALTER TABLE patient ADD "Sex" text """
-    sql4="""ALTER TABLE patient ADD "min_date" timestamp"""
-    sql5="""ALTER TABLE patient ADD "max_date" timestamp"""
+    sql1 = """ALTER TABLE patient ADD "index" integer"""
+    sql2 = """ALTER TABLE patient ADD "Age" integer"""
+    sql3 = """ALTER TABLE patient ADD "Sex" text """
+    sql4 = """ALTER TABLE patient ADD "min_date" timestamp"""
+    sql5 = """ALTER TABLE patient ADD "max_date" timestamp"""
 
     sql6=""" UPDATE patient SET "Age" = '27', "Sex" = 'female',"index"='1',"min_date"='2020-02-20 14:35:28', "max_date"='2021-07-01 09:17:59' WHERE "Name" = 'Patient 1'  """
     sql7=""" UPDATE patient SET "Age" = '32', "Sex" = 'male',"index"='2',"min_date"='2019-05-18 18:13:39 ', "max_date"='2020-11-10 13:12:22'  WHERE "Name" = 'Patient 2' """
