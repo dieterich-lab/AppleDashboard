@@ -3,7 +3,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 from app import app
-from apps import AppleWatch, Workouts, Comparison, tutorial
+from apps import AppleWatch, Workouts, Comparison, HRV, Questionnaire, tutorial
 
 # change color of background
 colors = {'background': '#f4f4f2', 'text': '#7FDBFF'}
@@ -31,7 +31,8 @@ app.layout = html.Div([
             children=[
             dcc.Link('Patient Health data', href='/'),
             dcc.Link('Patient Workouts', href='/'),
-#            dcc.Link('Patient Comparison', href='/'),
+            dcc.Link('Patient Comparison', href='/'),
+            dcc.Link('ECG analyze', href='/'),
            ])),
 
         dcc.Location(id='url', refresh=False),
@@ -53,8 +54,9 @@ def display_page(pathname):
     tabs = [
         dcc.Link("Patient health data", href='/apps/AppleWatch'),
         dcc.Link("Patient Workouts", href='/apps/Workouts'),
-       # dcc.Link("Patient Comparison", href='/apps/Comparison')
-
+        dcc.Link("Patient Comparison", href='/apps/Comparison'),
+        dcc.Link("ECG analyze", href='/apps/HRV'),
+        dcc.Link("Questionnaire", href='/apps/Questionnaire')
     ]
 
     if pathname == "/apps/Workouts":
@@ -63,12 +65,24 @@ def display_page(pathname):
         )
 
         return Workouts.layout, tabs
-#    elif pathname == "/apps/Comparison":
-#        tabs[2] = dcc.Link(
-#            dcc.Markdown("**&#9632 Patient comparison**"), href="/apps/Comparison"
-#        )
+    elif pathname == "/apps/Comparison":
+        tabs[2] = dcc.Link(
+            dcc.Markdown("**&#9632 Patient comparison**"), href="/apps/Comparison"
+        )
 
         return Comparison.layout, tabs
+    elif pathname == "/apps/HRV":
+        tabs[2] = dcc.Link(
+            dcc.Markdown("**&#9632 ECG analyze**"), href="/apps/HRV"
+        )
+
+        return HRV.layout, tabs
+    elif pathname == "/apps/Questionnaire":
+        tabs[2] = dcc.Link(
+            dcc.Markdown("**&#9632 Questionnaire**"), href="/apps/Questionnaire"
+        )
+
+        return Questionnaire.layout, tabs
     elif pathname == "/apps/tutorial":
 
         return tutorial.layout, tabs

@@ -38,8 +38,6 @@ def figure_trend(date, value, input_value,group, patient):
     else:
         fig = px.line(x=df['hour'], y=df['Value'], color=df[color])
 
-
-
     if fig:
         fig.update_layout(
             height=400,

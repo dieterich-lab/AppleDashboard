@@ -18,16 +18,13 @@
 }
 
 .tabs > a {
-    width: 40%;
+    width: 19%;
 }
 
-.tabs > a:first-child {
-    border-right: 1px solid lightgrey;
-}
-
-.tabs > a:last-child {
+.tabs > a {
     border-left: 1px solid lightgrey;
 }
+
 .dash-table-container .row {
   display: block;
   margin: 5px;

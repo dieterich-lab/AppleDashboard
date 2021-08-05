@@ -47,7 +47,7 @@ information = patient_information()
 
 
 layout = html.Div([
-    dbc.Row([dbc.Col(selection)]),
+    dbc.Row(dbc.Col(selection)),
     html.Br(),
     dbc.Row([
         dbc.Col(dbc.Card(information, style={'height': '100%'}), lg=4),
