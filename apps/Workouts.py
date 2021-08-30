@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
+from datetime import date
 
 import modules.load_data_from_database as ldd
 from db import connect_db
@@ -14,7 +15,7 @@ from Workout.barchart import update_figure
 from Workout.pie import update_pie
 from Workout.table import table
 from Workout.workout_figure import workout_figure
-
+from Workout.Recovery_heart_rate import graphs
 
 day_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -33,7 +34,7 @@ layout = html.Div([
             dash_table.DataTable(
                 id='tableu',
                 style_table={'overflowX': 'auto'},
-                page_size=9,
+                page_size=5,
                 filter_action='native',
                 sort_action="native",
                 sort_mode="multi",
@@ -52,15 +53,14 @@ layout = html.Div([
     dbc.Row([dbc.Col(dbc.Card(dcc.Graph(id='summary_workout'), style={'height': '100%'}), lg=7),
              dbc.Col(dbc.Card(dcc.Graph(id='pie_graph'), style={'height': '100%'}), lg=5)]),
     html.Br(),
-    dbc.Row([dbc.Col(dbc.Card(dcc.Graph(id='workout_graph'), style={'height': '100%'}), lg=7),
-             dbc.Col(dbc.Card(dcc.Graph(id='recovery_graph'), style={'height': '100%'}), lg=5)]),
+    dbc.Row([dbc.Col(dbc.Card(dcc.Graph(id='workout_graph'), style={'height': '100%'}))]),
     html.Br(),
-#    dbc.Row([dbc.Col(dbc.Card(dcc.Graph(id='recovery_generally'), style={'height': '100%'}), lg=6),
-#             dbc.Col(dbc.Card(dcc.Graph(id='speed_generally'), style={'height': '100%'}), lg=6)]),
-#    html.Br(),
-#    dbc.Row([dbc.Col(dbc.Card(dcc.Graph(id='HR_max'), style={'height': '100%'}), lg=6),
-#             dbc.Col(dbc.Card(dcc.Graph(id='HR_min'), style={'height': '100%'}), lg=6)]),
-#    html.Br(),
+    dbc.Row([dbc.Col(dbc.Card(dcc.Graph(id='recovery_generally'), style={'height': '100%'}), lg=6),
+             dbc.Col(dbc.Card(dcc.Graph(id='speed_generally'), style={'height': '100%'}), lg=6)]),
+    html.Br(),
+    dbc.Row([dbc.Col(dbc.Card(dcc.Graph(id='HR_max'), style={'height': '100%'}), lg=6),
+             dbc.Col(dbc.Card(dcc.Graph(id='HR_min'), style={'height': '100%'}), lg=6)]),
+    html.Br(),
 
 ])
 # callback for change selector with month/week/day after choosing group by
@@ -121,32 +121,32 @@ def update_selection(patient, value):
 
     return drop_down
 
-# update table1 depends what values are chosen in selector
-@app.callback(
-    Output('summary_workout', 'figure'),
-    [Input("patient", "value"),
-     Input('group by', "value")]
-)
-def summary_workout(patient, group):
-    data = ldd.WorkoutActivity_data(rdb,patient)
-    fig = update_figure(data, group)
-    return fig
 
-
-# update table1 depends what values are chosen in selector
+# update table depends what values are chosen in selector
 @app.callback(
     [Output('tableu', 'data'),
      Output('tableu', 'columns')],
     [Input('group by', "value"),
-     Input("patient", "value"),
-     Input('Bar chart', 'value')]
+     Input("patient", "value")]
 )
-def update_table(group, patient, bar):
-    datau = ldd.WorkoutActivity_data(rdb,patient)
-    result = table(datau, group, patient, bar)
+def update_table(group, patient):
+    data = ldd.WorkoutActivity_data(rdb,patient)
+    result = table(data, group, patient)
     data2 = result.to_dict('records')
     columns = [{"name": str(i), "id": str(i)} for i in result.columns]
     return data2, columns
+
+# update summary figure depends what values are chosen in selector
+@app.callback(
+    Output('summary_workout', 'figure'),
+    [Input("patient", "value"),
+     Input('group by', "value"),
+     Input("what", "value")]
+)
+def summary_workout(patient, group, what):
+    data = ldd.WorkoutActivity_data(rdb,patient)
+    fig = update_figure(data, group,what)
+    return fig
 
 # update table1 depends what values are chosen in selector
 @app.callback(
@@ -155,30 +155,86 @@ def update_table(group, patient, bar):
      Input('group by', "value"),
      Input({"index": ALL, 'type': 'filter-drop_down2'}, 'date'),
      Input({"index": ALL, 'type': 'filter-drop_down2'}, 'value'),
-     Input('drop_down-container2', 'children')]
+     Input('drop_down-container2', 'children'),
+    Input("what", "value")]
 )
-def pie_figure(patient, group, date,value,m):
+def pie_figure(patient, group, date,value,m,what):
     date = date[0]
     value = value[0]
-    datau = ldd.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
-    fig = update_pie(datau, group)
+    data = ldd.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
+    if data.empty:
+        fig = {}
+    else:
+        fig = update_pie(data, group,what)
     return fig
 
 
 # update table1 depends what values are chosen in selector
 @app.callback(
-    [Output('workout_graph', 'figure'),
-     Output('recovery_graph', 'figure')],
+    Output('workout_graph', 'figure'),
     [Input("patient", "value"),
      Input('group by', "value"),
      Input({"index": ALL, 'type': 'filter-drop_down2'}, 'date'),
      Input({"index": ALL, 'type': 'filter-drop_down2'}, 'value'),
      Input('drop_down-container2', 'children')]
 )
-def pie_figure(patient, group, date,value,m):
+def HR_figure(patient, group, date, value, m):
     date = date[0]
     value = value[0]
     df = ldd.Heart_Rate(rdb,date,patient)
     data = ldd.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
-    fig,fig2 = workout_figure(df,data)
-    return fig,fig2
+    data = data[(data['duration'] > 10) & (data['duration'] < 300)]
+
+    if group != 'D' or data.empty:
+        fig = {}
+    else:
+        fig = workout_figure(df,data)
+    return fig
+
+
+# update selector depend from the summary graph
+@app.callback(
+    [Output({'index': ALL, 'type': 'filter-drop_down2'}, 'date'),
+     Output({"index": ALL, 'type': 'filter-drop_down2'}, 'value')],
+    [Input("summary_workout", "clickData"),
+     Input("group by", "value")],
+)
+def update_bar_selector(click_data, group):
+    if group == 'D':
+        if click_data:
+            holder = [str(click_data["points"][0]["x"])]
+        else:
+            holder= [date(2020, 2, 20)]
+        holder2 = [None]
+    else:
+        if group == 'M':
+            holder2 = ['2020-07']
+            if click_data:
+                holder2[0] = click_data["points"][0]["x"][:7]
+
+        elif group == 'DOW':
+            holder2 = [day_of_week[0]]
+            if click_data:
+                holder2[0] = click_data["points"][0]["x"].replace(" ","")
+        else:
+            holder2 = ['2020/31']
+            if click_data:
+                holder2[0] = click_data["points"][0]["x"]
+        holder= [date(2020, 2, 20)]
+    return list(set(holder)), list(set(holder2))
+
+# update selector depend from the summary graph
+@app.callback(
+    [Output('recovery_generally', 'figure'),
+    Output('speed_generally', 'figure'),
+     Output('HR_max', 'figure'),
+     Output('HR_min', 'figure')],
+    [Input("patient", "value"),
+     Input('activity', 'value')]
+)
+def update_HRR_figure(patient, activity):
+
+    df = ldd.HRR(rdb, patient, activity)
+    fig1, fig2, fig3, fig4 = graphs(df)
+
+    return fig1, fig2, fig3, fig4

@@ -40,7 +40,6 @@ def selection():
                         options=[{'label': name, 'value': name} for name in label_bar],
                         value=label_bar[0],
                         clearable=False,
-                        multi=True
                     ),)),
             dbc.Col(dbc.Card(dcc.Dropdown(
                     id='linear plot',

@@ -61,6 +61,7 @@ def update_figure(patient,linear, bar, group):
             x=1
         ))
     fig.update_xaxes(title_text="Time")
-    fig.update_yaxes(title_text='{}'.format(linear), secondary_y=True)
+    if not isinstance(linear, list):
+        fig.update_yaxes(title_text='{}'.format(linear), secondary_y=True)
     fig.update_yaxes(title_text='{}'.format(bar), secondary_y=False)
     return fig

@@ -5,6 +5,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
 import time
+from datetime import date
 
 from flask import send_file
 import pandas as pd
@@ -107,7 +108,7 @@ layout = html.Div([
 
         ), style={'height': '100%'}), lg=3),
         dbc.Col(dbc.Card([html.A('Download ECG', id='my-link'),
-        dcc.Graph(id='figure_ecg'),], style={'height':'100%'}), lg=9)
+        dcc.Graph(id='figure_ecg')], style={'height': '100%'}), lg=9)
     ]),
     html.Br(),
 
@@ -121,6 +122,7 @@ layout = html.Div([
     Input('group by', "value")],
 )
 def update_selection(patient, value):
+
     if value == 'M':
         month = ldd.month(rdb,patient)
         drop_down = html.Div([dcc.Dropdown(
@@ -209,59 +211,57 @@ def update_card(patient, group, date, value,m):
     return resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary
 
 
-
 # update table1 depends what values are chosen in selector
 @app.callback(
     [Output('figure_summary', 'figure'),
+    Output("figure_summary", "clickData"),
     Output('table1', 'data'),
      Output('table1', 'columns')],
     [Input('group by', "value"),
      Input("patient", "value"),
      Input('linear plot', 'value'),
-     Input('Bar chart', 'value')
+     Input('Bar chart', 'value'),
+     Input('drop_down-container', 'children')
      ]
 )
-def update_table(group, patient, linear, bar):
+def update_table(group, patient, linear, bar,m):
     result = table(patient, group, linear, bar)
     data = result.to_dict('records')
     columns = [{"name": str(i), "id": str(i)} for i in result.columns]
     fig = update_figure(patient, linear, bar, group)
-    return fig, data, columns
+    return fig,None, data, columns
 
 
 # update selector depend from the summary graph
 @app.callback(
     [Output({'index': ALL, 'type': 'filter-drop_down'}, 'date'),
      Output({"index": ALL, 'type': 'filter-drop_down'}, 'value')],
-    [Input('patient', "value"),
-     Input("figure_summary", "selectedData"),
-     Input("figure_summary", "clickData"),
-     Input("group by", "value")],
+    [Input("figure_summary", "clickData"),
+     Input("group by", "value"),
+     ],
 )
-def update_bar_selector(patient,value, click_data, group):
-    min_date, max_date = ldd.min_max_date(rdb,patient)
+def update_bar_selector(click_data, group):
     if group == 'D':
-
-        holder = [min_date]
         if click_data:
-            holder[0] = str(click_data["points"][0]["x"])
+            holder = [str(click_data["points"][0]["x"])]
+        else:
+            holder= [date(2020, 2, 20)]
         holder2 = [None]
     else:
         if group == 'M':
-            month = ldd.month(rdb, patient)
-            holder2 = [month[0]]
+            holder2 = ['2020-07']
             if click_data:
                 holder2[0] = click_data["points"][0]["x"][:7]
+
         elif group == 'DOW':
             holder2 = [day_of_week[0]]
             if click_data:
                 holder2[0] = click_data["points"][0]["x"].replace(" ","")
         else:
-            week = ldd.week(rdb,patient)
-            holder2 = [week[0]]
+            holder2 = ['2020/31']
             if click_data:
                 holder2[0] = click_data["points"][0]["x"]
-        holder = [min_date]
+        holder= [date(2020, 2, 20)]
     return list(set(holder)), list(set(holder2))
 
 
@@ -290,15 +290,14 @@ def update_figure_day(date, value, group,linear, bar, patient,m):
     Output('figure_trend', 'figure'),
     [Input({"index": ALL, 'type': 'filter-drop_down'}, 'value'),
      Input({'index': ALL, 'type': 'filter-drop_down'}, 'date'),
-     Input('linear plot', 'value'),
      Input("group by", "value"),
      Input("patient", "value")],
 )
-def update_figure_trend(value, date, input_value, group, patient):
+def update_figure_trend(value, date, group, patient):
     if date and value:
         date = pd.to_datetime(date[-1])
         value = value[-1]
-        fig = figure_trend(date, value, input_value, group, patient)
+        fig = figure_trend(date, value,  group, patient)
     else:
         fig = {}
     return fig

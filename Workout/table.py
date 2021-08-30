@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 
 def grouping1(df, patient, group):
+
     df = df.loc[df["Name"] == patient]
     if group == 'M':
         df = df.groupby(['month', 'name'])['Value'].agg(['sum', 'mean']).reset_index()
@@ -32,8 +33,9 @@ def grouping2(df, patient, group):
     return df_sum_mean
 
 
-def table(df, group,  patient,bar,):
-    df = df[['type','duration','distance','EnergyBurned','Start_Date','End_Date']]
+def table(df, group,  patient,):
+
+    df = df[['type','date','Start','End','duration','distance','EnergyBurned',]]
     df =df.round(2)
 
     return df

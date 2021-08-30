@@ -4,21 +4,17 @@ import numpy as np
 
 def workout_figure(df,data):
 
-    fig = px.scatter(x=df['Date'], y=df['Value'])
-
+    fig = px.scatter(x=df['Date'], y=df['Value'],template="plotly_white")
 
     Start_Date = data['Start_Date'].values
     End_Date = data['End_Date'].values
-    Recovery_heart_rate = data['End_Date'].values + np.timedelta64(1, 'm')
+    type = data['type'].values
 
-
-    for i in Start_Date:
+    for i, j, k in zip(Start_Date, End_Date, type):
         fig.add_vline(x=str(i), line_width=3, line_dash="dash", line_color="green")
-    for i in End_Date:
-        fig.add_vline(x=str(i), line_width=3, line_dash="dash", line_color="red")
+        fig.add_vline(x=str(j), line_width=3, line_dash="dash", line_color="red")
+        fig.add_vrect(x0=str(i), x1=str(j), annotation_text=k, annotation_textangle=-90,
+                      annotation_position="bottom left", annotation=dict(font_size=15, font_family="Times New Roman"),
+                      fillcolor="green", opacity=0.25, line_width=0)
 
-    df_new = df[(df['Date'] > str(Start_Date[0])) & (df['Date'] < str(Recovery_heart_rate[0]))]
-    fig2 = px.scatter(x=df_new['Date'],y=df_new['Value'])
-    fig2.add_vline(x=str(End_Date[0]), line_width=3, line_dash="dash", line_color="green")
-
-    return fig,fig2
+    return fig

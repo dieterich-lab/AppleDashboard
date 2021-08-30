@@ -16,9 +16,7 @@ def day_figure_update(date, value, group, patient, linear,bar):
     if not df.empty:
         df_bar = df[df['name'] == bar]
         df = df[df['name'] == 'Heart Rate']
-        print(df)
         a=df["Value"].mean()
-        print(a)
         df_bar = df_bar.resample('5Min', on='Date').sum().reset_index()
         fig = make_subplots(specs=[[{"secondary_y": True}]])
         fig.add_trace(go.Scatter(x=df['Date'], y=df["Value"], name="Heart Rate"), secondary_y=False)

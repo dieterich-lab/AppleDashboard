@@ -22,7 +22,14 @@ def create_database_data(rdb):
                                     "EnergyBurnedUnit" text,
                                     "Name" text,
                                     "Start_Date" timestamp,
-                                    "End_Date" timestamp)"""
+                                    "End_Date" timestamp,
+                                    "HRR_1_min" float,
+                                    "HRR_2_min" float,
+                                    "HR_max" float,
+                                    "HR_min" float,
+                                    "HR_average" float,
+                                    "speed" float,
+                                    "HR-RS_index" float)"""
 
     table_ecg = """CREATE TABLE ECG (
                                     "Patient" text,
@@ -52,17 +59,17 @@ def create_database_data(rdb):
 def load_health_data_to_database(rdb, files):
     for file in files:
         df = ed.export_health_data_from_apple_watch(file)
+        df_workout = ed.export_workout_data_from_apple_watch(file)
+        df_workout_calculation = ed.calculate_HRR(df,df_workout)
         output = io.StringIO()
+        output_workout = io.StringIO()
         df.to_csv(output, index=False, header=False)
+        df_workout_calculation.to_csv(output_workout, index=False, header=False)
         output.seek(0)
+        output_workout.seek(0)
         cur = rdb.cursor()
         cur.copy_from(output, 'applewatch', null="", sep=',')  # null values become ''
         rdb.commit()
-    for file in files:
-        df_workout = ed.export_workout_data_from_apple_watch(file)
-        output_workout = io.StringIO()
-        df_workout.to_csv(output_workout, index=False, header=False)
-        output_workout.seek(0)
         cur.copy_from(output_workout, 'workout', null="", sep=',')  # null values become ''
         rdb.commit()
 

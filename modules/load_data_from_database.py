@@ -1,6 +1,4 @@
 import pandas as pd
-import time
-
 
 
 def patient(rdb):
@@ -9,11 +7,14 @@ def patient(rdb):
     :return: df: list patients
     """
     sql = """SELECT "Name" from patient order by index"""
-
-    df = pd.read_sql(sql,rdb)
-    df = df["Name"].values.tolist()
-
+    try:
+        df = pd.read_sql(sql,rdb)
+        df = df["Name"].values.tolist()
+    except:
+        df = []
     return df
+
+
 
 
 def age_sex(rdb,patient):
@@ -22,9 +23,10 @@ def age_sex(rdb,patient):
     :return: df: list patients
     """
     sql = """SELECT "Age","Sex" from patient where "Name"='{}' """.format(patient)
-
-    df = pd.read_sql(sql,rdb)
-
+    try:
+        df = pd.read_sql(sql,rdb)
+    except:
+        df = []
     return df
 
 
@@ -33,9 +35,11 @@ def month(rdb, patient):
     FROM applewatch_numeric where "Name"='{}' and name ='Resting Heart Rate' order by date_trunc('month', "Date")) 
     as foo""".format(patient)
 
-    df = pd.read_sql(sql, rdb)
-    df = df['month'].to_list()
-
+    try:
+        df = pd.read_sql(sql, rdb)
+        df = df['month'].to_list()
+    except:
+        df = []
     return df
 
 
@@ -43,8 +47,11 @@ def week(rdb, patient):
     sql = """ select distinct week from (SELECT to_char("Date", 'IYYY/IW') as week FROM applewatch_numeric 
     where "Name"='{}' and name ='Resting Heart Rate') as foo order by week """.format(patient)
 
-    df = pd.read_sql(sql, rdb)
-    df = df['week'].to_list()
+    try:
+        df = pd.read_sql(sql, rdb)
+        df = df['week'].to_list()
+    except:
+        df = []
 
     return df
 
@@ -53,9 +60,11 @@ def min_max_date(rdb, patient):
 
     sql = """SELECT min_date,max_date from patient where "Name"='{}'""".format(patient)
 
-    df = pd.read_sql(sql, rdb)
-
-    min_date, max_date = df['min_date'].iloc[0].date(), df['max_date'].iloc[0].date()
+    try:
+        df = pd.read_sql(sql, rdb)
+        min_date, max_date = df['min_date'].iloc[0].date(), df['max_date'].iloc[0].date()
+    except:
+        min_date,max_date='',''
 
     return min_date, max_date
 
@@ -64,7 +73,6 @@ def min_max_date_workout(rdb, patient):
     sql = """SELECT MIN("Start_Date"),MAX("End_Date") from workout where "Name" ='{}'""".format(patient)
 
     df = pd.read_sql(sql, rdb)
-
     min_date, max_date = df['min'].iloc[0].date(), df['max'].iloc[0].date()
 
     return min_date, max_date
@@ -78,9 +86,11 @@ def label(rdb):
     sql2 = """SELECT distinct name from name where name not in ('None','Heart Rate','Heart Rate Variability SDNN',
     'Resting Heart Rate','VO2Max','Walking Heart Rate Average')"""
 
-    df, df2 = pd.read_sql(sql, rdb),pd.read_sql(sql2, rdb)
-    df, df2 = df["name"].values.tolist(), df2["name"].values.tolist()
-
+    try:
+        df, df2 = pd.read_sql(sql, rdb),pd.read_sql(sql2, rdb)
+        df, df2 = df["name"].values.tolist(), df2["name"].values.tolist()
+    except:
+        df,df2 = [],[]
     return df, df2
 
 
@@ -101,14 +111,15 @@ def irregular_ecg(rdb, patient):
     sql = """SELECT "Classification",count(*) from ecg where "Patient"='{}' group by "Classification" """.format(patient)
     sql2 = """ select "Day","number", "Classification" from ecg  where "Patient"='{}' order by "Day" """.format(patient)
 
-    df = pd.read_sql(sql, rdb)
-    df2 = pd.read_sql(sql2, rdb)
+    try:
+        df,df2 = pd.read_sql(sql, rdb), pd.read_sql(sql2, rdb)
+    except:
+        df, df = [], []
 
     return df, df2
 
 
 def Card(rdb, patient, group, date, value):
-
 
     if group == 'M':
         sql = """ select name,month,sum("Value"),AVG("Value") from (SELECT to_char(date_trunc('month', "Date"),
@@ -131,10 +142,12 @@ def Card(rdb, patient, group, date, value):
                 'Heart Rate','Walking Heart Rate Average','Resting Heart Rate','Step Count','Apple Exercise Time')
                  order by "name","Date") as foo where date = '{}' group by date,name""".format(patient,date)
 
-    df = pd.read_sql(sql, rdb)
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df=[]
 
     return df
-
 
 
 def table(rdb, patient, group, linear, bar):
@@ -185,11 +198,13 @@ def table(rdb, patient, group, linear, bar):
                 'Walking Heart Rate Average') Then AVG("Value")
                 ELSE sum("Value")
                 end as "Value"
-                from (SELECT date_trunc('day', "Date") as date,"name",
+                from (SELECT "name",date_trunc('day', "Date")::date as date,
                 "Value" FROM applewatch_numeric where "Name" = '{0}' and "name" in ({1},{2})
                  order by "name","Date") as foo group by date,name""".format(patient,linear,bar)
-
-    df = pd.read_sql(sql, rdb)
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df=[]
 
     return df
 
@@ -221,8 +236,10 @@ def day_figure(rdb, patient, group, linear, bar, date, value):
         sql = """ select "Date",name,"Value" from (SELECT "Date",date_trunc('day', "Date") as date,"name",
                     "Value" FROM applewatch_numeric where "Name" = '{}' and "name" in ('Heart Rate',{})
                      order by "name","Date") as foo where date = '{}' """.format(patient,bar, date)
-
-    df = pd.read_sql(sql, rdb)
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df = []
 
     return df
 
@@ -247,22 +264,31 @@ def trend_figure(rdb, patient, group, start_date,end_date):
         sql = """ select date,hour,avg("Value") as "Value" from (SELECT "Date",extract('hour' from "Date") as hour,date_trunc('day', "Date") as date,"name",
                     "Value" FROM applewatch_numeric where "Name" = '{}' and name='Heart Rate' and "Date" > '{}' and "Date" < '{}'
                      order by "Date") as foo group by date,hour """.format(patient,start_date,end_date)
-    df = pd.read_sql(sql, rdb)
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df = []
     return df
 
 
 def ECG_number(rdb, date):
 
     sql = """SELECT distinct number from ECG where "Day"='{}' order by number""".format(str(date))
-    df = pd.read_sql(sql,rdb)
-    df = df['number'].to_list()
+    try :
+        df = pd.read_sql(sql,rdb)
+        df = df['number'].to_list()
+    except:
+        df = []
     return df
 
 
 def ECG_data(rdb,date,patient,num):
 
     sql="""SELECT * from ECG where "Day"='{0}' and "Patient"='{1}' and number='{2}' """.format(date,patient,num)
-    df = pd.read_sql(sql,rdb)
+    try:
+        df = pd.read_sql(sql,rdb)
+    except:
+        df = []
     return df
 
 
@@ -270,31 +296,43 @@ def number_of_days_more_6(rdb,patient):
     sql = """select "Name",count(*) from(SELECT "Name",date_trunc('day', "Date") as date,"type","name",count(*) 
     as number FROM applewatch_categorical where "type" = 'HKCategoryTypeIdentifierAppleStandHour' group by "Name",
     date,"type","name" having count(*) > 6 order by "Name",date) as foo where "Name" = '{}' group by "Name" """.format(patient)
-    df = pd.read_sql(sql, rdb)
-    df = df.iloc[0]['count']
+    try:
+        df = pd.read_sql(sql, rdb)
+        df = df.iloc[0]['count']
+    except:
+        df =''
 
     return df
 
 def HKWorkoutActivity(rdb):
     sql = """select distinct @workoutActivityType FROM workout  """
-    df = pd.read_sql(sql, rdb)
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df = []
     return df
 
 def WorkoutActivity_data(rdb,patient):
-    sql = """select *,
+    sql = """select type,duration,distance,"EnergyBurned",
+                "Start_Date"::time as "Start",
+                "End_Date"::time as "End",
                 to_char(date_trunc('month', "Start_Date"),'YYYY-MM') as month,
                 to_char("Start_Date", 'IYYY/IW') as week,
                 extract('week' from "Start_Date") as week_num,
                 extract('ISODOW' from "Start_Date") as "DOW_number",
                 to_char("Start_Date", 'Day') as "DOW",
-                date_trunc('day', "Start_Date") as date
+                date_trunc('day', "Start_Date")::date  as date
                 FROM workout  where "Name"='{}' order by "type","Start_Date"  """.format(patient)
 
-    df = pd.read_sql(sql, rdb)
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df=[]
     return df
 
 
-def WorkoutActivity_pie_chart(rdb,patient,group,date,value):
+def WorkoutActivity_pie_chart(rdb, patient, group, date, value):
+
     if group == 'M':
         sql = """select *,
                     to_char(date_trunc('month', "Start_Date"),'YYYY-MM') as month
@@ -309,24 +347,60 @@ def WorkoutActivity_pie_chart(rdb,patient,group,date,value):
         sql = """select *,
                     trim(to_char("Start_Date", 'Day')) as "DOW",
                     extract('ISODOW' from "Start_Date") as "DOW_number"
-                    FROM workout  where "Name"='{}' and trim(to_char("Start_Date", 'Day'))='{}' order by "type","Start_Date"  """.format(patient,value)
+                    FROM workout  where "Name"='{}' and trim(to_char("Start_Date", 'Day'))='{}'
+                     order by "type","Start_Date"  """.format(patient,value)
     else:
         sql = """select *,
                     date_trunc('day', "Start_Date") as date
                     FROM workout  where "Name"='{}' and date_trunc('day', "Start_Date") ='{}'
                      order by "type","Start_Date"  """.format(patient,date)
 
-    df = pd.read_sql(sql, rdb)
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df=[]
 
     return df
 
 
 def Heart_Rate(rdb, date, patient):
 
-    sql = """SELECT "Name","Date",name,"Value" FROM applewatch_numeric where "Name"='{}' and 
-    date_trunc('day', "Date")='{}' and type='HKQuantityTypeIdentifierHeartRate' order by "Date" """.format(patient,date)
+    if date == None:
+        sql = """SELECT "Name","Date",name,"Value" FROM applewatch_numeric where "Name"='{}' and 
+        date_trunc('day', "Date")='2020-08-01' and type='HKQuantityTypeIdentifierHeartRate' order by "Date" """.format(patient,
+                                                                                                               date)
+    else:
+        sql = """SELECT "Name","Date",name,"Value" FROM applewatch_numeric where "Name"='{}' and 
+        date_trunc('day', "Date")='{}' and type='HKQuantityTypeIdentifierHeartRate' order by "Date" """.format(patient,date)
 
-    df = pd.read_sql(sql, rdb)
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df=[]
+
+    return df
+
+def activity(rdb):
+
+    sql = """SELECT distinct type from workout"""
+
+    try:
+        df = pd.read_sql(sql, rdb)
+        df = df['type'].to_list()
+    except:
+        df = []
+
+    return df
+
+def HRR(rdb, patient,activity):
+    print(activity)
+    sql = """SELECT "Start_Date",type,duration,"HRR_1_min","HRR_2_min","HR_max","HR_min","HR_average","speed","HR-RS_index" 
+    FROM Workout where "Name"='{}' and type = '{}' order by "Start_Date" """.format(patient,activity)
+
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df=[]
 
     return df
 

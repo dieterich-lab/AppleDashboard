@@ -1,24 +1,21 @@
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+import plotly.express as px
 
-
-def update_figure(df,group):
-
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
+def update_figure(df,group,what):
+    df = df[(df['duration'] > 10) & (df['duration'] < 300)]
     if group == 'M':
-        df = df.groupby(['month']).sum().reset_index()
-        fig.add_trace(go.Bar(x=df['month'], y=df['duration']), secondary_y=True)
+        df = df.groupby(['month',"type"]).sum().reset_index()
+        fig = px.bar(x=df['month'], y=df[what], color=df["type"])
     elif group == 'W':
-        df = df.groupby(['week']).sum().reset_index()
-        fig.add_trace(go.Bar(x=df['week'], y=df['duration']), secondary_y=True)
+        df = df.groupby(['week',"type"]).sum().reset_index()
+        fig= px.bar(x=df['week'], y=df[what], color=df["type"])
     elif group == 'DOW':
-
-        df = df.groupby(['DOW','DOW_number',]).sum().reset_index()
-        fig.add_trace(go.Bar(x=df['DOW'], y=df['duration']), secondary_y=True)
+        df = df.groupby(['DOW','DOW_number',"type"]).sum().reset_index()
+        fig= px.bar(x=df['DOW'], y=df[what], color=df["type"])
     else:
-        df = df.groupby(['date']).sum().reset_index()
-
-        fig.add_trace(go.Bar(x=df['date'],  y=df['duration']), secondary_y=True),
+        df = df.groupby(['date',"type"]).sum().reset_index()
+        fig = px.bar(x=df['date'],  y=df[what], color=df["type"])
     fig.update_layout(
         height=400,
         template='plotly_white',
@@ -30,17 +27,6 @@ def update_figure(df,group):
             x=1
         ))
     fig.update_xaxes(title_text="Time")
+    fig.update_yaxes(title_text=what)
 
-    """
-    df_HRR = pd.read_csv('workout')
-    df_HRR = df_HRR[df_HRR['HRR'] > 0]
-
-    fig5 = px.scatter(x=df_HRR['Start_Date'],y=df_HRR['HRR'])
-
-    fig6 = px.scatter(x=df_HRR['Start_Date'],y=df_HRR['HR_max'])
-
-    fig7 = px.scatter(x=df_HRR['Start_Date'],y=df_HRR['HR_min'])
-
-    fig8 = px.scatter(x=df_HRR['Start_Date'], y=df_HRR['HR-RS_index'])
-    """
     return fig

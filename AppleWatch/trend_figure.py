@@ -1,6 +1,6 @@
 import pandas as pd
 import plotly.express as px
-import dateutil.relativedelta
+
 import datetime
 from dateutil.relativedelta import relativedelta
 import modules.load_data_from_database as ldd
@@ -12,14 +12,16 @@ rdb = connect_db()
 days_of_week = {"Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 7}
 
 
-def figure_trend(date, value, input_value,group, patient):
+def figure_trend(date, value, group, patient):
 
     if group == 'M':
         color, trend = "month", "months"
+        print(value)
         new_value = datetime.datetime.strptime(value + '-01', "%Y-%m-%d")
         start_date,end_date = new_value - relativedelta(months=3),new_value + relativedelta(months=1)
     elif group == 'W':
         color, trend = "week", "weeks"
+        print(value)
         new_value = datetime.datetime.strptime(value + '/1', "%G/%V/%w")
         start_date, end_date = new_value - datetime.timedelta(weeks=3),new_value + datetime.timedelta(weeks=1)
     elif group == "DOW":
