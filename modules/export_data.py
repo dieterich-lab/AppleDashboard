@@ -4,7 +4,9 @@ import pytz
 from os import listdir
 from os.path import isfile, join
 import numpy as np
-
+from ecgdetectors import Detectors
+from ECG_analyze.HRV_frequency_domain_analyze import frequencydomain
+from ECG_analyze.HRV_time_domain_analyze import time_domain_analyze
 
 def export_me_data_from_apple_watch(file):
     # export data from xml file
@@ -150,7 +152,8 @@ def export_workout_data_from_apple_watch(file):
 
 def export_ecg_data_from_apple_watch(directories):
 
-    df = pd.DataFrame(columns=['patient', 'Date', 'Day', 'number', 'Classification', 'data'])
+    df = pd.DataFrame(columns=['patient', 'Date', 'Day', 'number', 'Classification', 'data', 'hrvOwn', 'SDNN', 'SENN',
+                               'SDSD', 'pNN20', 'pNN50', 'lf', 'hf', 'lf_hf_ratio', 'total_power', 'vlf'])
     # Loading ECG data to database
     for i in directories:
         # export all ecg.csv files
@@ -162,19 +165,43 @@ def export_ecg_data_from_apple_watch(directories):
         for ecg_file in only_files:
             path = './import/{0}/{1}'.format(i, ecg_file)
 
-            ecg = pd.read_csv(path, error_bad_lines=False, warn_bad_lines=False)
-            ecg.reset_index(level=0, inplace=True)
-
-            data = pd.to_numeric(ecg['index'][8:]).to_list()
+            ecg = pd.read_csv(path, sep=";", names=['Name'])
+            data = ecg["Name"][10:].str.replace(',', '.').astype(float).to_list()
             ecg_file = ecg_file.replace('ecg_', '').replace('.csv', '')
             if '_' not in ecg_file:
                 ecg_file = ecg_file + '_0'
-            date = ecg['Name'][1]
-            classification = ecg['Name'][2]
+            date = ecg['Name'][2].replace("Recorded Date,", "")
+            classification = ecg['Name'][3].replace("Classification,", "")
 
             day, number = ecg_file[:10], ecg_file[-1]
+            datu = np.array(data)
+            r_peaks = detect_r_peaks(511, datu)
 
-            df = df.append({'patient': patient, 'Date': date, 'Day': day, 'number': number,
-                            'Classification': classification, 'data': data}, ignore_index=True)
+            RRints = np.diff(r_peaks)
+            RRints = (RRints / 511) * 1000
+
+            if len(RRints) > 20:
+                RRints = np.array(RRints)
+                frequency_domain_features = frequencydomain(RRints)
+                time_domain_features = time_domain_analyze(RRints)
+            else:
+                time_domain_features = {'hrvOwn': 0, 'SDNN': 0, 'SENN': 0, 'SDSD': 0, 'pNN20': 0, 'pNN50': 0}
+                frequency_domain_features = {'lf': 0, 'hf': 0, 'lf_hf_ratio': 0, 'total_power': 0, 'vlf': 0}
+
+            ecg_data = {'patient': patient, 'Date': date, 'Day': day, 'number': number,
+                        'Classification': classification, 'data': data}
+            merge = {**ecg_data,**time_domain_features,**frequency_domain_features}
+
+            df = df.append(merge, ignore_index=True)
 
     return df
+
+
+def detect_r_peaks(SampleRate, data):
+    # use library and implementation of peak detection to get array of r peak positions
+    detectors = Detectors(SampleRate)
+    # engzee worked best because it detects the position of max of the r peaks
+    r_peaks = detectors.engzee_detector(data)
+    # convert list to array
+    r_peaks = np.array(r_peaks)
+    return r_peaks

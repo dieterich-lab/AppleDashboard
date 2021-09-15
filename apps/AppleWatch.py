@@ -1,9 +1,9 @@
 from app import app
 from dash.dependencies import Input, Output, ALL
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-import dash_table
+from dash import dcc
+from dash import html
+from dash import dash_table
 import time
 from datetime import date
 
@@ -229,7 +229,7 @@ def update_table(group, patient, linear, bar,m):
     data = result.to_dict('records')
     columns = [{"name": str(i), "id": str(i)} for i in result.columns]
     fig = update_figure(patient, linear, bar, group)
-    return fig,None, data, columns
+    return fig, None, data, columns
 
 
 # update selector depend from the summary graph
@@ -312,7 +312,7 @@ def update_figure_trend(value, date, group, patient):
     Input("patient", "value")
 )
 def update_table2(patient):
-    df,df2 = ldd.irregular_ecg(rdb, patient)
+    df,df2, df3 = ldd.irregular_ecg(rdb, patient)
     data = df2.to_dict('records')
     columns = [{"name": i, "id": i} for i in df2.columns]
     return data, columns, 'single', [0]
@@ -325,13 +325,13 @@ def update_table2(patient):
     Input("patient", "value"),
     Input("table2", 'data')]
 )
-def update_ecg2(data, patient,data_tab):
+def update_ecg2(data, patient, data_tab):
     if not data_tab:
-        fig={}
+        fig = {}
     else:
         day = data_tab[data[0]]['Day']
         number = data_tab[data[0]]['number']
-        fig,df_ecg = update_ecg_figure(day, number, patient)
+        fig, df_ecg = update_ecg_figure(day, number, patient)
         data_store.csv_ecg = df_ecg.to_csv(index=False)
     return fig
 

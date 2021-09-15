@@ -1,9 +1,9 @@
 from app import app
 from dash.dependencies import Input, Output, ALL
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-import dash_table
+from dash import dcc
+from dash import html
+from dash import dash_table
 from datetime import date
 
 import modules.load_data_from_database as ldd

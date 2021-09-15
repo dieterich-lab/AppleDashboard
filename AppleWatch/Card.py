@@ -1,5 +1,5 @@
 import dash_bootstrap_components as dbc
-import dash_html_components as html
+from dash import html
 import modules.load_data_from_database as ldd
 from db import connect_db
 

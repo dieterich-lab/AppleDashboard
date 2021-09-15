@@ -110,13 +110,14 @@ def irregular_ecg(rdb, patient):
 
     sql = """SELECT "Classification",count(*) from ecg where "Patient"='{}' group by "Classification" """.format(patient)
     sql2 = """ select "Day","number", "Classification" from ecg  where "Patient"='{}' order by "Day" """.format(patient)
+    sql3 = """ select "Day","number", "hrvOwn", "SDNN", "SENN", "SDSD", "pNN20", "pNN50", "lf", "hf", "lf_hf_ratio",
+            "total_power", "vlf", "Classification" from ecg  where "Patient"='{}' order by "Day" """.format(patient)
 
     try:
-        df,df2 = pd.read_sql(sql, rdb), pd.read_sql(sql2, rdb)
+        df, df2, df3 = pd.read_sql(sql, rdb), pd.read_sql(sql2, rdb), pd.read_sql(sql3, rdb)
     except:
-        df, df = [], []
-
-    return df, df2
+        df, df2, df3 = [], [],[]
+    return df, df2, df3
 
 
 def Card(rdb, patient, group, date, value):
@@ -170,7 +171,7 @@ def table(rdb, patient, group, linear, bar):
                 end as "Value"
                 from (SELECT to_char(date_trunc('month', "Date"),
                 'YYYY-MM') as month,"name", "Value" FROM applewatch_numeric where "Name" = '{}' and "name" in 
-                ({},{}) order by "name","Date") as foo group by month,name""".format(patient,linear,bar)
+                ({},{}) order by "name","Date") as foo group by month,name""".format(patient, linear, bar)
     elif group == 'W':
         sql = """ select name,week,
                 case 
@@ -376,7 +377,7 @@ def Heart_Rate(rdb, date, patient):
     try:
         df = pd.read_sql(sql, rdb)
     except:
-        df=[]
+        df = []
 
     return df
 
@@ -393,7 +394,6 @@ def activity(rdb):
     return df
 
 def HRR(rdb, patient,activity):
-    print(activity)
     sql = """SELECT "Start_Date",type,duration,"HRR_1_min","HRR_2_min","HR_max","HR_min","HR_average","speed","HR-RS_index" 
     FROM Workout where "Name"='{}' and type = '{}' order by "Start_Date" """.format(patient,activity)
 
@@ -405,15 +405,16 @@ def HRR(rdb, patient,activity):
     return df
 
 def box_plot1(rdb,line,bar):
-    sql1 = """SELECT "Name","Value" FROM applewatch_numeric where 
-    name='{}' """.format(line)
+    sql1 = """SELECT p."Age",p."Sex",an."Name",an."Value" as "{0}" FROM applewatch_numeric as an LEFT JOIN patient as p 
+    on p."Name" = an."Name" where an.name='{0}' """.format(line)
 
-    sql2 = """SELECT "Name",name,SUM("Value") as "Value" FROM applewatch_numeric where 
-    name in ('{}') group by "Name",name,date_trunc('day', "Date") """.format(bar)
-
+    sql2 = """SELECT p."Age",p."Sex",an."Name",an.name,SUM(an."Value") as "Value" FROM applewatch_numeric as an LEFT JOIN patient as p 
+    on p."Name" = an."Name" where 
+    an.name in ('{}') group by p."Sex",p."Age",an."Name",an.name,date_trunc('day', an."Date") """.format(bar)
 
     df1 = pd.read_sql(sql1, rdb)
     df2 = pd.read_sql(sql2, rdb)
+
 
     return df1,df2
 
@@ -444,13 +445,10 @@ def box_plot(rdb, group, line,bar):
                 "Value" FROM applewatch_numeric where "name" in ('{}')) as foo "Name",date """.format(line)
 
 
-    sql = """SELECT "Name","Value" FROM applewatch_numeric where 
-    type='HKQuantityTypeIdentifierHeartRate' """
-
     df1 = pd.read_sql(sql1, rdb)
     df2 = pd.read_sql(sql2, rdb)
 
-    return df1,2
+    return df1,df2
 
 
 def histogram_plot(rdb, group, line):
@@ -463,49 +461,108 @@ def histogram_plot(rdb, group, line):
     return df
 
 
+def linear_plot(rdb, group, line):
+
+    sql = """SELECT "Name",date_trunc('day', "Date") as date,AVG("Value") as "Value" FROM applewatch_numeric where 
+    type='HKQuantityTypeIdentifierHeartRate' group by "Name",date_trunc('day', "Date") order by  "Name",date_trunc('day', "Date") """
+
+    df = pd.read_sql(sql, rdb)
+
+    return df
+
+
 def scatter_plot(rdb, group, linear, bar):
     if group == 'M':
-        sql = """ select "Name",name,month,
+        sql = """ select p."Age",p."Sex",foo."Name",foo.name,foo.month,
                 case 
                 when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
                 'Walking Heart Rate Average') Then AVG("Value")
                 ELSE sum("Value")
                 end as "Value"
                 from (SELECT "Name",to_char(date_trunc('month', "Date"),'YYYY-MM') as month,"name","Value"
-                FROM applewatch_numeric where "name" in ('{}','{}')) as foo group by "Name",month,name""".format(linear,bar)
+                FROM applewatch_numeric where "name" in ('{}','{}')) as foo LEFT JOIN patient as p 
+                on p."Name" = foo."Name"
+                group by p."Age",p."Sex",foo."Name",foo.month,foo.name""".format(linear,bar)
     elif group == 'W':
-        sql = """ select "Name",name,week,
+        sql = """ select p."Age",p."Sex",foo."Name",foo.name,foo.week,
                 case 
                 when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
                 'Walking Heart Rate Average') Then AVG("Value")
                 ELSE sum("Value")
                 end as "Value"
                 from (SELECT "Name",to_char("Date", 'IYYY/IW') as week,"name","Value" FROM applewatch_numeric 
-                where "name" in ('{}','{}')) as foo group by "Name",week,name""".format(linear,bar)
+                where "name" in ('{}','{}')) as foo LEFT JOIN patient as p on p."Name" = foo."Name"
+                group by p."Age",p."Sex",foo."Name",foo.week,foo.name""".format(linear,bar)
     elif group == 'DOW':
-        sql = """ select "Name",name,"DOW_number","DOW",
+        sql = """ select p."Age",p."Sex",foo."Name",foo.name,foo."DOW_number",foo."DOW",
                 case 
                 when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
                 'Walking Heart Rate Average') Then AVG("Value")
                 ELSE sum("Value")
                 end as "Value"
                 from (SELECT "Name",trim(to_char("Date", 'Day')) as "DOW",extract('ISODOW' from "Date") as "DOW_number",
-                "name","Value" FROM applewatch_numeric where "name" in ('{}','{}')) as foo 
-                group by "Name","DOW","DOW_number",name """.format(linear,bar)
+                "name","Value" FROM applewatch_numeric where "name" in ('{}','{}')) as foo LEFT JOIN patient as p 
+                on p."Name" = foo."Name"
+                group by p."Age",p."Sex",foo."Name",foo."DOW",foo."DOW_number",foo.name """.format(linear,bar)
     else:
-        sql = """ select "Name",name,date,
+        sql = """ select p."Age",p."Sex",foo."Name",foo.name,foo.date,
                 case 
                 when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
                 'Walking Heart Rate Average') Then AVG("Value")
                 ELSE sum("Value")
                 end as "Value"
                 from (SELECT "Name",date_trunc('day', "Date") as date,"name", "Value" FROM applewatch_numeric 
-                where name in ('{}','{}')) as foo group by "Name",date,name""".format(linear, bar)
+                where name in ('{}','{}')) as foo LEFT JOIN patient as p 
+                on p."Name" = foo."Name" group by p."Age",p."Sex",foo."Name",foo.date,foo.name""".format(linear, bar)
 
     df = pd.read_sql(sql, rdb)
 
     return df
 
+
+def during_workout(rdb, group, line):
+
+    sql = """SELECT "Name",date_trunc('day', "Date") as date,AVG("Value") as "Value" FROM applewatch_numeric where 
+    type='HKQuantityTypeIdentifierHeartRate' group by "Name",date_trunc('day', "Date") order by  "Name",date_trunc('day', "Date") """
+
+    df = pd.read_sql(sql, rdb)
+
+    return df
+
+
+def Heart_Rate_workout_comparison(rdb, type):
+
+    sql = """select "Name","HR_average" FROM workout where "duration" > 10 and "duration" < 300 and type = '{}' 
+        order by "Start_Date"  """.format(type)
+
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df = []
+
+    return df
+
+
+def scatter_plot_ecg(rdb, patient, x_axis, y_axis):
+
+    sql = """ select "{0}","{1}" from ecg  where "Patient"='{2}' """.format(x_axis, y_axis, patient)
+
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df = []
+    return df
+
+
+def box_plot_ecg(rdb,x_axis):
+
+    sql = """ select "Patient","{}" from ecg """.format(x_axis)
+
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df = []
+    return df
 
 """
 select *,"@startDate"::timestamp - lag("@startDate"::timestamp) over(partition by "@sourceName" order by "@sourceName",

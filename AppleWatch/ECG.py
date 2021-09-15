@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from db import connect_db
 from itertools import product
+from ecgdetectors import Detectors
+
 rdb = connect_db()
 
 
@@ -44,6 +46,11 @@ def update_ecg_figure(day, number, patient):
         df_data = pd.DataFrame()
         df_data['value'] = data
         df_data['time'] = time
+        r_peaks = detect_r_peaks(511,data)
+
+        RRints = np.diff(r_peaks)
+        RRints = (RRints/511)*1000
+
 
         fig = px.line(x=time, y=data, template='plotly_white')
         add_minor_grid(fig, x_range=[0, 30], y_range=[-1.5, 1.5])
@@ -60,3 +67,13 @@ def update_ecg_figure(day, number, patient):
             'yanchor': 'top'})
 
     return fig, df_data
+
+def detect_r_peaks(SampleRate,data):
+    # use library and implementation of peak detection to get array of r peak positions
+    detectors = Detectors(SampleRate)
+    # engzee worked best because it detects the position of max of the r peaks
+    r_peaks = detectors.engzee_detector(data)
+    # convert list to array
+    r_peaks = np.array(r_peaks)
+    return r_peaks
+

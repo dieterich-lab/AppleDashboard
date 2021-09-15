@@ -37,7 +37,18 @@ def create_database_data(rdb):
                                     "Day" text,
                                     "number" text,
                                     "Classification" text,
-                                    "Value" integer [])"""
+                                    "Value" integer [],
+                                    "hrvOwn" integer,
+                                    "SDNN" integer,
+                                    "SENN" integer,
+                                    "SDSD" integer,
+                                    "pNN20" integer,
+                                    "pNN50" integer,
+                                    "lf" integer,
+                                    "hf" integer,
+                                    "lf_hf_ratio" integer,
+                                    "total_power" integer,
+                                    "vlf" integer)"""
 
     table_name = """CREATE TABLE name (
                                     "name" text,
@@ -80,7 +91,10 @@ def load_ecg_data_to_database(rdb, directories):
     df = ed.export_ecg_data_from_apple_watch(directories)
     cur = rdb.cursor()
     for index, row in df.iterrows():
-        cur.execute("INSERT INTO ecg VALUES (%s,%s,%s,%s,%s,%s)", row)
+        try:
+            cur.execute("INSERT INTO ecg VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", row)
+        except:
+            print(df['patient'])
     rdb.commit()
 
     return print('done load_ecg_data_to_database')

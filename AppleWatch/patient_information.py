@@ -1,5 +1,5 @@
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 from db import connect_db
 import modules.load_data_from_database as ldd
 
@@ -23,7 +23,7 @@ def patient_information():
 def info(patient):
     age_gender=ldd.age_sex(rdb,patient)
     height = ldd.weight_and_height(rdb, patient)
-    df2, df4 = ldd.irregular_ecg(rdb, patient)
+    df2, df4, df3 = ldd.irregular_ecg(rdb, patient)
     days = ldd.number_of_days_more_6(rdb,patient)
 
 

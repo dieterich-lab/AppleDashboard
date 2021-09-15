@@ -1,5 +1,5 @@
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 from app import app
@@ -72,7 +72,7 @@ def display_page(pathname):
 
         return Comparison.layout, tabs
     elif pathname == "/apps/HRV":
-        tabs[2] = dcc.Link(
+        tabs[3] = dcc.Link(
             dcc.Markdown("**&#9632 ECG analyze**"), href="/apps/HRV"
         )
 
