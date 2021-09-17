@@ -144,7 +144,6 @@ def export_workout_data_from_apple_watch(file):
     df['@endDate'] = pd.to_datetime(df['@endDate']).map(
         lambda x: x.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT+1')))
 
-
     xml_file.close()
 
     return df

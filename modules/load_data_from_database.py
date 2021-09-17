@@ -406,11 +406,11 @@ def HRR(rdb, patient,activity):
 
 def box_plot1(rdb,line,bar):
     sql1 = """SELECT p."Age",p."Sex",an."Name",an."Value" as "{0}" FROM applewatch_numeric as an LEFT JOIN patient as p 
-    on p."Name" = an."Name" where an.name='{0}' """.format(line)
+    on p."Name" = an."Name" where an.name='{0}' order by an."Name" """.format(line)
 
     sql2 = """SELECT p."Age",p."Sex",an."Name",an.name,SUM(an."Value") as "Value" FROM applewatch_numeric as an LEFT JOIN patient as p 
     on p."Name" = an."Name" where 
-    an.name in ('{}') group by p."Sex",p."Age",an."Name",an.name,date_trunc('day', an."Date") """.format(bar)
+    an.name in ('{}') group by p."Sex",p."Age",an."Name",an.name,date_trunc('day', an."Date") order by an."Name" """.format(bar)
 
     df1 = pd.read_sql(sql1, rdb)
     df2 = pd.read_sql(sql2, rdb)

@@ -59,7 +59,7 @@ def figures(gr,group, linear, bar, bar2):
     df2 = ldd.scatter_plot(rdb, group, linear, bar)
     data = ldd.Heart_Rate_workout_comparison(rdb, bar2)
 
-    fig = figure_boxplot(df1, df3, gr, linear)
+    fig = figure_boxplot(df1, df3, gr, linear,bar)
     fig2 = figure_histogram(df1, gr, linear)
     fig3 = figure_scatter_plot(df2, gr, group, linear, bar)
     fig4 = figure_linear_plot(df, gr, group, linear)
