@@ -33,7 +33,7 @@ def create_database_data(rdb):
 
     table_ecg = """CREATE TABLE ECG (
                                     "Patient" text,
-                                    "Date" text,
+                                    "Date" timestamp,
                                     "Day" text,
                                     "number" text,
                                     "Classification" text,

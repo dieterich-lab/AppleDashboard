@@ -30,4 +30,14 @@ if os.environ.get('IMPORT_DISABLED') is None:
     scheduler.start()
     scheduler.stop()
 
+class DataStore():
+
+    # for filter
+    csv_ecg = None
+    csv_ecgs = None
+    csv_apple = None
+    csv_hrv= None
+
+
+data_store = DataStore()
 

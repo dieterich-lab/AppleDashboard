@@ -15,6 +15,7 @@ def selection():
         html.Br(),
         dbc.Row([
             dbc.Col([
+                'Patient selection:',
                 dcc.Dropdown(
                     style={'height': '40px'},
                     id='patient',
@@ -22,7 +23,8 @@ def selection():
                     value=patient[0],
                     clearable=False
                 )],style={'height': '100%'}),
-            dbc.Col(dbc.Card(
+            dbc.Col(['Group by:',
+                dbc.Card(
                 dcc.Dropdown(
                     style={'height': '40px'},
                     id='group by',
@@ -32,24 +34,27 @@ def selection():
                              {'label': 'by day', 'value': 'D'}],
                     value='D',
                     clearable=False
-                    )),style={'height': '100%'}),
-            dbc.Col(dbc.Card(
+                    ))],style={'height': '100%'}),
+            dbc.Col(['Barchart:',
+                    dbc.Card(
                     dcc.Dropdown(
                         id='Bar chart',
                         style={'height': '100%'},
                         options=[{'label': name, 'value': name} for name in label_bar],
                         value=label_bar[0],
                         clearable=False,
-                    ),)),
-            dbc.Col(dbc.Card(dcc.Dropdown(
+                    ))]),
+            dbc.Col([
+                'Linear plot:',
+                dbc.Card(dcc.Dropdown(
                     id='linear plot',
                     style={'height': '100%'},
                     options=[{'label': name, 'value': name} for name in label_linear],
                     value=label_linear[1],
                     clearable = False,
                     multi=True
-            ))),
-            dbc.Col([
+            ))]),
+            dbc.Col(['Update cards:',
                 html.Div(id='drop_down-container', children=[])
             ]),
         ]),

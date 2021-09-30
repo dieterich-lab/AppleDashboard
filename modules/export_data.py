@@ -5,8 +5,9 @@ from os import listdir
 from os.path import isfile, join
 import numpy as np
 from ecgdetectors import Detectors
-from ECG_analyze.HRV_frequency_domain_analyze import frequencydomain
-from ECG_analyze.HRV_time_domain_analyze import time_domain_analyze
+from Trash.HRV_frequency_domain_analyze import frequencydomain
+from Trash.HRV_time_domain_analyze import time_domain_analyze
+
 
 def export_me_data_from_apple_watch(file):
     # export data from xml file
@@ -169,7 +170,9 @@ def export_ecg_data_from_apple_watch(directories):
             ecg_file = ecg_file.replace('ecg_', '').replace('.csv', '')
             if '_' not in ecg_file:
                 ecg_file = ecg_file + '_0'
-            date = ecg['Name'][2].replace("Recorded Date,", "")
+            date = ecg['Name'][2].replace("Aufzeichnungsdatum,", "")
+            date = date.replace("Recorded Date,", "")
+            date = pd.to_datetime(date).replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT+1'))
             classification = ecg['Name'][3].replace("Classification,", "")
 
             day, number = ecg_file[:10], ecg_file[-1]

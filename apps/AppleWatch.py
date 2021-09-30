@@ -28,6 +28,7 @@ class DataStore():
 
     # for filter
     csv_ecg = None
+    csv_ecgs = None
     csv_apple = None
 
 
@@ -330,7 +331,7 @@ def update_ecg2(data, patient, data_tab):
         fig = {}
     else:
         day = data_tab[data[0]]['Day']
-        number = data_tab[data[0]]['number']
+        number = data_tab[data[0]]['time']
         fig, df_ecg = update_ecg_figure(day, number, patient)
         data_store.csv_ecg = df_ecg.to_csv(index=False)
     return fig

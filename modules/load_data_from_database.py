@@ -109,9 +109,9 @@ def weight_and_height(rdb, patient):
 def irregular_ecg(rdb, patient):
 
     sql = """SELECT "Classification",count(*) from ecg where "Patient"='{}' group by "Classification" """.format(patient)
-    sql2 = """ select "Day","number", "Classification" from ecg  where "Patient"='{}' order by "Day" """.format(patient)
-    sql3 = """ select "Day","number", "hrvOwn", "SDNN", "SENN", "SDSD", "pNN20", "pNN50", "lf", "hf", "lf_hf_ratio",
-            "total_power", "vlf", "Classification" from ecg  where "Patient"='{}' order by "Day" """.format(patient)
+    sql2 = """ select "Day","Date"::time as Time, "Classification" from ecg  where "Patient"='{}' order by "Day" """.format(patient)
+    sql3 = """ select "Patient","Day","Date"::time as Time, "hrvOwn", "SDNN", "SENN", "SDSD", "pNN20", "pNN50", "lf", "hf", "lf_hf_ratio",
+            "total_power", "vlf", "Classification" from ecg  order by "Patient","Day" """
 
     try:
         df, df2, df3 = pd.read_sql(sql, rdb), pd.read_sql(sql2, rdb), pd.read_sql(sql3, rdb)
@@ -285,7 +285,8 @@ def ECG_number(rdb, date):
 
 def ECG_data(rdb,date,patient,num):
 
-    sql="""SELECT * from ECG where "Day"='{0}' and "Patient"='{1}' and number='{2}' """.format(date,patient,num)
+    sql="""SELECT * from ECG where "Day"='{0}' and "Patient"='{1}' and "Date"::time='{2}' """.format(date,patient,num)
+
     try:
         df = pd.read_sql(sql,rdb)
     except:
@@ -543,9 +544,9 @@ def Heart_Rate_workout_comparison(rdb, type):
     return df
 
 
-def scatter_plot_ecg(rdb, patient, x_axis, y_axis):
+def scatter_plot_ecg(rdb,x_axis, y_axis):
 
-    sql = """ select "{0}","{1}" from ecg  where "Patient"='{2}' """.format(x_axis, y_axis, patient)
+    sql = """ select "Patient","{0}","{1}" from ecg """.format(x_axis, y_axis)
 
     try:
         df = pd.read_sql(sql, rdb)

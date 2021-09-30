@@ -8,7 +8,16 @@ from apps import AppleWatch, Workouts, Comparison, HRV, Questionnaire, tutorial
 # change color of background
 colors = {'background': '#f4f4f2', 'text': '#7FDBFF'}
 
+class DataStore():
 
+    # for filter
+    csv_ecg = None
+    csv_ecgs = None
+    csv_apple = None
+    csv_hrv= None
+
+
+data_store = DataStore()
 
 # Creating layout
 app.layout = html.Div([
@@ -55,8 +64,7 @@ def display_page(pathname):
         dcc.Link("Patient health data", href='/apps/AppleWatch'),
         dcc.Link("Patient Workouts", href='/apps/Workouts'),
         dcc.Link("Patient Comparison", href='/apps/Comparison'),
-        dcc.Link("ECG analyze", href='/apps/HRV'),
-        dcc.Link("Questionnaire", href='/apps/Questionnaire')
+        dcc.Link("ECG analyze", href='/apps/HRV')
     ]
 
     if pathname == "/apps/Workouts":
@@ -77,12 +85,7 @@ def display_page(pathname):
         )
 
         return HRV.layout, tabs
-    elif pathname == "/apps/Questionnaire":
-        tabs[2] = dcc.Link(
-            dcc.Markdown("**&#9632 Questionnaire**"), href="/apps/Questionnaire"
-        )
 
-        return Questionnaire.layout, tabs
     elif pathname == "/apps/tutorial":
 
         return tutorial.layout, tabs
