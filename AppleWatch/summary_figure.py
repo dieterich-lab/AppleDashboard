@@ -37,7 +37,6 @@ def update_figure(patient,linear, bar, group):
     if isinstance(linear, list):
         for i in linear:
             df_linear = df[[index, i]]
-            df_linear = df_linear.replace('', np.nan).dropna(subset=[i])
             fig.add_trace(go.Scatter(x=df_linear[index], y=df_linear[i], name='{}'.format(i), mode='lines+markers'),
                           secondary_y=True)
     else:

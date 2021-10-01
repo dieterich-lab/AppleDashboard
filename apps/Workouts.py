@@ -238,3 +238,15 @@ def update_HRR_figure(patient, activity):
     fig1, fig2, fig3, fig4 = graphs(df)
 
     return fig1, fig2, fig3, fig4
+
+
+def HRR(rdb, patient,activity):
+    sql = """SELECT "Start_Date",type,duration,"HRR_1_min","HRR_2_min","HR_max","HR_min","HR_average","speed","HR-RS_index" 
+    FROM Workout where "Name"='{}' and type = '{}' order by "Start_Date" """.format(patient,activity)
+
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df=[]
+
+    return df

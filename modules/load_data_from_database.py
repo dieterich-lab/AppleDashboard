@@ -306,81 +306,6 @@ def number_of_days_more_6(rdb,patient):
 
     return df
 
-def HKWorkoutActivity(rdb):
-    sql = """select distinct @workoutActivityType FROM workout  """
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = []
-    return df
-
-def WorkoutActivity_data(rdb,patient):
-    sql = """select type,duration,distance,"EnergyBurned",
-                "Start_Date"::time as "Start",
-                "End_Date"::time as "End",
-                to_char(date_trunc('month', "Start_Date"),'YYYY-MM') as month,
-                to_char("Start_Date", 'IYYY/IW') as week,
-                extract('week' from "Start_Date") as week_num,
-                extract('ISODOW' from "Start_Date") as "DOW_number",
-                to_char("Start_Date", 'Day') as "DOW",
-                date_trunc('day', "Start_Date")::date  as date
-                FROM workout  where "Name"='{}' order by "type","Start_Date"  """.format(patient)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df=[]
-    return df
-
-
-def WorkoutActivity_pie_chart(rdb, patient, group, date, value):
-
-    if group == 'M':
-        sql = """select *,
-                    to_char(date_trunc('month', "Start_Date"),'YYYY-MM') as month
-                    FROM workout  where "Name"='{}' and to_char(date_trunc('month', "Start_Date"),'YYYY-MM') ='{}'
-                     order by "type","Start_Date"  """.format(patient,value)
-    elif group == 'W':
-        sql = """select *,
-                    to_char("Start_Date", 'IYYY/IW') as week
-                    FROM workout  where "Name"='{}' and to_char("Start_Date", 'IYYY/IW')='{}'
-                     order by "type","Start_Date"  """.format(patient,value)
-    elif group == 'DOW':
-        sql = """select *,
-                    trim(to_char("Start_Date", 'Day')) as "DOW",
-                    extract('ISODOW' from "Start_Date") as "DOW_number"
-                    FROM workout  where "Name"='{}' and trim(to_char("Start_Date", 'Day'))='{}'
-                     order by "type","Start_Date"  """.format(patient,value)
-    else:
-        sql = """select *,
-                    date_trunc('day', "Start_Date") as date
-                    FROM workout  where "Name"='{}' and date_trunc('day', "Start_Date") ='{}'
-                     order by "type","Start_Date"  """.format(patient,date)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df=[]
-
-    return df
-
-
-def Heart_Rate(rdb, date, patient):
-
-    if date == None:
-        sql = """SELECT "Name","Date",name,"Value" FROM applewatch_numeric where "Name"='{}' and 
-        date_trunc('day', "Date")='2020-08-01' and type='HKQuantityTypeIdentifierHeartRate' order by "Date" """.format(patient,
-                                                                                                               date)
-    else:
-        sql = """SELECT "Name","Date",name,"Value" FROM applewatch_numeric where "Name"='{}' and 
-        date_trunc('day', "Date")='{}' and type='HKQuantityTypeIdentifierHeartRate' order by "Date" """.format(patient,date)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = []
-
-    return df
 
 def activity(rdb):
 
@@ -394,30 +319,7 @@ def activity(rdb):
 
     return df
 
-def HRR(rdb, patient,activity):
-    sql = """SELECT "Start_Date",type,duration,"HRR_1_min","HRR_2_min","HR_max","HR_min","HR_average","speed","HR-RS_index" 
-    FROM Workout where "Name"='{}' and type = '{}' order by "Start_Date" """.format(patient,activity)
 
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df=[]
-
-    return df
-
-def box_plot1(rdb,line,bar):
-    sql1 = """SELECT p."Age",p."Sex",an."Name",an."Value" as "{0}" FROM applewatch_numeric as an LEFT JOIN patient as p 
-    on p."Name" = an."Name" where an.name='{0}' order by an."Name" """.format(line)
-
-    sql2 = """SELECT p."Age",p."Sex",an."Name",an.name,SUM(an."Value") as "Value" FROM applewatch_numeric as an LEFT JOIN patient as p 
-    on p."Name" = an."Name" where 
-    an.name in ('{}') group by p."Sex",p."Age",an."Name",an.name,date_trunc('day', an."Date") order by an."Name" """.format(bar)
-
-    df1 = pd.read_sql(sql1, rdb)
-    df2 = pd.read_sql(sql2, rdb)
-
-
-    return df1,df2
 
 def box_plot(rdb, group, line,bar):
 
@@ -462,64 +364,6 @@ def histogram_plot(rdb, group, line):
     return df
 
 
-def linear_plot(rdb, group, line):
-
-    sql = """SELECT "Name",date_trunc('day', "Date") as date,AVG("Value") as "Value" FROM applewatch_numeric where 
-    type='HKQuantityTypeIdentifierHeartRate' group by "Name",date_trunc('day', "Date") order by  "Name",date_trunc('day', "Date") """
-
-    df = pd.read_sql(sql, rdb)
-
-    return df
-
-
-def scatter_plot(rdb, group, linear, bar):
-    if group == 'M':
-        sql = """ select p."Age",p."Sex",foo."Name",foo.name,foo.month,
-                case 
-                when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
-                'Walking Heart Rate Average') Then AVG("Value")
-                ELSE sum("Value")
-                end as "Value"
-                from (SELECT "Name",to_char(date_trunc('month', "Date"),'YYYY-MM') as month,"name","Value"
-                FROM applewatch_numeric where "name" in ('{}','{}')) as foo LEFT JOIN patient as p 
-                on p."Name" = foo."Name"
-                group by p."Age",p."Sex",foo."Name",foo.month,foo.name""".format(linear,bar)
-    elif group == 'W':
-        sql = """ select p."Age",p."Sex",foo."Name",foo.name,foo.week,
-                case 
-                when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
-                'Walking Heart Rate Average') Then AVG("Value")
-                ELSE sum("Value")
-                end as "Value"
-                from (SELECT "Name",to_char("Date", 'IYYY/IW') as week,"name","Value" FROM applewatch_numeric 
-                where "name" in ('{}','{}')) as foo LEFT JOIN patient as p on p."Name" = foo."Name"
-                group by p."Age",p."Sex",foo."Name",foo.week,foo.name""".format(linear,bar)
-    elif group == 'DOW':
-        sql = """ select p."Age",p."Sex",foo."Name",foo.name,foo."DOW_number",foo."DOW",
-                case 
-                when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
-                'Walking Heart Rate Average') Then AVG("Value")
-                ELSE sum("Value")
-                end as "Value"
-                from (SELECT "Name",trim(to_char("Date", 'Day')) as "DOW",extract('ISODOW' from "Date") as "DOW_number",
-                "name","Value" FROM applewatch_numeric where "name" in ('{}','{}')) as foo LEFT JOIN patient as p 
-                on p."Name" = foo."Name"
-                group by p."Age",p."Sex",foo."Name",foo."DOW",foo."DOW_number",foo.name """.format(linear,bar)
-    else:
-        sql = """ select p."Age",p."Sex",foo."Name",foo.name,foo.date,
-                case 
-                when name in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
-                'Walking Heart Rate Average') Then AVG("Value")
-                ELSE sum("Value")
-                end as "Value"
-                from (SELECT "Name",date_trunc('day', "Date") as date,"name", "Value" FROM applewatch_numeric 
-                where name in ('{}','{}')) as foo LEFT JOIN patient as p 
-                on p."Name" = foo."Name" group by p."Age",p."Sex",foo."Name",foo.date,foo.name""".format(linear, bar)
-
-    df = pd.read_sql(sql, rdb)
-
-    return df
-
 
 def during_workout(rdb, group, line):
 
@@ -527,19 +371,6 @@ def during_workout(rdb, group, line):
     type='HKQuantityTypeIdentifierHeartRate' group by "Name",date_trunc('day', "Date") order by  "Name",date_trunc('day', "Date") """
 
     df = pd.read_sql(sql, rdb)
-
-    return df
-
-
-def Heart_Rate_workout_comparison(rdb, type):
-
-    sql = """select "Name","HR_average" FROM workout where "duration" > 10 and "duration" < 300 and type = '{}' 
-        order by "Start_Date"  """.format(type)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = []
 
     return df
 
