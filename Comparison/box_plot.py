@@ -1,27 +1,44 @@
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import time
+
+def figure_boxplot(df,group,linear,bar):
+
+    dfa=df[df['name']==linear]
+    dfu=df[df['name']==bar]
+
+    fig_box_plot= px.box(dfa, y="Value",color=group)
+    fig_box_plot.update_layout(showlegend=False)
+    fig_box_plot.update_layout(
+        margin=dict(l=30, r=30, t=30, b=50),
+    )
+    fig_box_plot2 = px.box(dfu, y="Value",color=group)
+    fig_box_plot2.update_layout(
+        margin=dict(l=30, r=30, t=30, b=50),
+    )
+    fig_box_plot2.update_yaxes(title=None)
 
 
-def figure_boxplot(df,group):
 
-    fig_box_plot= px.box(df, y="Value",color=group, facet_col="name")
-    fig_box_plot.layout.yaxis2.update(matches=None)
-    fig_histogram = px.histogram(df, x="Value",color=group, facet_col="name")
-    fig_histogram.layout.yaxis2.update(matches=None)
+    fig_histogram = px.histogram(dfa, x="Value",color=group)
+    fig_histogram.update_layout(showlegend=False)
+    fig_histogram.update_layout(
+        margin=dict(l=30, r=30, t=30, b=50),
+    )
+    fig_histogram2 = px.histogram(dfu, x="Value",color=group)
+    fig_histogram2.update_layout(
+        margin=dict(l=30, r=30, t=30, b=50),
+    )
+    fig_histogram2.update_yaxes(title=None)
 
-    return fig_box_plot,fig_histogram
+    df = df.pivot(index=[group,'date'], columns='name', values='Value').reset_index()
 
-def figure_scatter_plot(df,gr,linear,bar):
+    fig = px.scatter(df, x=bar, y=linear, color=group)
 
-    index = ['Name', 'Age', 'Sex', 'date']
 
-    df = df.pivot(index=index, columns='name', values='Value') \
-        .reset_index()
+    return fig_box_plot,fig_box_plot2,fig_histogram,fig_histogram2,fig
 
-    fig = px.scatter(df, x=bar, y=linear, color=gr)
-
-    return fig
 
 
 def figure_linear_plot(df,gr,linear):
@@ -31,15 +48,15 @@ def figure_linear_plot(df,gr,linear):
 
     return fig
 
-def figure_workout_plot(df,gr):
-    #if group == 'M': index = ['Name','month']
-    #elif group == 'W': index = ['Name','week']
-    #elif group == 'DOW': index = ['Name','DOW','DOW_number']
-    #else: index = ['Name','date']
-
-    #df = df.pivot(index=index, columns='name', values='Value') \
-    #    .reset_index()
+def figure_workout_plot(df,gr,bar2):
 
     fig = px.box(df,x="Name", y="HR_average")
+    fig.update_layout(
+        title={
+            'text': "Average Heart Rate during {}".format(bar2),
+            'y': 0.9,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'})
 
     return fig
