@@ -1,5 +1,6 @@
 import pandas as pd
 import xmltodict
+from datetime import datetime
 import pytz
 from os import listdir
 from os.path import isfile, join
@@ -7,6 +8,42 @@ import numpy as np
 from ecgdetectors import Detectors
 from Trash.HRV_frequency_domain_analyze import frequencydomain
 from Trash.HRV_time_domain_analyze import time_domain_analyze
+from dateutil.relativedelta import relativedelta
+
+
+def basic_information(file):
+    # export data from xml file
+    input_path = './import/{}'.format(file)
+
+    with open(input_path, 'r', errors='ignore') as xml_file:
+        input_data = xmltodict.parse(xml_file.read())
+
+    # import health data
+    records_list = input_data['HealthData']['Record']
+    df = pd.DataFrame(records_list)
+    min_date = df['@creationDate'].min()
+    max_date = df['@creationDate'].max()
+
+    n = int(''.join(filter(str.isdigit, file)))
+
+    patient = 'Patient {}'.format(n)
+
+    records_list = [input_data['HealthData']['Me']]
+
+    df = pd.DataFrame(records_list)
+    sex = df['@HKCharacteristicTypeIdentifierBiologicalSex'][0]
+    sex = sex.replace('HKBiologicalSex', '')
+
+    birth = df['@HKCharacteristicTypeIdentifierDateOfBirth'][0]
+    today = datetime.date.today()
+    birth = datetime.datetime.fromisoformat(birth)
+    time_difference = relativedelta(today, birth)
+    age = time_difference.years
+
+    xml_file.close()
+
+    return patient, n, age, sex, min_date, max_date
+
 
 
 def export_me_data_from_apple_watch(file):

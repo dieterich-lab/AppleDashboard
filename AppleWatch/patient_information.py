@@ -21,9 +21,9 @@ def patient_information():
 
 # change value in card depend from this what is chosen in selector
 def info(patient):
-    age_gender=ldd.age_sex(rdb,patient)
+    age_gender = ldd.age_sex(rdb, patient)
     height = ldd.weight_and_height(rdb, patient)
-    df2, df4, df3 = ldd.irregular_ecg(rdb, patient)
+    df2 = ldd.irregular_ecg(rdb, patient)
     days = ldd.number_of_days_more_6(rdb,patient)
 
 

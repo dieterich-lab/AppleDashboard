@@ -11,10 +11,8 @@ def patient(rdb):
         df = pd.read_sql(sql,rdb)
         df = df["Name"].values.tolist()
     except:
-        df = []
+        df = pd.Dataframe()
     return df
-
-
 
 
 def age_sex(rdb,patient):
@@ -26,7 +24,7 @@ def age_sex(rdb,patient):
     try:
         df = pd.read_sql(sql,rdb)
     except:
-        df = []
+        df = pd.Dataframe()
     return df
 
 
@@ -39,7 +37,7 @@ def month(rdb, patient):
         df = pd.read_sql(sql, rdb)
         df = df['month'].to_list()
     except:
-        df = []
+        df = pd.Dataframe()
     return df
 
 
@@ -51,7 +49,7 @@ def week(rdb, patient):
         df = pd.read_sql(sql, rdb)
         df = df['week'].to_list()
     except:
-        df = []
+        df = pd.Dataframe()
 
     return df
 
@@ -90,13 +88,13 @@ def label(rdb):
         df, df2 = pd.read_sql(sql, rdb),pd.read_sql(sql2, rdb)
         df, df2 = df["name"].values.tolist(), df2["name"].values.tolist()
     except:
-        df,df2 = [],[]
+        df,df2 = pd.Dataframe(), pd.Dataframe()
     return df, df2
 
 
 def weight_and_height(rdb, patient):
 
-    sql = """SELECT * from applewatch_numeric where "type" in ('HKQuantityTypeIdentifierHeight') and "Name" = '{}' """.format(patient)
+    sql = """SELECT * from applewatch_numeric where "type"='HKQuantityTypeIdentifierHeight' and "Name" = '{}' """.format(patient)
     df = pd.read_sql(sql,rdb)
     if not df.empty:
         df = df.iloc[-1]['Value']
@@ -109,16 +107,24 @@ def weight_and_height(rdb, patient):
 def irregular_ecg(rdb, patient):
 
     sql = """SELECT "Classification",count(*) from ecg where "Patient"='{}' group by "Classification" """.format(patient)
-    sql2 = """ select "Day","Date"::time as Time, "Classification" from ecg  where "Patient"='{}' order by "Day" """.format(patient)
-    sql3 = """ select "Patient","Day","Date"::time as Time, "hrvOwn", "SDNN", "SENN", "SDSD", "pNN20", "pNN50", "lf", "hf", "lf_hf_ratio",
-            "total_power", "vlf", "Classification" from ecg  order by "Patient","Day" """
+
 
     try:
-        df, df2, df3 = pd.read_sql(sql, rdb), pd.read_sql(sql2, rdb), pd.read_sql(sql3, rdb)
+        df = pd.read_sql(sql, rdb)
     except:
-        df, df2, df3 = [], [],[]
-    return df, df2, df3
+        df = pd.Dataframe()
+    return df
 
+def irregular_ecg2(rdb, patient):
+
+
+    sql2 = """ select "Day","Date"::time as Time, "Classification" from ecg  where "Patient"='{}' order by "Day" """.format(patient)
+
+    try:
+        df = pd.read_sql(sql2, rdb)
+    except:
+        df = pd.Dataframe()
+    return df
 
 def Card(rdb, patient, group, date, value):
 
@@ -146,7 +152,7 @@ def Card(rdb, patient, group, date, value):
     try:
         df = pd.read_sql(sql, rdb)
     except:
-        df=[]
+        df = pd.Dataframe()
 
     return df
 
@@ -205,7 +211,7 @@ def table(rdb, patient, group, linear, bar):
     try:
         df = pd.read_sql(sql, rdb)
     except:
-        df=[]
+        df = pd.Dataframe()
 
     return df
 
@@ -240,7 +246,7 @@ def day_figure(rdb, patient, group, linear, bar, date, value):
     try:
         df = pd.read_sql(sql, rdb)
     except:
-        df = []
+        df = pd.Dataframe()
 
     return df
 
@@ -268,7 +274,7 @@ def trend_figure(rdb, patient, group, start_date,end_date):
     try:
         df = pd.read_sql(sql, rdb)
     except:
-        df = []
+        df = pd.Dataframe()
     return df
 
 
@@ -279,7 +285,7 @@ def ECG_number(rdb, date):
         df = pd.read_sql(sql,rdb)
         df = df['number'].to_list()
     except:
-        df = []
+        df = pd.Dataframe()
     return df
 
 
@@ -290,7 +296,7 @@ def ECG_data(rdb,date,patient,num):
     try:
         df = pd.read_sql(sql,rdb)
     except:
-        df = []
+        df = pd.Dataframe()
     return df
 
 
@@ -302,7 +308,7 @@ def number_of_days_more_6(rdb,patient):
         df = pd.read_sql(sql, rdb)
         df = df.iloc[0]['count']
     except:
-        df =''
+        df = ''
 
     return df
 
@@ -315,7 +321,7 @@ def activity(rdb):
         df = pd.read_sql(sql, rdb)
         df = df['type'].to_list()
     except:
-        df = []
+        df = pd.Dataframe()
 
     return df
 
@@ -382,7 +388,7 @@ def scatter_plot_ecg(rdb,x_axis, y_axis):
     try:
         df = pd.read_sql(sql, rdb)
     except:
-        df = []
+        df = pd.Dataframe()
     return df
 
 
@@ -393,7 +399,7 @@ def box_plot_ecg(rdb,x_axis):
     try:
         df = pd.read_sql(sql, rdb)
     except:
-        df = []
+        df = pd.Dataframe()
     return df
 
 """

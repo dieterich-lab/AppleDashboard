@@ -16,12 +16,11 @@ def figure_trend(date, value, group, patient):
 
     if group == 'M':
         color, trend = "month", "months"
-        print(value)
+
         new_value = datetime.datetime.strptime(value + '-01', "%Y-%m-%d")
         start_date,end_date = new_value - relativedelta(months=3),new_value + relativedelta(months=1)
     elif group == 'W':
         color, trend = "week", "weeks"
-        print(value)
         new_value = datetime.datetime.strptime(value + '/1', "%G/%V/%w")
         start_date, end_date = new_value - datetime.timedelta(weeks=3),new_value + datetime.timedelta(weeks=1)
     elif group == "DOW":

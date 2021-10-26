@@ -9,14 +9,13 @@ rdb = connect_db()
 
 
 def day_figure_update(date, value, group, patient, linear,bar):
-    date=date[0]
-    value=value[0]
+    date = date[0]
+    value = value[0]
     df = ldd.day_figure(rdb, patient, group, linear, bar, date, value)
 
     if not df.empty:
         df_bar = df[df['name'] == bar]
         df = df[df['name'] == 'Heart Rate']
-        a=df["Value"].mean()
         df_bar = df_bar.resample('5Min', on='Date').sum().reset_index()
         fig = make_subplots(specs=[[{"secondary_y": True}]])
         fig.add_trace(go.Scatter(x=df['Date'], y=df["Value"], name="Heart Rate"), secondary_y=False)

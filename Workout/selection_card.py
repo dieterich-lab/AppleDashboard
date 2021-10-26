@@ -34,14 +34,6 @@ def selection():
                     value='D',
                     clearable=False
                     )]),
-            dbc.Col(dbc.Card(
-                dcc.Dropdown(
-                    id='activity',
-                    style={'height': '100%'},
-                    options=[{'label': name, 'value': name} for name in label_bar],
-                    value=label_bar[0],
-                    clearable=False,
-                ), )),
             dbc.Col(
                 dcc.Dropdown(
                     id='what',

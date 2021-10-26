@@ -1,3 +1,4 @@
+import pandas as pd
 
 def HKWorkoutActivity(rdb):
     sql = """select distinct @workoutActivityType FROM workout  """
@@ -53,7 +54,7 @@ def WorkoutActivity_pie_chart(rdb, patient, group, date, value):
     try:
         df = pd.read_sql(sql, rdb)
     except:
-        df=[]
+        df = pd.Dataframe()
 
     return df
 
@@ -71,5 +72,16 @@ def Heart_Rate(rdb, date, patient):
         df = pd.read_sql(sql, rdb)
     except:
         df = []
+
+    return df
+
+def HRR(rdb, patient,activity):
+    sql = """SELECT "Start_Date",type,duration,"HRR_1_min","HRR_2_min","HR_max","HR_min","HR_average","speed","HR-RS_index" 
+    FROM Workout where "Name"='{}' and type = '{}' order by "Start_Date" """.format(patient,activity)
+
+    try:
+        df = pd.read_sql(sql, rdb)
+    except:
+        df=[]
 
     return df

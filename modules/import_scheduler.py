@@ -72,6 +72,7 @@ def start_import(rdb):
         # use function from import_dataset to create tables in database
         print("Start import data")
         id.create_database_data(rdb)
+        id.load_basic_information(rdb, files)
         id.load_health_data_to_database(rdb, files)
         id.load_ecg_data_to_database(rdb, directories)
         id.load_data_to_name_table(rdb)

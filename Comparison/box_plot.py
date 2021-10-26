@@ -7,50 +7,71 @@ def figure_boxplot(df,group,linear,bar):
 
     dfa=df[df['name']==linear]
     dfu=df[df['name']==bar]
+    namee = df[group].unique()
 
-    fig_box_plot= px.box(dfa, y="Value",color=group)
-    fig_box_plot.update_layout(showlegend=False)
-    fig_box_plot.update_layout(
-        margin=dict(l=30, r=30, t=30, b=50),
-    )
-    fig_box_plot2 = px.box(dfu, y="Value",color=group)
-    fig_box_plot2.update_layout(
-        margin=dict(l=30, r=30, t=30, b=50),
-    )
-    fig_box_plot2.update_yaxes(title=None)
+    colors=px.colors.qualitative.Plotly
 
 
+    start_time = time.time()
+    fig_histogram = make_subplots(rows=1, cols=2,subplot_titles=(linear,bar))
+    fig_box_plot = make_subplots(rows=1, cols=2,subplot_titles=(linear,bar))
+    for a,i in enumerate(namee):
+        dfs = dfa[dfa[group] == i]
+        dfk = dfu[dfu[group] == i]
+        i=str(i)
+        fig_histogram.add_trace(go.Histogram(x=dfs['Value'],name=i,showlegend = False,legendgroup=i,marker_color=colors[a]), row=1, col=1)
+        fig_histogram.add_trace(go.Histogram(x=dfk['Value'],name=i, legendgroup=i,marker_color=colors[a]), row=1, col=2)
+        fig_box_plot.add_trace(go.Box(y=dfs['Value'],name=i,showlegend = False,legendgroup=i,marker_color=colors[a]), row=1, col=1)
+        fig_box_plot.add_trace(go.Box(y=dfk['Value'],name=i, legendgroup=i,marker_color=colors[a]), row=1, col=2)
 
-    fig_histogram = px.histogram(dfa, x="Value",color=group)
-    fig_histogram.update_layout(showlegend=False)
-    fig_histogram.update_layout(
-        margin=dict(l=30, r=30, t=30, b=50),
-    )
-    fig_histogram2 = px.histogram(dfu, x="Value",color=group)
-    fig_histogram2.update_layout(
-        margin=dict(l=30, r=30, t=30, b=50),
-    )
-    fig_histogram2.update_yaxes(title=None)
+    # Overlay both histograms
+    fig_histogram.update_layout(barmode='stack')
+    fig_histogram.update_layout(  template='plotly_white')
+    fig_box_plot.update_layout( template='plotly_white')
+
+    #fig_box_plot = px.box(df, y="Value",color=group, facet_col="name")
+    #fig_box_plot.layout.yaxis2.update(matches=None, showticklabels=True)
+
+    end_time = time.time()
+    times = end_time - start_time
+    print('check first',times)
+
+
 
     df = df.pivot(index=[group,'date'], columns='name', values='Value').reset_index()
 
-    fig = px.scatter(df, x=bar, y=linear, color=group)
+    fig = px.scatter(df, x=bar, y=linear, color=group, template='plotly_white')
 
 
-    return fig_box_plot,fig_box_plot2,fig_histogram,fig_histogram2,fig
+    return fig_box_plot,fig_histogram,fig
 
 
 
-def figure_linear_plot(df,gr,linear):
+def figure_linear_plot(df1,df2,gr,linear,bar):
 
+    fig1 = px.scatter(df1, x="week", y="Value", color=gr, template='plotly_white').update_traces(mode='lines+markers')
+    fig2 = px.scatter(df2, x="week", y="Value", color=gr, template='plotly_white').update_traces(
+        mode='lines+markers')
+    fig1.update_layout(
+        title={
+            'text': "{}".format(linear),
+            'y': 0.9,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'})
+    fig1.update_layout(
+        title={
+            'text': "{}".format(bar),
+            'y': 0.9,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'})
 
-    fig = px.scatter(df, x="week", y="Value", color="Name").update_traces(mode='lines+markers')
+    return fig1,fig2
 
-    return fig
+def figure_workout_plot(df,gr,bar2,df2):
 
-def figure_workout_plot(df,gr,bar2):
-
-    fig = px.box(df,x="Name", y="HR_average")
+    fig = px.box(df,x=gr, y="HR_average", template='plotly_white')
     fig.update_layout(
         title={
             'text': "Average Heart Rate during {}".format(bar2),
@@ -59,4 +80,6 @@ def figure_workout_plot(df,gr,bar2):
             'xanchor': 'center',
             'yanchor': 'top'})
 
-    return fig
+    fig2 = px.scatter(df2, x="date", y="HR_average", color=gr, template='plotly_white').update_traces(mode='lines+markers')
+
+    return fig,fig2

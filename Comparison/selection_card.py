@@ -23,8 +23,9 @@ def selection():
                     options=[{'label': 'Patient', 'value': 'Name'},
                              {'label': 'Age', 'value': 'Age'},
                              {'label': 'Sex', 'value': 'Sex'},
-                             {'label': 'Illness', 'value': 'Illness'},
-                             {'label': 'hours of Apple Watch use', 'value': 'Hours'}],
+                             #{'label': 'Illness', 'value': 'Illness'},
+                             #{'label': 'hours of Apple Watch use', 'value': 'Hours'}
+                             ],
                     value='Name',
                     clearable=False
                 ))], style={'height': '100%'}),
@@ -53,7 +54,7 @@ def selection():
                     id='Bar chart2',
                     style={'height': '100%'},
                     options=[{'label': name, 'value': name} for name in label_bar2],
-                    value=label_bar2[0],
+                    value='Walking',
                     clearable=False,
                 )]),
         ]),

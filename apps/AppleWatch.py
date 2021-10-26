@@ -119,13 +119,18 @@ layout = html.Div([
 # callback for change selector with month/week/day after choosing group by
 @app.callback(
     Output('drop_down-container', 'children'),
-    [Input('patient', "value"),
+    [Input("figure_summary", "clickData"),
+    Input('patient', "value"),
     Input('group by', "value")],
 )
-def update_selection(patient, value):
-
+def update_selection(click,patient, value):
+    start_time = time.time()
     if value == 'M':
-        month = ldd.month(rdb,patient)
+        month = ldd.month(rdb, patient)
+        if click:
+            value_m = click["points"][0]["x"][:7]
+        else:
+            value_m = month[0]
         drop_down = html.Div([dcc.Dropdown(
             style={'height': '40px'},
             id={
@@ -133,12 +138,15 @@ def update_selection(patient, value):
                 'index': 0
             },
             options=[{'label': name, 'value': name} for name in month],
-            value=month[0],
+            value=value_m,
             clearable=False
         )])
     elif value == 'W':
-
-        week = ldd.week(rdb,patient)
+        week = ldd.week(rdb, patient)
+        if click:
+            value_w = click["points"][0]["x"]
+        else:
+            value_w = week[0]
         drop_down = html.Div([dcc.Dropdown(
             style={'height': '40px'},
             id={
@@ -146,10 +154,14 @@ def update_selection(patient, value):
                 'index': 0
             },
             options=[{'label': name, 'value': name} for name in week],
-            value=week[0],
+            value=value_w,
             clearable = False
         )])
     elif value == 'DOW':
+        if click:
+            value_dow = click["points"][0]["x"].replace(" ", "")
+        else:
+            value_dow = day_of_week[0]
         drop_down = html.Div([dcc.Dropdown(
             style={'height': '40px'},
             id={
@@ -157,11 +169,15 @@ def update_selection(patient, value):
                 'index': 1
             },
             options=[{'label': name, 'value': name} for name in day_of_week],
-            value=day_of_week[0],
+            value=value_dow,
             clearable=False
         )])
     elif value == 'D':
         min_date, max_date = ldd.min_max_date(rdb,patient)
+        if click:
+            value_day = str(click["points"][0]["x"])
+        else:
+            value_day = max_date
         drop_down = html.Div([dcc.DatePickerSingle(
             style={'height': '40px'},
             id={
@@ -171,8 +187,10 @@ def update_selection(patient, value):
             min_date_allowed=min_date,
             max_date_allowed=max_date,
             display_format='D/M/Y',
-            date=min_date)])
-
+            date=value_day)])
+    end_time = time.time()
+    times = end_time - start_time
+    print('t2',times)
     return drop_down
 
 
@@ -182,7 +200,11 @@ def update_selection(patient, value):
     [Input("patient", "value")],
 )
 def update_information(patient):
+    start_time = time.time()
     text = info(patient)
+    end_time = time.time()
+    times = end_time - start_time
+    print('info',times)
     return text
 
 
@@ -201,69 +223,42 @@ def update_information(patient):
      Input('drop_down-container', 'children')],
 )
 def update_card(patient, group, date, value,m):
-
+    start_time = time.time()
     if not date:
         resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary =\
             0, 0, 0, 0, 0, 0
     else:
         resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary =\
             card_update(patient,group, date,value)
-
+    end_time = time.time()
+    times = end_time - start_time
+    print('cards',times)
     return resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary
 
 
 # update table1 depends what values are chosen in selector
 @app.callback(
     [Output('figure_summary', 'figure'),
-    Output("figure_summary", "clickData"),
     Output('table1', 'data'),
      Output('table1', 'columns')],
     [Input('group by', "value"),
      Input("patient", "value"),
      Input('linear plot', 'value'),
      Input('Bar chart', 'value'),
-     Input('drop_down-container', 'children')
      ]
 )
-def update_table(group, patient, linear, bar,m):
-    result = table(patient, group, linear, bar)
+def update_table(group, patient, linear, bar):
+    start_time = time.time()
+    df = ldd.table(rdb, patient, group, linear, bar)
+    result = table(df, group)
     data = result.to_dict('records')
     columns = [{"name": str(i), "id": str(i)} for i in result.columns]
-    fig = update_figure(patient, linear, bar, group)
-    return fig, None, data, columns
+    fig = update_figure(df, linear, bar, group)
+    end_time = time.time()
+    times = end_time - start_time
+    print('summary',times)
+    return fig, data, columns
 
-
-# update selector depend from the summary graph
-@app.callback(
-    [Output({'index': ALL, 'type': 'filter-drop_down'}, 'date'),
-     Output({"index": ALL, 'type': 'filter-drop_down'}, 'value')],
-    [Input("figure_summary", "clickData"),
-     Input("group by", "value"),
-     ],
-)
-def update_bar_selector(click_data, group):
-    if group == 'D':
-        if click_data:
-            holder = [str(click_data["points"][0]["x"])]
-        else:
-            holder= [date(2020, 2, 20)]
-        holder2 = [None]
-    else:
-        if group == 'M':
-            holder2 = ['2020-07']
-            if click_data:
-                holder2[0] = click_data["points"][0]["x"][:7]
-
-        elif group == 'DOW':
-            holder2 = [day_of_week[0]]
-            if click_data:
-                holder2[0] = click_data["points"][0]["x"].replace(" ","")
-        else:
-            holder2 = ['2020/31']
-            if click_data:
-                holder2[0] = click_data["points"][0]["x"]
-        holder= [date(2020, 2, 20)]
-    return list(set(holder)), list(set(holder2))
 
 
 # update day figure
@@ -274,11 +269,10 @@ def update_bar_selector(click_data, group):
      Input("group by", "value"),
      Input('linear plot', 'value'),
      Input('Bar chart', 'value'),
-     Input("patient", "value"),
-    Input('drop_down-container', 'children')
+     Input("patient", "value")
      ]
 )
-def update_figure_day(date, value, group,linear, bar, patient,m):
+def update_figure_day(date, value, group,linear, bar, patient):
     if not date and not value:
         fig3 = {}
     else:
@@ -292,9 +286,10 @@ def update_figure_day(date, value, group,linear, bar, patient,m):
     [Input({"index": ALL, 'type': 'filter-drop_down'}, 'value'),
      Input({'index': ALL, 'type': 'filter-drop_down'}, 'date'),
      Input("group by", "value"),
-     Input("patient", "value")],
+     Input("patient", "value"),
+     Input('drop_down-container', 'children')],
 )
-def update_figure_trend(value, date, group, patient):
+def update_figure_trend(value, date, group, patient,m):
     if date and value:
         date = pd.to_datetime(date[-1])
         value = value[-1]
@@ -313,7 +308,7 @@ def update_figure_trend(value, date, group, patient):
     Input("patient", "value")
 )
 def update_table2(patient):
-    df,df2, df3 = ldd.irregular_ecg(rdb, patient)
+    df2 = ldd.irregular_ecg2(rdb, patient)
     data = df2.to_dict('records')
     columns = [{"name": i, "id": i} for i in df2.columns]
     return data, columns, 'single', [0]

@@ -5,9 +5,8 @@ from db import connect_db
 rdb = connect_db()
 
 
-def table(patient, group, linear, bar):
+def table(df, group):
 
-    df = ldd.table(rdb, patient, group, linear, bar)
 
     table_summary = df.round(2)
     if group == 'M': index = 'month'

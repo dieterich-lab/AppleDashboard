@@ -54,6 +54,17 @@ def create_database_data(rdb):
                                     "name" text,
                                     "type" text)"""
 
+    patient = """CREATE TABLE patient (
+                                    "Name" text,
+                                    "index" integer,
+                                    "Age" text,
+                                    "Sex" text,
+                                    "min_date" timestamp,
+                                    "max_date" timestamp
+                                    
+    
+    )"""
+
     try:
         cur = rdb.cursor()
         cur.execute(drop_all_tables)
@@ -61,10 +72,21 @@ def create_database_data(rdb):
         cur.execute(table_workout_apple_watch)
         cur.execute(table_ecg)
         cur.execute(table_name)
+        cur.execute(patient)
         rdb.commit()
         return print('done create_database_data')
     except (ValueError, Exception):
         return print("Problem with connection with database 1")
+
+
+def load_basic_information(rdb, files):
+    for file in files:
+        cur = rdb.cursor()
+        patient, n, age, sex, min_date, max_date = ed.basic_information(file)
+        cur.execute("INSERT INTO patient VALUES (%s,%s,%s,%s,%s,%s)", [patient, n, age, sex, min_date, max_date])
+        rdb.commit()
+
+    return print('done load health and workout data to database')
 
 
 def load_health_data_to_database(rdb, files):
@@ -127,23 +149,7 @@ def alter_tables(rdb):
     create_table_apple_watch_categorical = """CREATE TABLE applewatch_categorical AS SELECT "type","name","Name",
     "unit","Date","Value" from applewatch where "Value" !~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
 
-    create_table_patient = """CREATE TABLE patient AS select distinct "Name" from applewatch"""
-
-    sql1 = """ALTER TABLE patient ADD "index" integer"""
-    sql2 = """ALTER TABLE patient ADD "Age" integer"""
-    sql3 = """ALTER TABLE patient ADD "Sex" text """
-    sql4 = """ALTER TABLE patient ADD "min_date" timestamp"""
-    sql5 = """ALTER TABLE patient ADD "max_date" timestamp"""
-
-    sql6=""" UPDATE patient SET "Age" = '27', "Sex" = 'female',"index"='1',"min_date"='2020-02-20 14:35:28', "max_date"='2021-07-01 09:17:59' WHERE "Name" = 'Patient 1'  """
-    sql7=""" UPDATE patient SET "Age" = '32', "Sex" = 'male',"index"='2',"min_date"='2019-05-18 18:13:39 ', "max_date"='2020-11-10 13:12:22'  WHERE "Name" = 'Patient 2' """
-    sql8=""" UPDATE patient SET "Age" = '24', "Sex" = 'male',"index"='3',"min_date"='2019-09-20 16:30:00', "max_date"='2021-04-27 12:59:55 '  WHERE "Name" = 'Patient 3'  """
-    sql9=""" UPDATE patient SET "Age" = '24', "Sex" = 'male',"index"='4',"min_date"='2016-12-25 07:35:50', "max_date"='2021-04-24 19:16:58 '  WHERE "Name" = 'Patient 4'  """
-    sql10=""" UPDATE patient SET "Age" = '24', "Sex" = 'male',"index"='5',"min_date"='2018-12-28 12:37:51', "max_date"='2021-04-29 07:21:31'  WHERE "Name" = 'Patient 5' """
-    sql11=""" UPDATE patient SET "Age" = '25', "Sex" = 'female',"index"='6',"min_date"='2021-04-02 18:15:52', "max_date"='2021-05-25 12:02:43'  WHERE "Name" = 'Patient 6' """
-    sql12=""" UPDATE patient SET "Age" = '26', "Sex" = 'male',"index"='7',"min_date"='2021-06-10 15:38:33', "max_date"='2021-06-13 11:16:53'  WHERE "Name" = 'Patient 7'  """
-    sql13=""" UPDATE patient SET "Age" = '26', "Sex" = 'male',"index"='8',"min_date"='2021-05-19 15:10:17', "max_date"='2021-06-17 16:25:21'  WHERE "Name" = 'Patient 8' """
-    sql14=""" UPDATE patient SET "Age" = '23', "Sex" = 'female',"index"='9',"min_date"='2021-04-07 11:17:37', "max_date"='2021-05-19 10:08:23'  WHERE "Name" = 'Patient 9' """
+    sql = """CREATE INDEX IF NOT EXISTS "Key_index" ON applewatch_numeric (name)"""
 
     try:
         cur = rdb.cursor()
@@ -151,22 +157,7 @@ def alter_tables(rdb):
         cur.execute(update_column_name)
         cur.execute(create_table_apple_watch_numeric)
         cur.execute(create_table_apple_watch_categorical)
-
-        cur.execute(create_table_patient)
-        cur.execute(sql1)
-        cur.execute(sql2)
-        cur.execute(sql3)
-        cur.execute(sql4)
-        cur.execute(sql5)
-        cur.execute(sql6)
-        cur.execute(sql7)
-        cur.execute(sql8)
-        cur.execute(sql9)
-        cur.execute(sql10)
-        cur.execute(sql11)
-        cur.execute(sql12)
-        cur.execute(sql13)
-        cur.execute(sql14)
+        cur.execute(sql)
         rdb.commit()
         return print('done alter_tables')
     except (ValueError, Exception):

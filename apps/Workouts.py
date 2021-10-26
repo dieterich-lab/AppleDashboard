@@ -7,6 +7,7 @@ from dash import dash_table
 from datetime import date
 
 import modules.load_data_from_database as ldd
+import modules.load_data_from_database_Workout as lddw
 from db import connect_db
 
 
@@ -66,12 +67,17 @@ layout = html.Div([
 # callback for change selector with month/week/day after choosing group by
 @app.callback(
     Output('drop_down-container2', 'children'),
-    [Input('patient', "value"),
+    [Input("summary_workout", "clickData"),
+    Input('patient', "value"),
     Input('group by', "value")],
 )
-def update_selection(patient, value):
+def update_selection(click,patient, value):
     if value == 'M':
-        month = ldd.month(rdb,patient)
+        month = ldd.month(rdb, patient)
+        if click:
+            value_m = click["points"][0]["x"][:7]
+        else:
+            value_m = month[0]
         drop_down = html.Div([dcc.Dropdown(
             style={'height': '40px'},
             id={
@@ -79,11 +85,15 @@ def update_selection(patient, value):
                 'index': 0
             },
             options=[{'label': name, 'value': name} for name in month],
-            value=month[0],
+            value=value_m,
             clearable=False
         )])
     elif value == 'W':
         week = ldd.week(rdb,patient)
+        if click:
+            value_w = click["points"][0]["x"]
+        else:
+            value_w = week[0]
         drop_down = html.Div([dcc.Dropdown(
             style={'height': '40px'},
             id={
@@ -91,10 +101,14 @@ def update_selection(patient, value):
                 'index': 0
             },
             options=[{'label': name, 'value': name} for name in week],
-            value=week[0],
+            value=value_w,
             clearable = False
         )])
     elif value == 'DOW':
+        if click:
+            value_dow = click["points"][0]["x"].replace(" ", "")
+        else:
+            value_dow = day_of_week[0]
         drop_down = html.Div([dcc.Dropdown(
             style={'height': '40px'},
             id={
@@ -102,11 +116,15 @@ def update_selection(patient, value):
                 'index': 1
             },
             options=[{'label': name, 'value': name} for name in day_of_week],
-            value=day_of_week[0],
+            value=value_dow,
             clearable=False
         )])
     elif value == 'D':
         min_date, max_date = ldd.min_max_date_workout(rdb,patient)
+        if click:
+            value_day = str(click["points"][0]["x"])
+        else:
+            value_day = max_date
         drop_down = html.Div([dcc.DatePickerSingle(
             style={'height': '40px'},
             id={
@@ -116,10 +134,12 @@ def update_selection(patient, value):
             min_date_allowed=min_date,
             max_date_allowed=max_date,
             display_format='D/M/Y',
-            date=min_date
+            date=value_day
         )])
 
     return drop_down
+
+
 
 
 # update table depends what values are chosen in selector
@@ -130,7 +150,7 @@ def update_selection(patient, value):
      Input("patient", "value")]
 )
 def update_table(group, patient):
-    data = ldd.WorkoutActivity_data(rdb,patient)
+    data = lddw.WorkoutActivity_data(rdb,patient)
     result = table(data, group, patient)
     data2 = result.to_dict('records')
     columns = [{"name": str(i), "id": str(i)} for i in result.columns]
@@ -144,7 +164,7 @@ def update_table(group, patient):
      Input("what", "value")]
 )
 def summary_workout(patient, group, what):
-    data = ldd.WorkoutActivity_data(rdb,patient)
+    data = lddw.WorkoutActivity_data(rdb,patient)
     fig = update_figure(data, group,what)
     return fig
 
@@ -161,7 +181,7 @@ def summary_workout(patient, group, what):
 def pie_figure(patient, group, date,value,m,what):
     date = date[0]
     value = value[0]
-    data = ldd.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
+    data = lddw.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
     if data.empty:
         fig = {}
     else:
@@ -181,8 +201,8 @@ def pie_figure(patient, group, date,value,m,what):
 def HR_figure(patient, group, date, value, m):
     date = date[0]
     value = value[0]
-    df = ldd.Heart_Rate(rdb,date,patient)
-    data = ldd.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
+    df = lddw.Heart_Rate(rdb,date,patient)
+    data = lddw.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
     data = data[(data['duration'] > 10) & (data['duration'] < 300)]
 
     if group != 'D' or data.empty:
@@ -192,36 +212,7 @@ def HR_figure(patient, group, date, value, m):
     return fig
 
 
-# update selector depend from the summary graph
-@app.callback(
-    [Output({'index': ALL, 'type': 'filter-drop_down2'}, 'date'),
-     Output({"index": ALL, 'type': 'filter-drop_down2'}, 'value')],
-    [Input("summary_workout", "clickData"),
-     Input("group by", "value")],
-)
-def update_bar_selector(click_data, group):
-    if group == 'D':
-        if click_data:
-            holder = [str(click_data["points"][0]["x"])]
-        else:
-            holder= [date(2020, 2, 20)]
-        holder2 = [None]
-    else:
-        if group == 'M':
-            holder2 = ['2020-07']
-            if click_data:
-                holder2[0] = click_data["points"][0]["x"][:7]
 
-        elif group == 'DOW':
-            holder2 = [day_of_week[0]]
-            if click_data:
-                holder2[0] = click_data["points"][0]["x"].replace(" ","")
-        else:
-            holder2 = ['2020/31']
-            if click_data:
-                holder2[0] = click_data["points"][0]["x"]
-        holder= [date(2020, 2, 20)]
-    return list(set(holder)), list(set(holder2))
 
 # update selector depend from the summary graph
 @app.callback(
@@ -234,19 +225,9 @@ def update_bar_selector(click_data, group):
 )
 def update_HRR_figure(patient, activity):
 
-    df = ldd.HRR(rdb, patient, activity)
+    df = lddw.HRR(rdb, patient, activity)
     fig1, fig2, fig3, fig4 = graphs(df)
 
     return fig1, fig2, fig3, fig4
 
 
-def HRR(rdb, patient,activity):
-    sql = """SELECT "Start_Date",type,duration,"HRR_1_min","HRR_2_min","HR_max","HR_min","HR_average","speed","HR-RS_index" 
-    FROM Workout where "Name"='{}' and type = '{}' order by "Start_Date" """.format(patient,activity)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df=[]
-
-    return df

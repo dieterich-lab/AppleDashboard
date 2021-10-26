@@ -14,7 +14,6 @@ class DataStore():
     csv_ecg = None
     csv_ecgs = None
     csv_apple = None
-    csv_hrv= None
 
 
 data_store = DataStore()
@@ -28,10 +27,10 @@ app.layout = html.Div([
         dbc.Card(html.Div(
 
         className="row header",
-        children = [html.Img(src=app.get_asset_url("logo.jpg"),style={'height':'5%', 'width':'5%','margin-left': '15px'}),
-                html.H1('HiGHmed Patient Dashboard',style={"font-size": "3rem", "margin-top": "15px"}),
-                html.A(dcc.Link(html.H2('Tutorial',style={"font-size": "2rem", "margin-top": "20px","vertical-align": "middle"}),
-                                   href='/apps/tutorial'))
+        children=[dbc.Col(html.Img(src=app.get_asset_url("logo.jpg"),style={ 'width':'60%','margin-left': '15px'}),lg=1),
+                dbc.Col(html.H1('HiGHmed Patient Dashboard',style={"font-size": "3rem", "margin-top": "30px","vertical-align": "middle"}),lg=8),
+                dbc.Col(html.A(dcc.Link(html.H2('Tutorial',style={"font-size": "2rem", "margin-top": "20px","vertical-align": "middle"}),
+                                   href='/apps/tutorial')),lg=3)
                     ])),
 
         dbc.Card(html.Div(
