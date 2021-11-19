@@ -7,7 +7,7 @@ from dash import dash_table
 from datetime import date
 
 import modules.load_data_from_database as ldd
-import modules.load_data_from_database_Workout as lddw
+import modules.load_data_from_database as ldd
 from db import connect_db
 
 
@@ -150,7 +150,7 @@ def update_selection(click,patient, value):
      Input("patient", "value")]
 )
 def update_table(group, patient):
-    data = lddw.WorkoutActivity_data(rdb,patient)
+    data = ldd.WorkoutActivity_data(rdb,patient)
     result = table(data, group, patient)
     data2 = result.to_dict('records')
     columns = [{"name": str(i), "id": str(i)} for i in result.columns]
@@ -164,7 +164,7 @@ def update_table(group, patient):
      Input("what", "value")]
 )
 def summary_workout(patient, group, what):
-    data = lddw.WorkoutActivity_data(rdb,patient)
+    data = ldd.WorkoutActivity_data(rdb,patient)
     fig = update_figure(data, group,what)
     return fig
 
@@ -181,7 +181,7 @@ def summary_workout(patient, group, what):
 def pie_figure(patient, group, date,value,m,what):
     date = date[0]
     value = value[0]
-    data = lddw.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
+    data = ldd.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
     if data.empty:
         fig = {}
     else:
@@ -201,8 +201,8 @@ def pie_figure(patient, group, date,value,m,what):
 def HR_figure(patient, group, date, value, m):
     date = date[0]
     value = value[0]
-    df = lddw.Heart_Rate(rdb,date,patient)
-    data = lddw.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
+    df = ldd.Heart_Rate(rdb,date,patient)
+    data = ldd.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
     data = data[(data['duration'] > 10) & (data['duration'] < 300)]
 
     if group != 'D' or data.empty:
@@ -220,13 +220,13 @@ def HR_figure(patient, group, date, value, m):
     Output('speed_generally', 'figure'),
      Output('HR_max', 'figure'),
      Output('HR_min', 'figure')],
-    [Input("patient", "value"),
-     Input('activity', 'value')]
+    [Input("patient", "value")]
 )
-def update_HRR_figure(patient, activity):
+def update_HRR_figure(patient):
 
-    df = lddw.HRR(rdb, patient, activity)
-    fig1, fig2, fig3, fig4 = graphs(df)
+    #df = ldd.HRR(rdb, patient, activity)
+    #fig1, fig2, fig3, fig4 = graphs(df)
+    fig1, fig2, fig3, fig4 = {},{},{},{}
 
     return fig1, fig2, fig3, fig4
 

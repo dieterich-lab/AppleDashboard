@@ -10,7 +10,8 @@ patient = ldd.patient(rdb)
 
 hrv_features = ['hrvOwn', 'SDNN', 'SENN', 'SDSD', 'pNN20', 'pNN50', 'lf', 'hf', 'lf_hf_ratio', 'total_power', 'vlf']
 
-# selection for first dropdowns
+
+# selection for first drop downs
 def selection():
     selection = [
         html.Br(),
@@ -27,12 +28,12 @@ def selection():
             html.Div([
                 'Y axis:',
                 dcc.Dropdown(
-                id='y axis',
-                style={'height': '100%'},
-                options=[{'label': name, 'value': name} for name in hrv_features],
-                value=hrv_features[1],
-                clearable=False,
-            )])])
+                    id='y axis',
+                    style={'height': '100%'},
+                    options=[{'label': name, 'value': name} for name in hrv_features],
+                    value=hrv_features[1],
+                    clearable=False,
+                )])])
         ]),
     ]
     return selection

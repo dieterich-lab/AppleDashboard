@@ -17,4 +17,4 @@ def connect_db():
         db = psycopg2.connect(DATABASE_URL)
         return db
     except (ValueError, Exception):
-        time.sleep(0.1)
+        time.sleep(1)

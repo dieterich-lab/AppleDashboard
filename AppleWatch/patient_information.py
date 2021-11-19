@@ -7,6 +7,7 @@ rdb = connect_db()
 
 
 def patient_information():
+
     information = [dcc.Tab(
         label='About',
         value='what-is',
@@ -22,10 +23,10 @@ def patient_information():
 # change value in card depend from this what is chosen in selector
 def info(patient):
     age_gender = ldd.age_sex(rdb, patient)
-    height = ldd.weight_and_height(rdb, patient)
-    df2 = ldd.irregular_ecg(rdb, patient)
-    days = ldd.number_of_days_more_6(rdb,patient)
+    ecg_classification = ldd.irregular_ecg(rdb, patient)
+    days = ldd.number_of_days_more_6(rdb, patient)
 
+    print('cc',*ecg_classification)
 
     if 'Inconclusive' in df2.values:
         inconclusive_ecg =  df2[df2['Classification'] == 'Inconclusive'].iloc[0]['count']
@@ -52,12 +53,11 @@ def info(patient):
     age = age_gender['Age'][0]
     sex = age_gender['Sex'][0]
 
-
-    text = html.Br(),'Age: {}'.format(age), html.Br(), 'Sex: {}'.format(sex), html.Br(),\
-           'Height: {}'.format(height), html.Br(), 'Patient disease: None', \
-           html.Br(), 'Number of inconclusive ECG: {}'.format(inconclusive_ecg), html.Br(),\
-           'Number of irregular ECG: {}'.format(irregular_ecg), html.Br(),\
-           'Over 120: {}'.format(over_150), html.Br(), 'Under 50: {}'.format(under_50), html.Br(),\
-           'The number of days the Apple Watch has been worn for at least 6h: {}'.format(days)
+    text = html.Br(), 'Age: {}'.format(age), html.Br(), 'Sex: {}'.format(sex), html.Br(),\
+        'height: {}'.format(height), html.Br(), 'Patient disease: None', \
+        html.Br(), 'Number of inconclusive ECG: {}'.format(inconclusive_ecg), html.Br(),\
+        'Number of irregular ECG: {}'.format(irregular_ecg), html.Br(),\
+        'Over 120: {}'.format(over_150), html.Br(), 'Under 50: {}'.format(under_50), html.Br(),\
+        'The number of days the Apple Watch has been worn for at least 6h: {}'.format(days)
 
     return text

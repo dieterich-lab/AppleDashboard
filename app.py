@@ -4,11 +4,13 @@ from db import connect_db
 from modules.import_scheduler import Scheduler
 import os
 
-rdb = connect_db()
-
 
 app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
+
+
+rdb = connect_db()
+
 
 def check_for_env(key: str, default=None, cast=None):
     if key in os.environ:
@@ -36,8 +38,7 @@ class DataStore():
     csv_ecg = None
     csv_ecgs = None
     csv_apple = None
-    csv_hrv= None
+    csv_hrv = None
 
 
 data_store = DataStore()
-

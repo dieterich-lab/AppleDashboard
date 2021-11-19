@@ -7,7 +7,7 @@ from datetime import date
 
 # connection with database
 rdb = connect_db()
-patient,label_bar = ldd.patient(rdb),ldd.activity(rdb)
+patient,label_bar = ldd.patient(rdb),ldd.activity_type(rdb)
 
 
 # selection for first drop downs

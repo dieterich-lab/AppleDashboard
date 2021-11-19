@@ -1,9 +1,15 @@
 from modules import export_data as ed
+import xmltodict
 import io
 
+
 def create_database_data(rdb):
+    """
+    CREATE the necessary tables in  a PostgreSQL database
+    """
     # Remove tables from database if exists and create new name_type and examination tables in the PostgreSQL database
-    drop_all_tables = "DROP TABLE IF EXISTS AppleWatch,ECG,name,AppleWatch_numeric,AppleWatch_categorical,workout,patient"
+    drop_all_tables = """ DROP TABLE IF EXISTS AppleWatch,AppleWatch_numeric,AppleWatch_categorical,
+                            other_sources,workout,ECG,name,patient,activity_type """
 
     table_apple_watch = """CREATE TABLE AppleWatch (
                                     "type" text,
@@ -11,6 +17,14 @@ def create_database_data(rdb):
                                     "unit" text,
                                     "Date" timestamp,
                                     "Value" text)"""
+
+    table_other_sources = """CREATE TABLE other_sources (
+                                    "type" text,
+                                    "Name" text,
+                                    "unit" text,
+                                    "Date" timestamp,
+                                    "Value" text,
+                                    "Patient" text)"""
 
     table_workout_apple_watch = """CREATE TABLE Workout (
                                     "type" text,
@@ -50,28 +64,23 @@ def create_database_data(rdb):
                                     "total_power" integer,
                                     "vlf" integer)"""
 
-    table_name = """CREATE TABLE name (
-                                    "name" text,
-                                    "type" text)"""
-
     patient = """CREATE TABLE patient (
                                     "Name" text,
                                     "index" integer,
                                     "Age" text,
                                     "Sex" text,
+                                    "blood_group" text,
+                                    "skin_type" text,
                                     "min_date" timestamp,
-                                    "max_date" timestamp
-                                    
-    
-    )"""
+                                    "max_date" timestamp)"""
 
     try:
         cur = rdb.cursor()
         cur.execute(drop_all_tables)
         cur.execute(table_apple_watch)
+        cur.execute(table_other_sources)
         cur.execute(table_workout_apple_watch)
         cur.execute(table_ecg)
-        cur.execute(table_name)
         cur.execute(patient)
         rdb.commit()
         return print('done create_database_data')
@@ -79,30 +88,34 @@ def create_database_data(rdb):
         return print("Problem with connection with database 1")
 
 
-def load_basic_information(rdb, files):
+def insert_data(rdb, files):
+    """
+    Inserting basic information, health and workout data into tables
+    """
+    cur = rdb.cursor()
     for file in files:
-        cur = rdb.cursor()
-        patient, n, age, sex, min_date, max_date = ed.basic_information(file)
-        cur.execute("INSERT INTO patient VALUES (%s,%s,%s,%s,%s,%s)", [patient, n, age, sex, min_date, max_date])
-        rdb.commit()
+        # export data from xml file
+        input_path = './import/{}'.format(file)
 
-    return print('done load health and workout data to database')
+        with open(input_path, 'r', errors='ignore') as xml_file:
+            input_data = xmltodict.parse(xml_file.read())
+            n = int(''.join(filter(str.isdigit, file)))
 
+        xml_file.close()
 
-def load_health_data_to_database(rdb, files):
-    for file in files:
-        df = ed.export_health_data_from_apple_watch(file)
-        df_workout = ed.export_workout_data_from_apple_watch(file)
-        df_workout_calculation = ed.calculate_HRR(df,df_workout)
-        output = io.StringIO()
-        output_workout = io.StringIO()
+        data = ed.basic_information(input_data, n)
+        df, df2, min_date, max_date = ed.export_health_data_from_apple_watch(input_data, n)
+        data.extend([min_date, max_date])
+        cur.execute("INSERT INTO patient VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", data)
+        df_workout = ed.export_workout_data_from_apple_watch(input_data, n)
+        df_workout_calculation = ed.calculate_HRR(df, df_workout)
+
+        output, output_workout = io.StringIO(), io.StringIO()
         df.to_csv(output, index=False, header=False)
         df_workout_calculation.to_csv(output_workout, index=False, header=False)
-        output.seek(0)
-        output_workout.seek(0)
-        cur = rdb.cursor()
+        output.seek(0), output_workout.seek(0)
+
         cur.copy_from(output, 'applewatch', null="", sep=',')  # null values become ''
-        rdb.commit()
         cur.copy_from(output_workout, 'workout', null="", sep=',')  # null values become ''
         rdb.commit()
 
@@ -110,6 +123,9 @@ def load_health_data_to_database(rdb, files):
 
 
 def load_ecg_data_to_database(rdb, directories):
+    """
+    Inserting ECG data into tables
+    """
     df = ed.export_ecg_data_from_apple_watch(directories)
     cur = rdb.cursor()
     for index, row in df.iterrows():
@@ -122,42 +138,31 @@ def load_ecg_data_to_database(rdb, directories):
     return print('done load_ecg_data_to_database')
 
 
-def load_data_to_name_table(rdb):
-    cur = rdb.cursor()
-    name = './import/name.csv'
-    with open(name, 'r') as in_file:
-        for row in in_file:
-            row = row.replace("\n", "").split(",")
-            cur.execute("INSERT INTO name VALUES (%s, %s)", row)
-    rdb.commit()
-    in_file.close()
-
-    return print('done load_data_to_name_table')
-
-
 def alter_tables(rdb):
-
+    """
+    CREATE tables for numeric and categorical data and necessary indexes.
+    """
     # Alters in database
-    add_column_name_to_table_apple_watch = """Alter table applewatch add column name text"""
-
-    update_column_name = """UPDATE applewatch t2 SET name = t1.name FROM name t1 WHERE t2."type" = t1."type" """
-
-    create_table_apple_watch_numeric = """CREATE TABLE applewatch_numeric AS SELECT "type","name","Name","unit",
+    create_table_apple_watch_numeric = """CREATE TABLE applewatch_numeric AS SELECT "type","Name","unit",
     "Date",("Value"::double precision) as "Value" from applewatch where 
     "Value" ~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
 
-    create_table_apple_watch_categorical = """CREATE TABLE applewatch_categorical AS SELECT "type","name","Name",
+    create_table_apple_watch_categorical = """CREATE TABLE applewatch_categorical AS SELECT "type","Name",
     "unit","Date","Value" from applewatch where "Value" !~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
 
-    sql = """CREATE INDEX IF NOT EXISTS "Key_index" ON applewatch_numeric (name)"""
+    sql = """CREATE INDEX IF NOT EXISTS "Key_index" ON applewatch_numeric (type)"""
+
+    name_table = """CREATE TABLE name as (SELECT distinct type from applewatch_numeric)"""
+
+    activity_type = """CREATE TABLE activity_type as (SELECT distinct type FROM Workout)"""
 
     try:
         cur = rdb.cursor()
-        cur.execute(add_column_name_to_table_apple_watch)
-        cur.execute(update_column_name)
         cur.execute(create_table_apple_watch_numeric)
         cur.execute(create_table_apple_watch_categorical)
         cur.execute(sql)
+        cur.execute(name_table)
+        cur.execute(activity_type)
         rdb.commit()
         return print('done alter_tables')
     except (ValueError, Exception):

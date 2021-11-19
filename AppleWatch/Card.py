@@ -6,9 +6,9 @@ from db import connect_db
 # connection with database
 rdb = connect_db()
 
+
 def cards_view():
     """
-
     :return: card layout
     """
     cards = [
@@ -73,17 +73,11 @@ days_of_week = {"Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Frida
 
 def card_update(patient, group, date, value):
     """
-    Change of values on cards depending on what is selected in the selector.
+    Changing values on cards depending on what is selected in the drop down.
 
-    :param patient:
-    :param group:
-    :param date:
-    :param date:
-    :return: updated values
     """
-    date = date[0]
-    value = value[0]
-    df = ldd.Card(rdb, patient, group, date, value)
+
+    df = ldd.Card(rdb, patient, group, date[0], value[0])
 
     if 'Resting Heart Rate' not in df.values: resting_heart_rate = 'Not measured'
     else: resting_heart_rate = str(round(df[df['name'] == 'Resting Heart Rate'].iloc[0]['avg'], 2))

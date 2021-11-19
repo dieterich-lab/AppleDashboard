@@ -16,11 +16,11 @@ def update_figure(df,linear, bar, group):
     else: index = 'date'
 
     if group == 'DOW':
-        df = df.pivot(index=index, columns='name', values='Value') \
+        df = df.pivot(index=index, columns='type', values='Value') \
             .reset_index().sort_values(by=['DOW_number']).drop(columns=['DOW_number'])
         index = 'DOW'
     else:
-        df = df.pivot(index=index, columns='name', values='Value') \
+        df = df.pivot(index=index, columns='type', values='Value') \
             .reset_index()
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])

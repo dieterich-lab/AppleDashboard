@@ -10,8 +10,23 @@ def NN20(rr):
 
 
 def time_domain_analyze(RRints):
+    """
+    Computes time domain features on RR interval data
 
-    hrvOwn = np.sqrt(np.mean(np.square(np.diff(RRints))))
+    Parameters:
+    ------------
+    RRints : list, shape = [n_samples,]
+           RR interval data in ms
+
+
+
+    Returns:
+    ---------
+    timeDomainFeats : dict
+                   hrv,SDNN,SENN,SDS,pNN20,pNN50
+
+    """
+    hrv = np.sqrt(np.mean(np.square(np.diff(RRints))))
     SDNN = np.std(RRints)
     SENN = np.std(RRints) / np.sqrt(len(RRints))
     SDSD = np.std(np.diff(RRints))
@@ -19,7 +34,7 @@ def time_domain_analyze(RRints):
     pNN20 = NN20(RRints) / len(RRints) * 100
 
     time_domain_features = {
-        'hrvOwn': hrvOwn,
+        'hrv': hrv,
         'SDNN': SDNN,
         'SENN': SENN,
         'SDSD': SDSD,

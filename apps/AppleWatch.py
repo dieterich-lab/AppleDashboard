@@ -1,9 +1,7 @@
-from app import app
+from app import app, data_store
 from dash.dependencies import Input, Output, ALL
 import dash_bootstrap_components as dbc
-from dash import dcc
-from dash import html
-from dash import dash_table
+from dash import dcc, html, dash_table
 import time
 from datetime import date
 
@@ -18,30 +16,19 @@ from AppleWatch.Card import card_update, cards_view
 from AppleWatch.trend_figure import figure_trend
 from AppleWatch.summary_figure import update_figure
 from AppleWatch.day_figure import day_figure_update
-from AppleWatch.ECG import update_ecg_figure
+from ECG_analyze.ECG_plot import update_ecg_figure
 from AppleWatch.selection_card import selection
 from AppleWatch.table import table
 from AppleWatch.patient_information import patient_information, info
 
 
-class DataStore():
-
-    # for filter
-    csv_ecg = None
-    csv_ecgs = None
-    csv_apple = None
-
-
-data_store = DataStore()
-
 # connection with database
 rdb = connect_db()
 
-# get data from database
+
 day_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
-# get the card for Cards and card for information about patient
 # Selection
 selection = selection()
 cards = cards_view()
@@ -50,6 +37,7 @@ information = patient_information()
 
 layout = html.Div([
     dbc.Row(dbc.Col(selection)),
+
     html.Br(),
     dbc.Row([
         dbc.Col(dbc.Card(information, style={'height': '100%'}), lg=4),

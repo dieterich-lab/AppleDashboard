@@ -3,7 +3,8 @@ import numpy as np
 
 
 def frequencydomain(RRints):
-    """ Computes frequency domain features on RR interval data
+    """
+    Computes frequency domain features on RR interval data
 
     Parameters:
     ------------
