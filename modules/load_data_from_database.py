@@ -75,7 +75,7 @@ def min_max_date_workout(rdb, patient):
 
 def irregular_ecg(rdb, patient):
 
-    sql = """SELECT "Classification",count(*) from ecg where "Patient"='{}' group by "Classification" """.format(patient)
+    sql = """SELECT "Classification",count(*) FROM ecg WHERE "Patient"='{}' GROUP BY "Classification" """.format(patient)
 
 
     try:
@@ -90,9 +90,16 @@ def number_of_days_more_6(rdb, patient):
     :param rdb: connection with database
     :return: df: list patients
     """
-    sql = """select "Name",count(*) from(SELECT "Name",date_trunc('day', "Date") as date,"type","type",count(*) 
-    as number FROM applewatch_categorical where "type" = 'HKCategoryTypeIdentifierAppleStandHour' group by "Name",
-    date,"type","type" having count(*) > 6 order by "Name",date) as foo where "Name" = '{}' group by "Name" """.format(patient)
+    sql = """SELECT "Name",count(*) 
+            FROM (SELECT "Name",DATE_TRUNC('day', "Date") AS date,"type","type",
+                                                  count(*) AS number 
+                  FROM applewatch_categorical 
+                  WHERE "type" = 'HKCategoryTypeIdentifierAppleStandHour' 
+                  GROUP BY "Name",date,"type","type" 
+                  HAVING count(*) > 6 
+                  ORDER BY "Name",date) AS foo 
+            WHERE "Name" = '{}' 
+            GROUP BY "Name" """.format(patient)
     try:
         df = pd.read_sql(sql, rdb)
         df = df.iloc[0]['count']
@@ -102,13 +109,13 @@ def number_of_days_more_6(rdb, patient):
     return df
 
 
-
-
-
 def month(rdb, patient):
-    sql = """ select to_char(month,'YYYY-MM') as month from (SELECT distinct date_trunc('month', "Date")  as month 
-    FROM applewatch_numeric where "Name"='{}' and type ='Resting Heart Rate' order by date_trunc('month', "Date")) 
-    as foo""".format(patient)
+    sql = """ SELECT to_char(month,'YYYY-MM') AS month 
+              FROM (SELECT distinct date_trunc('month', "Date")  AS month 
+                    FROM applewatch_numeric 
+                    where "Name"='{}' 
+                    and type ='Resting Heart Rate' 
+                    order by date_trunc('month', "Date")) as foo""".format(patient)
 
     try:
         df = pd.read_sql(sql, rdb)
@@ -119,8 +126,12 @@ def month(rdb, patient):
 
 
 def week(rdb, patient):
-    sql = """ select distinct week from (SELECT to_char("Date", 'IYYY/IW') as week FROM applewatch_numeric 
-    where "Name"='{}' and type ='Resting Heart Rate') as foo order by week """.format(patient)
+    sql = """ select distinct week 
+              from (SELECT to_char("Date", 'IYYY/IW') as week 
+                    FROM applewatch_numeric 
+                    where "Name"='{}' 
+                    and type ='Resting Heart Rate') as foo 
+              order by week """.format(patient)
 
     try:
         df = pd.read_sql(sql, rdb)
@@ -146,30 +157,44 @@ def Card(rdb, patient, group, date, value):
 
     if group == 'M':
         sql = """ SELECT type,month,sum("Value"),AVG("Value") 
-                        FROM (SELECT to_char(date_trunc('month', "Date"),'YYYY-MM') AS month,type,"Value" 
-                                    FROM applewatch_numeric 
-                                    WHERE "Name" = '{}' AND type in ('Active Energy Burned','Heart Rate',
-                                                                        'Walking Heart Rate Average',
-                                                                        'Resting Heart Rate','Step Count',
-                                                                        'Apple Exercise Time') 
-                                    ORDER BY type,"Date") as foo 
-                        WHERE month='{}' 
-                        GROUP BY month,type""".format(patient, value)
+                   FROM (SELECT to_char(date_trunc('month', "Date"),'YYYY-MM') AS month,type,"Value" 
+                         FROM applewatch_numeric 
+                         WHERE "Name" = '{}' 
+                         AND type in ('Active Energy Burned','Heart Rate','Walking Heart Rate Average',
+                                        'Resting Heart Rate','Step Count','Apple Exercise Time') 
+                          ORDER BY type,"Date") as foo 
+                    WHERE month='{}' 
+                    GROUP BY month,type""".format(patient, value)
     elif group == 'W':
-        sql = """ select type,week,sum("Value"),AVG("Value") from (SELECT to_char("Date", 'IYYY/IW') as week,type,
-        "Value" FROM applewatch_numeric where "Name" = '{}' and type in ('Active Energy Burned','Heart Rate',
-        'Walking Heart Rate Average','Resting Heart Rate','Step Count','Apple Exercise Time') order by type,"Date")
-         as foo where week='{}' group by week,type""".format(patient,value)
+        sql = """ select type,week,sum("Value"),AVG("Value") 
+                  from (SELECT to_char("Date", 'IYYY/IW') as week,type,"Value" 
+                        FROM applewatch_numeric 
+                        where "Name" = '{}' 
+                        and type in ('Active Energy Burned','Heart Rate','Walking Heart Rate Average',
+                                    'Resting Heart Rate','Step Count','Apple Exercise Time') 
+                        order by type,"Date") as foo 
+                  where week='{}' 
+                  group by week,type""".format(patient,value)
     elif group == 'DOW' :
-        sql = """ select type,"DOW",sum("Value"),AVG("Value") from (SELECT trim(to_char("Date", 'Day')) as "DOW",
-        type,"Value" FROM applewatch_numeric where "Name" = '{}' and type in ('Active Energy Burned',
-        'Heart Rate','Walking Heart Rate Average','Resting Heart Rate','Step Count','Apple Exercise Time') 
-        order by type,"Date") as foo where "DOW"='{}' group by "DOW",type""".format(patient,value)
+        sql = """ select type,"DOW",sum("Value"),AVG("Value") 
+                  from (SELECT trim(to_char("Date", 'Day')) as "DOW",type,"Value" 
+                        FROM applewatch_numeric 
+                        where "Name" = '{}' 
+                        and type in ('Active Energy Burned','Heart Rate','Walking Heart Rate Average',
+                                    'Resting Heart Rate','Step Count','Apple Exercise Time') 
+                        order by type,"Date") as foo 
+                  where "DOW"='{}' 
+                  group by "DOW",type""".format(patient,value)
     else:
-        sql = """ select type,sum("Value"),AVG("Value") from (SELECT date_trunc('day', "Date") as date,type,
-                "Value" FROM applewatch_numeric where "Name" = '{}' and type in ('Active Energy Burned',
-                'Heart Rate','Walking Heart Rate Average','Resting Heart Rate','Step Count','Apple Exercise Time')
-                 order by type,"Date") as foo where date = '{}' group by date,type""".format(patient,date)
+        sql = """ select type,sum("Value"),AVG("Value") 
+                  from (SELECT date_trunc('day', "Date") as date,type,"Value" 
+                        FROM applewatch_numeric 
+                        where "Name" = '{}' 
+                        and type in ('Active Energy Burned','Heart Rate','Walking Heart Rate Average',
+                                        'Resting Heart Rate','Step Count','Apple Exercise Time')
+                        order by type,"Date") as foo 
+                  where date = '{}' 
+                  group by date,type""".format(patient,date)
 
     try:
         df = pd.read_sql(sql, rdb)
@@ -192,44 +217,57 @@ def table(rdb, patient, group, linear, bar):
 
     if group == 'M':
         sql = """ select type,month,
-                case 
-                when type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
-                'Walking Heart Rate Average') Then AVG("Value")
-                ELSE sum("Value")
-                end as "Value"
-                from (SELECT to_char(date_trunc('month', "Date"),
-                'YYYY-MM') as month,"type", "Value" FROM applewatch_numeric where "Name" = '{}' and "type" in 
-                ({},{}) order by "type","Date") as foo group by month,type""".format(patient, linear, bar)
+                    case when type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                                'Walking Heart Rate Average') 
+                    Then AVG("Value")
+                    ELSE sum("Value")
+                    end as "Value"
+                    from (SELECT to_char(date_trunc('month', "Date"),'YYYY-MM') as month,"type", "Value" 
+                          FROM applewatch_numeric 
+                          where "Name" = '{}' 
+                          and "type" in ({},{}) 
+                          order by "type","Date") as foo 
+                    group by month,type""".format(patient, linear, bar)
     elif group == 'W':
         sql = """ select type,week,
-                case 
-                when type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
-                'Walking Heart Rate Average') Then AVG("Value")
-                ELSE sum("Value")
-                end as "Value"
-                from (SELECT to_char("Date", 'IYYY/IW') as week,"type",
-                "Value" FROM applewatch_numeric where "Name" = '{}' and "type" in ({},{}) order by "type","Date")
-                as foo group by week,type""".format(patient,linear,bar)
+                    case when type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                                        'Walking Heart Rate Average') Then AVG("Value")
+                    ELSE sum("Value")
+                    end as "Value"
+                    from (SELECT to_char("Date", 'IYYY/IW') as week,"type","Value" 
+                          FROM applewatch_numeric 
+                          where "Name" = '{}' 
+                          and "type" in ({},{}) 
+                          order by "type","Date") as foo 
+                    group by week,type""".format(patient,linear,bar)
     elif group == 'DOW' :
         sql = """ select type,"DOW_number","DOW",
-                case 
-                when type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
-                'Walking Heart Rate Average') Then AVG("Value")
-                ELSE sum("Value")
-                end as "Value"
-                from (SELECT trim(to_char("Date", 'Day')) as "DOW",extract('ISODOW' from "Date") as "DOW_number",
-                "type","Value" FROM applewatch_numeric where "Name" = '{}' and "type" in ({},{}) 
-                order by "type","Date") as foo group by "DOW","DOW_number",type order by "DOW_number" """.format(patient,linear,bar)
+                    case when type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                                    'Walking Heart Rate Average') 
+                    Then AVG("Value")
+                    ELSE sum("Value")
+                    end as "Value"
+                    from (SELECT trim(to_char("Date", 'Day')) as "DOW",extract('ISODOW' from "Date") as "DOW_number",
+                                    "type","Value" 
+                          FROM applewatch_numeric 
+                          where "Name" = '{}' 
+                          and "type" in ({},{}) 
+                          order by "type","Date") as foo 
+                    group by "DOW","DOW_number",type 
+                    order by "DOW_number" """.format(patient,linear,bar)
     else:
         sql = """ select type,date,
-                case 
-                when type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
-                'Walking Heart Rate Average') Then AVG("Value")
-                ELSE sum("Value")
-                end as "Value"
-                from (SELECT "type",date_trunc('day', "Date")::date as date,
-                "Value" FROM applewatch_numeric where "Name" = '{0}' and "type" in ({1},{2})
-                 order by "type","Date") as foo group by date,type""".format(patient,linear,bar)
+                    case when type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                                        'Walking Heart Rate Average') 
+                    Then AVG("Value")
+                    ELSE sum("Value")
+                    end as "Value"
+                    from (SELECT "type",date_trunc('day', "Date")::date as date,"Value" 
+                          FROM applewatch_numeric 
+                          where "Name" = '{0}' 
+                          and "type" in ({1},{2})
+                          order by "type","Date") as foo 
+                    group by date,type""".format(patient,linear,bar)
     try:
         df = pd.read_sql(sql, rdb)
     except:
@@ -249,22 +287,39 @@ def day_figure(rdb, patient, group, linear, bar, date, value):
         linear = "'" + linear + "'"
 
     if group == 'M':
-        sql = """ select "Date",type,month,"Value"from (SELECT "Date",to_char(date_trunc('month', "Date"),
-            'YYYY-MM') as month,"type", "Value" FROM applewatch_numeric where "Name" = '{}' and "type" in 
-            ('Heart Rate',{}) order by "type","Date") as foo where month='{}' """.format(
-            patient,bar, value)
+        sql = """ select "Date",type,month,"Value"
+                  from (SELECT "Date",to_char(date_trunc('month', "Date"),'YYYY-MM') as month,"type", "Value" 
+                        FROM applewatch_numeric 
+                        where "Name" = '{}' 
+                        and "type" in ('Heart Rate',{}) 
+                        order by "type","Date") as foo 
+                  where month='{}' """.format(patient, bar, value)
     elif group == 'W':
-        sql = """ select "Date",type,week,"Value" from (SELECT "Date",to_char("Date", 'IYYY/IW') as week,"type",
-            "Value" FROM applewatch_numeric where "Name" = '{}' and "type" in ({},{}) order by "type","Date")
-             as foo where week='{}' """.format(patient,linear,bar, value)
+        sql = """ select "Date",type,week,"Value" 
+                  from (SELECT "Date",to_char("Date", 'IYYY/IW') as week,"type","Value" 
+                        FROM applewatch_numeric 
+                        where "Name" = '{}' 
+                        and "type" in ({},{}) 
+                        order by "type","Date") as foo 
+                  where week='{}' """.format(patient,linear,bar, value)
     elif group == 'DOW':
-        sql = """ select "Date",date,type,"DOW","Value" from (SELECT "Date",trim(to_char("Date", 'Day')) as "DOW",
-        date_trunc('day', "Date") as date,type,"Value" FROM applewatch_numeric where "Name" = '{}' and "type" in ({},{}) 
-            order by "type","Date") as foo where "DOW"='{}' and date = (SELECT Max(date_trunc('day', "Date")) FROM applewatch_numeric) """.format(patient,linear,bar, value)
+        sql = """ select "Date",date,type,"DOW","Value" 
+                  from (SELECT "Date",trim(to_char("Date", 'Day')) as "DOW",date_trunc('day', "Date") as date,
+                                type,"Value" 
+                        FROM applewatch_numeric 
+                        where "Name" = '{}' 
+                        and "type" in ({},{}) 
+                        order by "type","Date") as foo 
+                  where "DOW"='{}' 
+                  and date = (SELECT Max(date_trunc('day', "Date")) FROM applewatch_numeric) """.format(patient,linear,bar, value)
     else:
-        sql = """ select "Date",type,"Value" from (SELECT "Date",date_trunc('day', "Date") as date,"type",
-                    "Value" FROM applewatch_numeric where "Name" = '{}' and "type" in ('Heart Rate',{})
-                     order by "type","Date") as foo where date = '{}' """.format(patient,bar, date)
+        sql = """ select "Date",type,"Value" 
+                  from (SELECT "Date",date_trunc('day', "Date") as date,"type","Value" 
+                        FROM applewatch_numeric 
+                        where "Name" = '{}' 
+                        and "type" in ('Heart Rate',{})
+                        order by "type","Date") as foo 
+                  where date = '{}' """.format(patient,bar, date)
     try:
         df = pd.read_sql(sql, rdb)
     except:
@@ -276,23 +331,47 @@ def day_figure(rdb, patient, group, linear, bar, date, value):
 def trend_figure(rdb, patient, group, start_date,end_date):
 
     if group == 'M':
-        sql = """ select month,hour,avg("Value") as "Value" from (SELECT to_char(date_trunc('month', "Date"),
-            'YYYY-MM') as month,extract('hour' from "Date") as hour,"Value" 
-        FROM applewatch_numeric where "Name" = '{}' and "type"= 'Heart Rate' and "Date" > '{}' and "Date" < '{}' 
-        order by "Date") as foo group by month,hour order by month,hour""".format(patient,start_date,end_date)
+        sql = """ select month,hour,avg("Value") as "Value" 
+                  from (SELECT to_char(date_trunc('month', "Date"),'YYYY-MM') as month,extract('hour' from "Date") as hour,"Value" 
+                        FROM applewatch_numeric 
+                        where "Name" = '{}' 
+                        and "type"= 'Heart Rate' 
+                        and "Date" > '{}' 
+                        and "Date" < '{}' 
+                        order by "Date") as foo 
+                  group by month,hour order by month,hour""".format(patient,start_date,end_date)
     elif group == 'W':
-        sql = """ select week,hour,avg("Value") as "Value" from (SELECT to_char("Date", 'IYYY/IW') as week,extract('hour' from "Date") as hour,
-            "Value" FROM applewatch_numeric where "Name" = '{}' and type='Heart Rate' and "Date" > '{}' and "Date" < '{}' order by "Date")
-             as foo group by week,hour order by week,hour""".format(patient,start_date,end_date)
+        sql = """ select week,hour,avg("Value") as "Value" 
+                  from (SELECT to_char("Date", 'IYYY/IW') as week,extract('hour' from "Date") as hour,"Value" 
+                        FROM applewatch_numeric 
+                        where "Name" = '{}' 
+                        and type='Heart Rate' 
+                        and "Date" > '{}' 
+                        and "Date" < '{}' 
+                        order by "Date")
+                  as foo group by week,hour 
+                  order by week,hour""".format(patient,start_date,end_date)
     elif group == 'DOW':
-        sql = """ select "DOW","DOW_number",hour,avg("Value") as "Value" from (SELECT trim(to_char("Date", 'Day')) as "DOW",
-        extract('ISODOW' from "Date") as "DOW_number",extract('hour' from "Date") as hour,"Value" FROM applewatch_numeric 
-        where "Name" = '{}' and type='Heart Rate' order by "Date") as foo where "DOW_number" > '{}' and "DOW_number" < '{}' 
-        group by "DOW","DOW_number",hour  """.format(patient, start_date,end_date)
+        sql = """ select "DOW","DOW_number",hour,avg("Value") as "Value" 
+                  from (SELECT trim(to_char("Date", 'Day')) as "DOW",extract('ISODOW' from "Date") as "DOW_number",
+                                extract('hour' from "Date") as hour,"Value" 
+                        FROM applewatch_numeric 
+                        where "Name" = '{}' 
+                        and type='Heart Rate' 
+                        order by "Date") as foo 
+                  where "DOW_number" > '{}' 
+                  and "DOW_number" < '{}' 
+                  group by "DOW","DOW_number",hour  """.format(patient, start_date,end_date)
     else:
-        sql = """ select date,hour,avg("Value") as "Value" from (SELECT "Date",extract('hour' from "Date") as hour,date_trunc('day', "Date") as date,"type",
-                    "Value" FROM applewatch_numeric where "Name" = '{}' and type='Heart Rate' and "Date" > '{}' and "Date" < '{}'
-                     order by "Date") as foo group by date,hour """.format(patient,start_date,end_date)
+        sql = """ select date,hour,avg("Value") as "Value" 
+                  from (SELECT "Date",extract('hour' from "Date") as hour,date_trunc('day', "Date") as date,"type","Value" 
+                        FROM applewatch_numeric 
+                        where "Name" = '{}' 
+                        and type='Heart Rate' 
+                        and "Date" > '{}' 
+                        and "Date" < '{}'
+                  order by "Date") as foo 
+                  group by date,hour """.format(patient,start_date,end_date)
     try:
         df = pd.read_sql(sql, rdb)
     except:
@@ -300,39 +379,50 @@ def trend_figure(rdb, patient, group, start_date,end_date):
     return df
 
 
-
-
-
-
-
-
-
-
-
 def box_plot(rdb, group, line,bar):
 
     if group == 'M':
-        sql1 = """ select "Name",AVG("Value") from (SELECT "Name",to_char(date_trunc('month', "Date"),
-            'YYYY-MM') as month,"type", "Value" FROM applewatch_numeric where "type" in 
-            ('{}')) as foo group by "Name",month """.format(bar)
-        sql2 = """ select "Name",type,"Value" from (SELECT "Name",to_char(date_trunc('month', "Date"),
-            'YYYY-MM') as month,"type", "Value" FROM applewatch_numeric where "type" in 
-            ('{}')) as foo "Name",month """.format(line)
+        sql1 = """select "Name",AVG("Value") 
+                  from (SELECT "Name",to_char(date_trunc('month', "Date"),'YYYY-MM') as month,"type", "Value" 
+                        FROM applewatch_numeric 
+                        where "type" in ('{}')) as foo 
+                  group by "Name",month """.format(bar)
+
+        sql2 = """select "Name",type,"Value" 
+                  from (SELECT "Name",to_char(date_trunc('month', "Date"),'YYYY-MM') as month,"type", "Value" 
+                        FROM applewatch_numeric 
+                        where "type" in ('{}')) as foo 
+                  group by "Name",month""".format(line)
     elif group == 'W':
-        sql1 = """ select "Name",AVG("Value") from (SELECT "Name",to_char("Date", 'IYYY/IW') as week,"type", 
-            "Value" FROM applewatch_numeric where "type" in ('{}')) as foo group by "Name",week """.format(bar)
-        sql2 = """ select "Name",type,"Value" from (SELECT "Name",to_char("Date", 'IYYY/IW') as week,"type",
-            "Value" FROM applewatch_numeric where "type" in ('{}')) as foo "Name",week """.format(line)
+        sql1 = """select "Name",AVG("Value") 
+                  from (SELECT "Name",to_char("Date", 'IYYY/IW') as week,"type", "Value" 
+                        FROM applewatch_numeric 
+                        where "type" in ('{}')) as foo 
+                  group by "Name",week """.format(bar)
+
+        sql2 = """select "Name",type,"Value" 
+                  from (SELECT "Name",to_char("Date", 'IYYY/IW') as week,"type","Value" 
+                        FROM applewatch_numeric 
+                        where "type" in ('{}')) as foo 
+                   group by "Name",week """.format(line)
 
     elif group == 'DOW':
-        sql1 = """ select "Name",AVG("Value") from (SELECT "Name",trim(to_char("Date", 'Day')) as "DOW","type",
-            "Value" FROM applewatch_numeric where "type" in ('{}')) as foo group by "Name","DOW" """.format(bar)
-        sql2 = """ select "Name",type,"Value" from (SELECT "Name",trim(to_char("Date", 'Day')) as "DOW","type",
-                "Value" FROM applewatch_numeric where "type" in ('{}')) as foo "Name","DOW" """.format(line)
+        sql1 = """select "Name",AVG("Value") 
+                  from (SELECT "Name",trim(to_char("Date", 'Day')) as "DOW","type","Value" 
+                        FROM applewatch_numeric 
+                        where "type" in ('{}')) as foo 
+                  group by "Name","DOW" """.format(bar)
+
+        sql2 = """select "Name",type,"Value" 
+                  from (SELECT "Name",trim(to_char("Date", 'Day')) as "DOW","type","Value" 
+                        FROM applewatch_numeric 
+                        where "type" in ('{}')) as foo 
+                  group by "Name","DOW" """.format(line)
     else:
-        sql1 = """ select "Name",AVG("Value") from (SELECT "Name",date_trunc('day', "Date") as date,"type",
+        sql1 = """select "Name",AVG("Value") from (SELECT "Name",date_trunc('day', "Date") as date,"type",
             "Value" FROM applewatch_numeric where "type" in ('{}')) as foo group by "Name",date """.format(bar)
-        sql2 = """ select "Name",type,"Value" from (SELECT "type",date_trunc('day', "Date") as date,"type",
+
+        sql2 = """select "Name",type,"Value" from (SELECT "type",date_trunc('day', "Date") as date,"type",
                 "Value" FROM applewatch_numeric where "name" in ('{}')) as foo "Name",date """.format(line)
 
 
@@ -344,8 +434,7 @@ def box_plot(rdb, group, line,bar):
 
 def histogram_plot(rdb, group, line):
 
-    sql = """SELECT "Name","Value" FROM applewatch_numeric where 
-    type='HKQuantityTypeIdentifierHeartRate' """
+    sql = """SELECT "Name","Value" FROM applewatch_numeric where type='HKQuantityTypeIdentifierHeartRate' """
 
     df = pd.read_sql(sql, rdb)
 
@@ -355,8 +444,11 @@ def histogram_plot(rdb, group, line):
 
 def during_workout(rdb, group, line):
 
-    sql = """SELECT "Name",date_trunc('day', "Date") as date,AVG("Value") as "Value" FROM applewatch_numeric where 
-    type='HKQuantityTypeIdentifierHeartRate' group by "Name",date_trunc('day', "Date") order by  "Name",date_trunc('day', "Date") """
+    sql = """SELECT "Name",date_trunc('day', "Date") as date,AVG("Value") as "Value" 
+             FROM applewatch_numeric 
+             where type='HKQuantityTypeIdentifierHeartRate' 
+             group by "Name",date_trunc('day', "Date") 
+             order by "Name",date_trunc('day', "Date") """
 
     df = pd.read_sql(sql, rdb)
 

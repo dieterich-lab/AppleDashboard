@@ -130,7 +130,7 @@ def export_ecg_data_from_apple_watch(directories):
     """
 
     # create DataFrame with all parameters
-    df = pd.DataFrame(columns=['patient', 'Date', 'Day', 'number', 'Classification', 'data', 'hrvOwn', 'SDNN', 'SENN',
+    df = pd.DataFrame(columns=['patient', 'Date', 'Day', 'number', 'Classification', 'data', 'hr', 'SDNN', 'SENN',
                                'SDSD', 'pNN20', 'pNN50', 'lf', 'hf', 'lf_hf_ratio', 'total_power', 'vlf'])
 
     # Loading ECG data to database
@@ -172,12 +172,12 @@ def export_ecg_data_from_apple_watch(directories):
             RRints = (RRints / 511) * 1000
 
             # calculate parameters for time and frequency domain
-            if len(RRints) > 20:
+            try:
                 RRints = np.array(RRints)
                 frequency_domain_features = frequencydomain(RRints)
                 time_domain_features = time_domain_analyze(RRints)
-            else:
-                time_domain_features = {'hrvOwn': 0, 'SDNN': 0, 'SENN': 0, 'SDSD': 0, 'pNN20': 0, 'pNN50': 0}
+            except:
+                time_domain_features = {'hrv': 0, 'SDNN': 0, 'SENN': 0, 'SDSD': 0, 'pNN20': 0, 'pNN50': 0}
                 frequency_domain_features = {'lf': 0, 'hf': 0, 'lf_hf_ratio': 0, 'total_power': 0, 'vlf': 0}
 
             ecg_data = {'patient': patient, 'Date': date, 'Day': day, 'number': number,

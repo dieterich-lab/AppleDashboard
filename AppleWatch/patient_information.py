@@ -26,7 +26,7 @@ def info(patient):
     ecg_classification = ldd.irregular_ecg(rdb, patient)
     days = ldd.number_of_days_more_6(rdb, patient)
 
-    print('cc',*ecg_classification)
+    print('cc',ecg_classification)
 
     if 'Inconclusive' in df2.values:
         inconclusive_ecg =  df2[df2['Classification'] == 'Inconclusive'].iloc[0]['count']
