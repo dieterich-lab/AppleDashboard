@@ -1,5 +1,5 @@
 # AppleDashboard
-This project provides a dashboard for visualization data from Apple Watch. The tool allow to load and analyze data from 
+This project provides a dashboard for visualization health and workout data from Apple Watch. The tool allow to load and analyze data from 
 multiple users at the same time.
 It was created to enable faster analysis of longitudinal data from Apple Watch without the need for programming skills.
 
@@ -11,7 +11,7 @@ Export "Health data" from Apple watch:
 3. Scroll down to the bottom of Health profile and press on "Export All Health data" <br/>
 4. Press on "Export" to confirm that you want export data <br/>
 5. Choose the method how you want save or share data <br/>
-![](./images/apple_watch.png)
+![](assets/apple_watch.png)
 
 ## Setup ##
 We highly recommend the setup via docker-compose. The installation via pip is only recommended for developers.
@@ -45,6 +45,8 @@ Not recommended for pure deployment.
 
 
 ## Data Import ##
+
+### Importing new data ###
 * To add new data, add the `export.xml` files and `electrocardiogram` directories downloaded from iPhone to the `.import` folder.
 
 In case of load data from more than one device, each `export.xml` file and `electrocardiogram` directory should be 
