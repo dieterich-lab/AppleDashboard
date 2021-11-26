@@ -7,7 +7,7 @@ from datetime import date
 
 # connection with database
 rdb = connect_db()
-patient,label_bar = ldd.patient(rdb),ldd.activity_type(rdb)
+patient = ldd.patient(rdb)
 
 
 # selection for first drop downs
@@ -45,10 +45,6 @@ def selection():
                     value='duration',
                     clearable=False
                 )),
-            dbc.Col([
-                html.Div(id='drop_down-container2', children=[])
-            ]),
-
         ]),
 
     ]

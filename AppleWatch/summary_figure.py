@@ -8,25 +8,12 @@ import numpy as np
 rdb = connect_db()
 
 
-def update_figure(df,linear, bar, group):
-
-    if group == 'M': index = 'month'
-    elif group == 'W': index = 'week'
-    elif group == 'DOW': index = ['DOW','DOW_number']
-    else: index = 'date'
-
-    if group == 'DOW':
-        df = df.pivot(index=index, columns='type', values='Value') \
-            .reset_index().sort_values(by=['DOW_number']).drop(columns=['DOW_number'])
-        index = 'DOW'
-    else:
-        df = df.pivot(index=index, columns='type', values='Value') \
-            .reset_index()
+def update_figure(df, linear, bar, index):
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-
     fig.add_trace(go.Bar(x=df[index], y=df[bar], name='{}'.format(bar)), secondary_y=False)
+
     if isinstance(linear, list):
         for i in linear:
             df_linear = df[[index, i]]
@@ -34,7 +21,7 @@ def update_figure(df,linear, bar, group):
             fig.add_trace(go.Scatter(x=df_linear[index], y=df_linear[i], name='{}'.format(i), mode='lines+markers'),
                           secondary_y=True)
     else:
-        df_linear = df[[index,linear]]
+        df_linear = df[[index, linear]]
         df_linear = df_linear.replace('', np.nan).dropna(subset=[linear])
         fig.add_trace(
             go.Scatter(x=df_linear[index], y=df_linear[linear], name='{}'.format(linear), mode='lines+markers'),

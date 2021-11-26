@@ -7,7 +7,9 @@ rdb = connect_db()
 
 
 def patient_information():
-
+    """
+    return: Card with patient information
+    """
     information = [dcc.Tab(
         label='About',
         value='what-is',
@@ -20,44 +22,33 @@ def patient_information():
     return information
 
 
-# change value in card depend from this what is chosen in selector
 def info(patient):
-    age_gender = ldd.age_sex(rdb, patient)
+    """
+    change value in information card depend from this what is chosen in selector
+
+    :param patient: patient id/number
+    :return: text: updated information about patient
+
+    """
+
+    age, sex = ldd.age_sex(rdb, patient)
     ecg_classification = ldd.irregular_ecg(rdb, patient)
     days = ldd.number_of_days_more_6(rdb, patient)
 
-    print('cc',ecg_classification)
+    def intersperse(lst, item):
+        result = [item] * (len(lst) * 2 - 1)
+        result[0::2] = lst
+        return result
 
-    if 'Inconclusive' in df2.values:
-        inconclusive_ecg =  df2[df2['Classification'] == 'Inconclusive'].iloc[0]['count']
-    elif 'Uneindeutig' in df2.values:
-        inconclusive_ecg = df2[df2['Classification'] == 'Uneindeutig'].iloc[0]['count']
-    else:
-        inconclusive_ecg = 0
-    if 'Irregular' not in df2.values:
-        irregular_ecg = 0
-    else:
-        irregular_ecg = df2[df2['Classification'] == 'Irregular'].iloc[0]['count']
-    if 'Heart Rate Over 120' not in df2.values:
-        over_150 = 0
-    else:
-        over_150 = df2[df2['Classification'] == 'Heart Rate Over 120'].iloc[0]['count']
-    if 'Heart Rate Under 50' in df2.values:
-        under_50 = df2[df2['Classification'] == 'Heart Rate Under 50'].iloc[0]['count']
-    elif 'Herzfrequenz unter 50' in df2.values:
-        under_50 = df2[df2['Classification'] == 'Herzfrequenz unter 50'].iloc[0]['count']
-    else:
-        under_50 = 0
+    ecg_classification.insert(1, 'separator', ':')
+    x = ecg_classification.to_string(header=False,
+                                     index=False,
+                                     index_names=False).split('\n')
 
+    ecg_classification = tuple(intersperse(x, html.Br()))
 
-    age = age_gender['Age'][0]
-    sex = age_gender['Sex'][0]
-
-    text = html.Br(), 'Age: {}'.format(age), html.Br(), 'Sex: {}'.format(sex), html.Br(),\
-        'height: {}'.format(height), html.Br(), 'Patient disease: None', \
-        html.Br(), 'Number of inconclusive ECG: {}'.format(inconclusive_ecg), html.Br(),\
-        'Number of irregular ECG: {}'.format(irregular_ecg), html.Br(),\
-        'Over 120: {}'.format(over_150), html.Br(), 'Under 50: {}'.format(under_50), html.Br(),\
-        'The number of days the Apple Watch has been worn for at least 6h: {}'.format(days)
+    text = (html.Br(), 'Age: {}'.format(age), html.Br(), 'Sex: {}'.format(sex), html.Br(), 'Patient disease: None',
+            html.Br()) + ecg_classification + \
+           (html.Br(), 'The number of days the Apple Watch has been worn for at least 6h: {}'.format(days))
 
     return text

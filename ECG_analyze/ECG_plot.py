@@ -49,6 +49,9 @@ def update_ecg_figure(day, time, patient, add):
         time = np.arange(0, len(data) / 511, 1 /511)
         time = time[0:len(data)]
         r_peaks = ed.detect_r_peaks(511, data)
+        df_data = pd.DataFrame()
+        df_data['value'] = data
+        df_data['time'] = time
 
         fig = px.line(x=time, y=data, template='plotly_white')
 
@@ -71,5 +74,5 @@ def update_ecg_figure(day, time, patient, add):
                 'xanchor': 'center',
                 'yanchor': 'top'})
 
-    return fig
+    return fig,df_data
 

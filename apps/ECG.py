@@ -24,7 +24,7 @@ df = ldd.table_hrv(rdb)
 data_store.csv_hrv = df.to_csv(index=False)  # data to csv file
 
 layout = html.Div([
-    dbc.Row([dbc.Col(dbc.Card(dcc.Graph(id='ecg_plot'), style={'height': '100%'}))]),
+    dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='ecg_plot')), style={'height': '100%'}))]),
     html.Br(),
 
     dbc.Row([dbc.Col(dbc.Card([
@@ -84,7 +84,7 @@ def update_ecg(data, data_tab):
         patient = data_tab[data[0]]['Patient']
         day = data_tab[data[0]]['Day']
         time = data_tab[data[0]]['time']
-        fig = update_ecg_figure(day, time, patient, add)
+        fig, df_data = update_ecg_figure(day, time, patient, add)
     return fig
 
 
@@ -95,7 +95,10 @@ def update_ecg(data, data_tab):
      Input("y axis", 'value')]
 )
 def update_scatter_plot_ecg(x_axis, y_axis):
-    fig = px.scatter(df, x=x_axis, y=y_axis, template='plotly_white', color="Patient")
+    if df.empty:
+        fig = {}
+    else:
+        fig = px.scatter(df, x=x_axis, y=y_axis, template='plotly_white', color="Patient")
     return fig
 
 
@@ -103,7 +106,10 @@ def update_scatter_plot_ecg(x_axis, y_axis):
 @app.callback(Output('box_plot_hrv', 'figure'),
               Input("group", 'value'))
 def update_box_plot_ecg(y_axis):
-    fig = px.box(df, x="Patient", y=y_axis, template='plotly_white')
+    if df.empty:
+        fig = px.box(df, x="Patient", y=y_axis, template='plotly_white')
+    else:
+        fig= {}
     return fig
 
 

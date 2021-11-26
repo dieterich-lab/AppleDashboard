@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html, dash_table
 import time
 from datetime import date
-
+import datetime
 from flask import send_file
 import pandas as pd
 import io
@@ -18,7 +18,6 @@ from AppleWatch.summary_figure import update_figure
 from AppleWatch.day_figure import day_figure_update
 from ECG_analyze.ECG_plot import update_ecg_figure
 from AppleWatch.selection_card import selection
-from AppleWatch.table import table
 from AppleWatch.patient_information import patient_information, info
 
 
@@ -70,14 +69,16 @@ layout = html.Div([
             )), style={'height': '100%'}), lg=4),
         dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_summary')), style={'height': '100%'}), lg=8)]),
     html.Br(),
+
     dbc.Row([
-        dbc.Col(dbc.Card(dcc.Graph(id='figure_day', hoverData={'points': [{'customdata': '1'}]}),
-                         style={'height': '100%'}), lg=6),
-        dbc.Col(dbc.Card(dcc.Graph(id='figure_trend'), style={'height': '100%'}), lg=6)
+        dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_day', hoverData={'points': [{'customdata': '1'}]}),
+                         style={'height': '100%'})), lg=6),
+        dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_trend')), style={'height': '100%'}), lg=6)
     ]),
     html.Br(),
+
     dbc.Row([
-        dbc.Col(dbc.Card(dash_table.DataTable(
+        dbc.Col(dbc.Card(dcc.Loading(dash_table.DataTable(
             id='table2',
             style_table={'overflowX': 'auto'},
             page_size=11,
@@ -95,12 +96,10 @@ layout = html.Div([
                 'fontWeight': 'bold'
             }
 
-        ), style={'height': '100%'}), lg=3),
-        dbc.Col(dbc.Card([html.A('Download ECG', id='my-link'),
-        dcc.Graph(id='figure_ecg')], style={'height': '100%'}), lg=9)
-    ]),
+        )), style={'height': '100%'}), lg=3),
+        dbc.Col(dbc.Card([html.A('Download ECG', id='my-link'), dcc.Graph(id='figure_ecg')], style={'height': '100%'}),
+                lg=9)]),
     html.Br(),
-
 ])
 
 
@@ -108,11 +107,10 @@ layout = html.Div([
 @app.callback(
     Output('drop_down-container', 'children'),
     [Input("figure_summary", "clickData"),
-    Input('patient', "value"),
-    Input('group by', "value")],
+     Input('patient', "value"),
+     Input('group by', "value")],
 )
-def update_selection(click,patient, value):
-    start_time = time.time()
+def update_selection(click, patient, value):
     if value == 'M':
         month = ldd.month(rdb, patient)
         if click:
@@ -143,7 +141,7 @@ def update_selection(click,patient, value):
             },
             options=[{'label': name, 'value': name} for name in week],
             value=value_w,
-            clearable = False
+            clearable=False
         )])
     elif value == 'DOW':
         if click:
@@ -176,9 +174,6 @@ def update_selection(click,patient, value):
             max_date_allowed=max_date,
             display_format='D/M/Y',
             date=value_day)])
-    end_time = time.time()
-    times = end_time - start_time
-    print('t2',times)
     return drop_down
 
 
@@ -188,11 +183,7 @@ def update_selection(click,patient, value):
     [Input("patient", "value")],
 )
 def update_information(patient):
-    start_time = time.time()
     text = info(patient)
-    end_time = time.time()
-    times = end_time - start_time
-    print('info',times)
     return text
 
 
@@ -210,43 +201,33 @@ def update_information(patient):
      Input({"index": ALL, 'type': 'filter-drop_down'}, 'value'),
      Input('drop_down-container', 'children')],
 )
-def update_card(patient, group, date, value,m):
-    start_time = time.time()
-    if not date:
-        resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary =\
-            0, 0, 0, 0, 0, 0
+def update_card(patient, group, date, value, m):
+    df = ldd.card(rdb, patient, group, date[0], value[0])
+    if not date or df.empty:
+        resting_hr, walking_hr, hr_mean, step, exercise_minute, activity_summary = 0, 0, 0, 0, 0, 0
     else:
-        resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary =\
-            card_update(patient,group, date,value)
-    end_time = time.time()
-    times = end_time - start_time
-    print('cards',times)
-    return resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary
+        resting_hr, walking_hr, hr_mean, step, exercise_minute, activity_summary = card_update(df)
+    return resting_hr, walking_hr, hr_mean, step, exercise_minute, activity_summary
 
 
-# update table1 depends what values are chosen in selector
+# update table1 summary_figure depends what values are chosen in selector
 @app.callback(
     [Output('figure_summary', 'figure'),
-    Output('table1', 'data'),
+     Output('table1', 'data'),
      Output('table1', 'columns')],
     [Input('group by', "value"),
      Input("patient", "value"),
      Input('linear plot', 'value'),
-     Input('Bar chart', 'value'),
-     ]
-)
+     Input('Bar chart', 'value')])
 def update_table(group, patient, linear, bar):
-    start_time = time.time()
-    df = ldd.table(rdb, patient, group, linear, bar)
-    result = table(df, group)
-    data = result.to_dict('records')
-    columns = [{"name": str(i), "id": str(i)} for i in result.columns]
-    fig = update_figure(df, linear, bar, group)
-    end_time = time.time()
-    times = end_time - start_time
-    print('summary',times)
-    return fig, data, columns
+    df, group_by = ldd.table(rdb, patient, group, linear, bar)
 
+    data = df.to_dict('records')
+    columns = [{"name": str(i), "id": str(i)} for i in df.columns]
+
+    fig = update_figure(df, linear, bar, group_by)
+
+    return fig, data, columns
 
 
 # update day figure
@@ -255,16 +236,22 @@ def update_table(group, patient, linear, bar):
     [Input({"index": ALL, 'type': 'filter-drop_down'}, 'date'),
      Input({"index": ALL, 'type': 'filter-drop_down'}, 'value'),
      Input("group by", "value"),
-     Input('linear plot', 'value'),
      Input('Bar chart', 'value'),
-     Input("patient", "value")
+     Input("patient", "value"),
+     Input('drop_down-container', 'children')
      ]
 )
-def update_figure_day(date, value, group,linear, bar, patient):
-    if not date and not value:
-        fig3 = {}
-    else:
-        fig3 = day_figure_update(date, value, group, patient, linear, bar)
+def update_figure_day(date, value, group, bar, patient, m):
+    if group == 'D': date = date[0]
+    elif group == 'M': date = value[0] + '-01'
+    elif group == 'W': date = datetime.datetime.strptime(value[0] + '/1', "%Y/%W/%w")
+    elif group == 'DOW': date = value[0]
+
+    df = ldd.day_figure(rdb, patient, bar, date)
+
+    if not date or df.empty: fig3 = {}
+    else: fig3 = day_figure_update(df, bar)
+
     return fig3
 
 
@@ -295,10 +282,10 @@ def update_figure_trend(value, date, group, patient,m):
      Output('table2', 'selected_rows')],
     Input("patient", "value")
 )
-def update_table2(patient):
-    df2 = ldd.irregular_ecg2(rdb, patient)
-    data = df2.to_dict('records')
-    columns = [{"name": i, "id": i} for i in df2.columns]
+def update_table_ecg(patient):
+    df = ldd.ecgs(rdb, patient)
+    data = df.to_dict('records')
+    columns = [{"name": i, "id": i} for i in df.columns]
     return data, columns, 'single', [0]
 
 
@@ -306,16 +293,18 @@ def update_table2(patient):
 @app.callback(
     Output('figure_ecg', 'figure'),
     [Input('table2', "selected_rows"),
-    Input("patient", "value"),
-    Input("table2", 'data')]
+     Input("patient", "value"),
+     Input("table2", 'data')]
 )
-def update_ecg2(data, patient, data_tab):
+def update_ecg(data, patient, data_tab):
     if not data_tab:
         fig = {}
     else:
+        add = ''
         day = data_tab[data[0]]['Day']
-        number = data_tab[data[0]]['time']
-        fig, df_ecg = update_ecg_figure(day, number, patient)
+        time = data_tab[data[0]]['time']
+
+        fig, df_ecg = update_ecg_figure(day, time, patient, add)
         data_store.csv_ecg = df_ecg.to_csv(index=False)
     return fig
 
@@ -333,10 +322,8 @@ def update_link(value):
 @app.server.route('/dash/urlToDownload')
 def download_csv():
     csv = data_store.csv_ecg
-    # Create a string buffer
-    buf_str = io.StringIO(csv)
-    # Create a bytes buffer from the string buffer
-    buf_byt = io.BytesIO(buf_str.read().encode("utf-8"))
+    buf_str = io.StringIO(csv)  # Create a string buffer
+    buf_byt = io.BytesIO(buf_str.read().encode("utf-8"))  # Create a bytes buffer from the string buffer
     buf_str.close()
     return send_file(buf_byt,
                      mimetype='text/csv',
@@ -347,13 +334,13 @@ def download_csv():
 @app.server.route('/dash/Download2')
 def download2_csv():
     csv = data_store.csv_apple
-    # Create a string buffer
     buf_str = io.StringIO(csv)
-    # Create a bytes buffer from the string buffer
     buf_byt = io.BytesIO(buf_str.read().encode("utf-8"))
     buf_str.close()
     return send_file(buf_byt,
                      mimetype='text/csv',
                      attachment_filename='data_apple_watch.csv',
                      as_attachment=True)
+                     
+
 

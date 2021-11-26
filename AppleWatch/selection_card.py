@@ -6,6 +6,7 @@ import modules.load_data_from_database as ldd
 
 # connection with database
 rdb = connect_db()
+
 patient = ldd.patient(rdb)
 label_linear, label_bar = ldd.label(rdb)
 
@@ -52,7 +53,7 @@ def selection():
                         style={'height': '100%'},
                         options=[{'label': name, 'value': name} for name in label_linear],
                         value=label_linear[0],
-                        clearable = False,
+                        clearable=False,
                         multi=True
                     ))]),
             dbc.Col(['Update cards:',

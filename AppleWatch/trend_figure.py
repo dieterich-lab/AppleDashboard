@@ -1,6 +1,6 @@
 import pandas as pd
 import plotly.express as px
-
+from datetime import date
 import datetime
 from dateutil.relativedelta import relativedelta
 import modules.load_data_from_database as ldd
@@ -9,14 +9,11 @@ from db import connect_db
 # connection with database
 rdb = connect_db()
 
-days_of_week = {"Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 7}
 
-
-def figure_trend(date, value, group, patient):
+def figure_trend(date_, value, group, patient):
 
     if group == 'M':
         color, trend = "month", "months"
-
         new_value = datetime.datetime.strptime(value + '-01', "%Y-%m-%d")
         start_date,end_date = new_value - relativedelta(months=3),new_value + relativedelta(months=1)
     elif group == 'W':
@@ -24,13 +21,12 @@ def figure_trend(date, value, group, patient):
         new_value = datetime.datetime.strptime(value + '/1', "%G/%V/%w")
         start_date, end_date = new_value - datetime.timedelta(weeks=3),new_value + datetime.timedelta(weeks=1)
     elif group == "DOW":
-        color, trend = "DOW","days"
-        new_value = days_of_week[value]
-        start_date, end_date = new_value - 4,new_value+1
+        color, trend = "DOW", "days"
+        start_date, end_date = '1900-01-01', date.today()
     else:
-        color,trend = 'date','days'
-        start_date, end_date = (pd.to_datetime(date) - pd.to_timedelta(3, unit='d')), \
-                               (pd.to_datetime(date) + pd.to_timedelta(1, unit='d'))
+        color,trend = 'date', 'days'
+        start_date, end_date = (pd.to_datetime(date_) - pd.to_timedelta(3, unit='d')), \
+                               (pd.to_datetime(date_) + pd.to_timedelta(1, unit='d'))
     df = ldd.trend_figure(rdb, patient, group, start_date,end_date)
     if 'date' in df.columns:
         df['date'] = df['date'].apply(lambda x: x.strftime('%Y-%m-%d'))

@@ -71,29 +71,28 @@ days_of_week = {"Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Frida
                 "Sunday": 7}
 
 
-def card_update(patient, group, date, value):
+def card_update(df):
     """
-    Changing values on cards depending on what is selected in the drop down.
+    Changing values in cards depending on what is selected in the drop down.
 
     """
 
-    df = ldd.Card(rdb, patient, group, date[0], value[0])
+    if 'Resting Heart Rate' not in df.type.values: resting_hr = 'Not measured'
+    else: resting_hr = df[df['type'] == 'Resting Heart Rate']["Value"]
 
-    if 'Resting Heart Rate' not in df.values: resting_heart_rate = 'Not measured'
-    else: resting_heart_rate = str(round(df[df['name'] == 'Resting Heart Rate'].iloc[0]['avg'], 2))
+    if 'Walking Heart Rate Average' not in df.type.values: walking_hr = 'Not measured'
+    else: walking_hr = df[df['type'] == 'Walking Heart Rate Average']["Value"]
 
-    if 'Walking Heart Rate Average' not in df.values: walking_heart_rate = 'Not measured'
-    else: walking_heart_rate = str(round(df.loc[df['name'] == 'Walking Heart Rate Average'].iloc[0]['avg'], 2))
+    if 'Heart Rate' not in df.type.values: hr_mean = 'Not measured'
+    else: hr_mean = df[df['type'] == 'Heart Rate']["Value"]
 
-    if 'Heart Rate' not in df.values: heart_rate_mean = 'Not measured'
-    else: heart_rate_mean = str(round(df.loc[df['name'] == 'Heart Rate'].iloc[0]['avg'], 2))
+    if 'Step Count' not in df.type.values: step = 'Not measured'
+    else: step = df[df['type'] == 'Step Count']["Value"]
 
-    if 'Step Count' not in df.values: step = 'Not measured'
-    else: step = str(round(df.loc[df['name'] == 'Step Count'].iloc[0]['sum'], 2))
-    if 'Apple Exercise Time' not in df.values:exercise_minute = 'Not measured'
-    else: exercise_minute = str(round(df.loc[df['name'] == 'Apple Exercise Time'].iloc[0]['sum'], 2))
+    if 'Apple Exercise Time' not in df.type.values:exercise_minute = 'Not measured'
+    else: exercise_minute = df[df['type'] == 'Step Count']["Value"]
 
-    if 'Active Energy Burned' not in df.values: activity_summary = 'Not measured'
-    else: activity_summary = str(round(df.loc[df['name'] == 'Active Energy Burned'].iloc[0]['sum'], 2))
+    if 'Active Energy Burned' not in df.type.values: activity_summary = 'Not measured'
+    else: activity_summary = df[df['type'] == 'Active Energy Burned']["Value"]
 
-    return resting_heart_rate, walking_heart_rate, heart_rate_mean, step, exercise_minute, activity_summary
+    return resting_hr, walking_hr, hr_mean, step, exercise_minute, activity_summary
