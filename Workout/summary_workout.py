@@ -1,8 +1,10 @@
 from plotly.subplots import make_subplots
 import plotly.express as px
+import pandas as pd
 
 
 def update_figure(df, group, what):
+    """ Update summary workout figure in Workout tab depending on drop downs"""
 
     if group == 'M': index = 'month'
     elif group == 'W': index = 'week'
@@ -11,6 +13,13 @@ def update_figure(df, group, what):
 
     df = df[(df['duration'] > 10) & (df['duration'] < 300)]
     df = df.groupby([index, "type"]).sum().reset_index()
+
+    if group == 'DOW':
+        print(df['DOW'])
+        cats = ['Monday   ', 'Tuesday  ', 'Wednesday', 'Thursday ', 'Friday   ', 'Saturday ', 'Sunday   ']
+        df['DOW'] = pd.Categorical(df['DOW'], categories=cats, ordered=True)
+        df = df.sort_values('DOW')
+
     fig = px.bar(x=df[index],  y=df[what], color=df["type"])
     fig.update_layout(
         height=400,

@@ -1,8 +1,7 @@
 from app import app
 from dash.dependencies import Input, Output, ALL
 import dash_bootstrap_components as dbc
-from dash import dcc
-from dash import html
+from dash import dcc, html
 import modules.load_data_from_database as ldd
 import time
 import plotly.express as px
@@ -13,13 +12,13 @@ from Comparison import plots as p
 from Comparison.selection_card import selection
 
 # Selection
-selection = selection()
+selection_health, selection_workout = selection()
 
 # connection with database
 rdb = connect_db()
 
 layout = html.Div([
-    dbc.Row([dbc.Col(selection)]),
+    dbc.Row([dbc.Col(selection_health)]),
 
     html.Br(),
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='scatter_plot')), style={'height': '100%'}))]),
@@ -31,7 +30,7 @@ layout = html.Div([
     html.Br(),
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='linear_plot')), style={'height': '100%'}),lg=6),
             dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='linear_plot1')), style={'height': '100%'}),lg=6)]),
-
+    dbc.Row([dbc.Col(selection_workout)]),
     html.Br(),
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='workout_plot')), style={'height': '100%'}))]),
 
@@ -43,7 +42,7 @@ layout = html.Div([
 ])
 
 
-# update box plot,histogram and scatter plot depends what was selected in drop down
+# update box plot,histogram and scatter plot depending on the drop-downs
 @app.callback(
     [Output('scatter_plot', 'figure'),
      Output('box_plot', 'figure'),
@@ -73,6 +72,7 @@ def update_figures(gr, linear, bar):
     return fig_scatter, fig_box_plot, fig_histogram,  fig1, fig2
 
 
+# update workouts figures depending on the drop-dwons
 @app.callback(
     [Output('workout_plot', 'figure'),
      Output('workout_plot2', 'figure')],
@@ -90,6 +90,7 @@ def update_workouts_figure(gr, bar):
     return fig_box, fig_linear
 
 
+# update day_night box plot depending on the drop-downs
 @app.callback(
     Output('during_night_day_plot', 'figure'),
     Input('group', 'value')

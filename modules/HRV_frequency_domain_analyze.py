@@ -34,7 +34,7 @@ def frequencydomain(RRints):
     RRseries = RRinterp - np.mean(RRinterp)
 
     # Pwelch w/ zero pad
-    freq, psd = signal.welch(RRseries, fsResamp, nfft=2 ** 12, window='hann')
+    freq, psd = signal.welch(RRseries, fsResamp, nfft=4096, window='hann')
 
     # bandwidth
     vlf_band = (0.003, 0.04)

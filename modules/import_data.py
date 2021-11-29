@@ -143,18 +143,21 @@ def alter_tables(rdb):
     CREATE tables for numeric and categorical data and necessary indexes.
     """
     # Alters in database
-    create_table_apple_watch_numeric = """CREATE TABLE applewatch_numeric AS SELECT "type","Name","unit",
-    "Date",("Value"::double precision) as "Value" from applewatch where 
-    "Value" ~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
+    create_table_apple_watch_numeric = """CREATE TABLE applewatch_numeric AS 
+                                            SELECT "type","Name","unit","Date",("Value"::double precision) AS "Value" 
+                                            FROM applewatch 
+                                            WHERE "Value" ~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
 
-    create_table_apple_watch_categorical = """CREATE TABLE applewatch_categorical AS SELECT "type","Name",
-    "unit","Date","Value" from applewatch where "Value" !~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
+    create_table_apple_watch_categorical = """CREATE TABLE applewatch_categorical AS 
+                                                SELECT "type","Name","unit","Date","Value" 
+                                                FROM applewatch 
+                                                WHERE "Value" !~ '-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?'"""
 
     sql = """CREATE INDEX IF NOT EXISTS "Key_index" ON applewatch_numeric (type)"""
 
-    name_table = """CREATE TABLE name as (SELECT distinct type from applewatch_numeric)"""
+    name_table = """CREATE TABLE name AS SELECT DISTINCT type FROM applewatch_numeric"""
 
-    activity_type = """CREATE TABLE activity_type as (SELECT distinct type FROM Workout)"""
+    activity_type = """CREATE TABLE activity_type AS SELECT DISTINCT type FROM Workout"""
 
     try:
         cur = rdb.cursor()

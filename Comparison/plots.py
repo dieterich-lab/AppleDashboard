@@ -5,11 +5,7 @@ import time
 
 
 def figure_box_hist(df, group, linear, bar):
-    """
-    :param rdb: connection with database
-    :return: df: list of workouts type
-
-    """
+    """ Update box plot and histogram in comparison tab depending on drop downs """
     df_linear = df[df['type'] == linear]
     df_bar = df[df['type'] == bar]
     name = df[group].unique()
@@ -39,11 +35,8 @@ def figure_box_hist(df, group, linear, bar):
 
 
 def figure_linear_plot(df1, df2, gr, linear, bar):
-    """
-    :param rdb: connection with database
-    :return: df: list of workouts type
+    """ Update linear plot in comparison tab depending on drop downs """
 
-    """
     fig1 = px.scatter(df1, x="week", y="Value", color=gr, template='plotly_white').update_traces(mode='lines+markers')
     fig2 = px.scatter(df2, x="week", y="Value", color=gr, template='plotly_white').update_traces(mode='lines+markers')
     fig1.update_layout(
@@ -65,11 +58,8 @@ def figure_linear_plot(df1, df2, gr, linear, bar):
 
 
 def figure_workout_plot(df_box, df_scatter, gr, bar):
-    """
-    :param rdb: connection with database
-    :return: df: list of workouts type
+    """ Update workouts plot and histogram in comparison tab depending on drop downs """
 
-    """
     fig_box_plot = px.box(df_box, x=gr, y="HR_average", template='plotly_white')
     fig_box_plot.update_layout(
         title={

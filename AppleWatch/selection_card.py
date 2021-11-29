@@ -13,6 +13,7 @@ label_linear, label_bar = ldd.label(rdb)
 
 # selection for first drop downs
 def selection():
+    """ Drop downs for AppleWatch tab """
     selection = [
         html.Br(),
         dbc.Row([

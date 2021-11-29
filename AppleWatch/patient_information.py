@@ -7,9 +7,7 @@ rdb = connect_db()
 
 
 def patient_information():
-    """
-    return: Card with patient information
-    """
+    """ Return: Card with patient information """
     information = [dcc.Tab(
         label='About',
         value='what-is',
@@ -23,16 +21,10 @@ def patient_information():
 
 
 def info(patient):
-    """
-    change value in information card depend from this what is chosen in selector
-
-    :param patient: patient id/number
-    :return: text: updated information about patient
-
-    """
+    """ Change values in information card depend from this what is chosen in drop down """
 
     age, sex = ldd.age_sex(rdb, patient)
-    ecg_classification = ldd.irregular_ecg(rdb, patient)
+    ecg_classification = ldd.classification_ecg(rdb, patient)
     days = ldd.number_of_days_more_6(rdb, patient)
 
     def intersperse(lst, item):

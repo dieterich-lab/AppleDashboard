@@ -1,14 +1,13 @@
 import plotly.express as px
 
 
-def update_pie(df,group,what):
-
+def update_pie(df, group, what):
+    """ Update pie figure in Workout tab depending on drop downs"""
     if group == 'M': index = 'month'
     elif group == 'W': index = 'week'
     elif group == 'DOW': index = 'DOW'
     else: index = 'date'
 
-    df = df[(df['duration'] > 10) & (df['duration'] < 300)]
     df_activity = df.groupby(['type']).sum().reset_index()
     df = df.groupby([index]).sum().reset_index()
     df_activity['%'] = 100 * df_activity[what] / df[what].values[0]

@@ -87,10 +87,10 @@ class Scheduler():
     Importing data check the data. Import data every day at 05.05 if the program see any changes.
     """
 
-    def __init__(self,rdb, day_of_week, hour, minute):
+    def __init__(self, rdb, day_of_week, hour, minute):
         self.bgs = BackgroundScheduler()
         start_import(rdb)
-        self.bgs.add_job(start_import,'cron',[rdb], day_of_week=day_of_week, hour=hour, minute=minute)
+        self.bgs.add_job(start_import, 'cron', [rdb], day_of_week=day_of_week, hour=hour, minute=minute)
 
     def start(self):
         self.bgs.start()

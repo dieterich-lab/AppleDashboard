@@ -9,6 +9,7 @@ rdb = connect_db()
 
 
 def update_figure(df, linear, bar, index):
+    """ Update the "summary figure" in the Patient tab depending on drop downs """
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -26,10 +27,12 @@ def update_figure(df, linear, bar, index):
         fig.add_trace(
             go.Scatter(x=df_linear[index], y=df_linear[linear], name='{}'.format(linear), mode='lines+markers'),
             secondary_y=True)
+        fig.update_yaxes(title_text='{}'.format(linear), secondary_y=True)
 
     fig.update_layout(
         height=400,
         template='plotly_white',
+        xaxis_title="Time",
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -37,8 +40,6 @@ def update_figure(df, linear, bar, index):
             xanchor="right",
             x=1
         ))
-    fig.update_xaxes(title_text="Time")
-    if not isinstance(linear, list):
-        fig.update_yaxes(title_text='{}'.format(linear), secondary_y=True)
     fig.update_yaxes(title_text='{}'.format(bar), secondary_y=False)
+
     return fig

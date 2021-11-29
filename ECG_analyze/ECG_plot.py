@@ -11,6 +11,7 @@ rdb = connect_db()
 
 
 def add_minor_grid(fig, x_range, y_range, major_step_x=0.4, major_step_y=1, minorgridcount_x=9, minorgridcount_y=9):
+    """ Create ECG grid """
     x_list = np.arange(x_range[0], x_range[1]+major_step_x, major_step_x)
     y_list = np.arange(y_range[0], y_range[1]+major_step_y, major_step_y)
     x, y = list(zip(*product(x_list, y_list)))
@@ -36,10 +37,7 @@ def add_minor_grid(fig, x_range, y_range, major_step_x=0.4, major_step_y=1, mino
 
 
 def update_ecg_figure(day, time, patient, add):
-    """
-
-    """
-
+    """ Update ECG graph in Patient and ECG tab depending on drop downs"""
     df = ldd.ecg_data(rdb, day, patient, time)
 
     if len(df) == 0:
@@ -74,5 +72,5 @@ def update_ecg_figure(day, time, patient, add):
                 'xanchor': 'center',
                 'yanchor': 'top'})
 
-    return fig,df_data
+    return fig, df_data
 

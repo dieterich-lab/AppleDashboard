@@ -13,6 +13,7 @@ hrv_features = ['hrvOwn', 'SDNN', 'SENN', 'SDSD', 'pNN20', 'pNN50', 'lf', 'hf', 
 
 # selection for first drop downs
 def selection():
+    """ Drop downs for ECG tab """
     selection = [
         html.Br(),
         dbc.Row([dbc.Col([

@@ -12,10 +12,11 @@ patient = ldd.patient(rdb)
 
 # selection for first drop downs
 def selection():
+    """ Drop downs for Workout tab """
     selection = [
         html.Br(),
         dbc.Row([
-            dbc.Col([
+            dbc.Col(['Patient selection:',
                 dcc.Dropdown(
                     style={'height': '40px'},
                     id='patient',
@@ -23,7 +24,7 @@ def selection():
                     value=patient[0],
                     clearable=False
                 )]),
-            dbc.Col([
+            dbc.Col(['Group by:',
                 dcc.Dropdown(
                     style={'height': '40px'},
                     id='group by',
@@ -34,7 +35,7 @@ def selection():
                     value='D',
                     clearable=False
                     )]),
-            dbc.Col(
+            dbc.Col(['Plot:',
                 dcc.Dropdown(
                     id='what',
                     style={'height': '40px'},
@@ -44,7 +45,7 @@ def selection():
                              ],
                     value='duration',
                     clearable=False
-                )),
+                )]),
         ]),
 
     ]

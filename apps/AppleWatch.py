@@ -46,7 +46,7 @@ layout = html.Div([
     dbc.Row([
         dbc.Col(dbc.Card(
             dcc.Loading(dash_table.DataTable(
-                id='table1',
+                id='table',
                 style_table={'overflowX': 'auto'},
                 page_size=9,
                 filter_action='native',
@@ -70,16 +70,14 @@ layout = html.Div([
         dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_summary')), style={'height': '100%'}), lg=8)]),
     html.Br(),
 
-    dbc.Row([
-        dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_day', hoverData={'points': [{'customdata': '1'}]}),
-                         style={'height': '100%'})), lg=6),
-        dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_trend')), style={'height': '100%'}), lg=6)
-    ]),
+    dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_day', hoverData={'points': [{'customdata': '1'}]}),
+                                          style={'height': '100%'})), lg=6),
+             dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_trend')), style={'height': '100%'}), lg=6)]),
     html.Br(),
 
     dbc.Row([
         dbc.Col(dbc.Card(dcc.Loading(dash_table.DataTable(
-            id='table2',
+            id='table_ecg',
             style_table={'overflowX': 'auto'},
             page_size=11,
             filter_action='native',
@@ -111,6 +109,7 @@ layout = html.Div([
      Input('group by', "value")],
 )
 def update_selection(click, patient, value):
+
     if value == 'M':
         month = ldd.month(rdb, patient)
         if click:
@@ -210,11 +209,12 @@ def update_card(patient, group, date, value, m):
     return resting_hr, walking_hr, hr_mean, step, exercise_minute, activity_summary
 
 
-# update table1 summary_figure depends what values are chosen in selector
+# update table and summary_figure depending on the drop-downs
 @app.callback(
     [Output('figure_summary', 'figure'),
-     Output('table1', 'data'),
-     Output('table1', 'columns')],
+     Output("figure_summary", "clickData"),
+     Output('table', 'data'),
+     Output('table', 'columns')],
     [Input('group by', "value"),
      Input("patient", "value"),
      Input('linear plot', 'value'),
@@ -222,12 +222,13 @@ def update_card(patient, group, date, value, m):
 def update_table(group, patient, linear, bar):
     df, group_by = ldd.table(rdb, patient, group, linear, bar)
 
+    click = None
     data = df.to_dict('records')
     columns = [{"name": str(i), "id": str(i)} for i in df.columns]
 
     fig = update_figure(df, linear, bar, group_by)
 
-    return fig, data, columns
+    return fig,click, data, columns
 
 
 # update day figure
@@ -246,11 +247,11 @@ def update_figure_day(date, value, group, bar, patient, m):
     elif group == 'M': date = value[0] + '-01'
     elif group == 'W': date = datetime.datetime.strptime(value[0] + '/1', "%Y/%W/%w")
     elif group == 'DOW': date = value[0]
-
     df = ldd.day_figure(rdb, patient, bar, date)
-
-    if not date or df.empty: fig3 = {}
-    else: fig3 = day_figure_update(df, bar)
+    if not date or df.empty:
+        fig3 = {}
+    else:
+        fig3 = day_figure_update(df, bar)
 
     return fig3
 
@@ -264,7 +265,7 @@ def update_figure_day(date, value, group, bar, patient, m):
      Input("patient", "value"),
      Input('drop_down-container', 'children')],
 )
-def update_figure_trend(value, date, group, patient,m):
+def update_figure_trend(value, date, group, patient, m):
     if date and value:
         date = pd.to_datetime(date[-1])
         value = value[-1]
@@ -274,12 +275,12 @@ def update_figure_trend(value, date, group, patient,m):
     return fig
 
 
-# update table2
+# update table_ecg
 @app.callback(
-    [Output('table2', 'data'),
-     Output('table2', 'columns'),
-     Output('table2', 'row_selectable'),
-     Output('table2', 'selected_rows')],
+    [Output('table_ecg', 'data'),
+     Output('table_ecg', 'columns'),
+     Output('table_ecg', 'row_selectable'),
+     Output('table_ecg', 'selected_rows')],
     Input("patient", "value")
 )
 def update_table_ecg(patient):
@@ -292,9 +293,9 @@ def update_table_ecg(patient):
 # update ECG figure
 @app.callback(
     Output('figure_ecg', 'figure'),
-    [Input('table2', "selected_rows"),
+    [Input('table_ecg', "selected_rows"),
      Input("patient", "value"),
-     Input("table2", 'data')]
+     Input("table_ecg", 'data')]
 )
 def update_ecg(data, patient, data_tab):
     if not data_tab:

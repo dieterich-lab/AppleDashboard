@@ -8,9 +8,7 @@ rdb = connect_db()
 
 
 def cards_view():
-    """
-    :return: card layout
-    """
+    """ card layout """
     cards = [
         dbc.Row([dbc.Col(dbc.Card(
             [
@@ -67,15 +65,8 @@ def cards_view():
     return cards
 
 
-days_of_week = {"Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6,
-                "Sunday": 7}
-
-
 def card_update(df):
-    """
-    Changing values in cards depending on what is selected in the drop down.
-
-    """
+    """ Changing values in cards depending on what is selected in the drop down."""
 
     if 'Resting Heart Rate' not in df.type.values: resting_hr = 'Not measured'
     else: resting_hr = df[df['type'] == 'Resting Heart Rate']["Value"]

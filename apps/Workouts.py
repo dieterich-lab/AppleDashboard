@@ -29,7 +29,7 @@ layout = html.Div([
     dbc.Row([
         dbc.Col(dbc.Card(dcc.Loading(
             dash_table.DataTable(
-                id='table',
+                id='table_workout',
                 style_table={'overflowX': 'auto'},
                 page_size=5,
                 filter_action='native',
@@ -57,10 +57,10 @@ layout = html.Div([
 ])
 
 
-# update table depends what values are chosen in selector
+# update table depending on the drop-downs
 @app.callback(
-    [Output('table', 'data'),
-     Output('table', 'columns')],
+    [Output('table_workout', 'data'),
+     Output('table_workout', 'columns')],
     [Input('group by', "value"),
      Input("patient", "value")]
 )
@@ -72,23 +72,25 @@ def update_table(group, patient):
     return data, columns
 
 
-# update summary figure depends what values are chosen in selector
+# update summary figure depending on the drop-downs
 @app.callback(
-    Output('summary_workout', 'figure'),
+    [Output('summary_workout', 'figure'),
+     Output("summary_workout", "clickData")],
     [Input("patient", "value"),
      Input('group by', "value"),
      Input("what", "value")]
 )
 def summary_workout(patient, group, what):
-    data = ldd.workout_activity_data(rdb, patient)
-    if data.empty:
+    df = ldd.workout_activity_data(rdb, patient)
+    click = None
+    if df.empty:
         fig = {}
     else:
-        fig = update_figure(data, group, what)
-    return fig
+        fig = update_figure(df, group, what)
+    return fig, click
 
 
-# update table1 depends what values are chosen in selector
+# update pie figure depending on the drop-downs
 @app.callback(
     Output('pie_graph', 'figure'),
     [Input("patient", "value"),
@@ -97,16 +99,35 @@ def summary_workout(patient, group, what):
      Input("what", "value")]
 )
 def pie_figure(patient, group, value, what):
-    if value:
-        value = value["points"][0]["x"].replace(" ", "")
-    else:
-        value = ldd.workout_maxdate(rdb)
+
     data = ldd.workout_activity_pie_chart(rdb, patient, value, group, what)
     if data.empty:
         fig = {}
     else:
         fig = update_pie(data, group, what)
     return fig
+
+
+# update workout figure depending on the drop-downs
+@app.callback(
+    Output('graph', 'children'),
+    [Input('group by', "value"),
+     Input("summary_workout", "clickData"),
+     Input("patient", "value")]
+)
+def hr_figure(group, click, patient):
+
+    if group == 'D':
+        df1, df2 = ldd.heart_rate(rdb, click, patient)
+        if df1.empty or df2.empty:
+            graph = html.Div()
+        else:
+            fig = workout_figure(df1, df2)
+            graph = html.Div([dcc.Graph(figure=fig)])
+    else:
+        graph = html.Div()
+
+    return graph
 
 """
 # update table depends what values are chosen in selector
@@ -129,9 +150,13 @@ def HR_figure(patient, group, date, value, m):
         fig = {}
     else:
         fig = workout_figure(df,data)
+    graph    
     return fig
 
 """
+
+
+
 
 
 

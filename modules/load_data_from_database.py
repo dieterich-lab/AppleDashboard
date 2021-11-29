@@ -1,12 +1,11 @@
 import pandas as pd
 import time
 
+
 def patient(rdb):
-    """
-    :param rdb: connection with database
-    :return: patients: list of patients
-    """
-    patients = """SELECT "Name" FROM patient order by index"""
+    """ Returns list of patients """
+
+    patients = """SELECT "Name" FROM patient ORDER BY index"""
     try:
         patients = pd.read_sql(patients, rdb)
         patients = patients["Name"].values.tolist()
@@ -16,17 +15,10 @@ def patient(rdb):
 
 
 def label(rdb):
-    """
-    Lists for drop downs related with bar plot and linear plot
-
-
-    :param rdb: connection with database
-    :return: label linear: list of names
-    :return: label linear: list of names
-    """
+    """ Returns list of parameter for linear and bar drop down """
 
     sql = """SELECT type FROM name WHERE type IN ('Heart Rate','Heart Rate Variability SDNN', 'Resting Heart Rate',
-                                                    'VO2Max','Walking Heart Rate Average')"""
+                                                    'VO2 Max','Walking Heart Rate Average')"""
 
     sql2 = """SELECT type FROM name WHERE type NOT IN ('Heart Rate','Heart Rate Variability SDNN',
                                                         'Resting Heart Rate','VO2 Max','Walking Heart Rate Average')"""
@@ -40,14 +32,8 @@ def label(rdb):
 
 
 def month(rdb, patient):
-    """
-        Lists for month drop down
+    """ Returns list of months in database for selected patient """
 
-
-        :param rdb: connection with database
-        :param patient: patient id/numer
-        :return: list with months
-    """
     sql = """SELECT DISTINCT TO_CHAR("Date",'YYYY-MM')  AS month 
              FROM applewatch_numeric 
              WHERE "Name"='{}' 
@@ -63,14 +49,8 @@ def month(rdb, patient):
 
 
 def week(rdb, patient):
-    """
-        Lists for weeks drop down
+    """  Returns list of weeks in database for selected patient  """
 
-
-        :param rdb: connection with database
-        :param patient: patient id/numer
-        :return: list with weeks
-    """
     sql = """SELECT DISTINCT TO_CHAR("Date", 'IYYY/IW') AS week 
              FROM applewatch_numeric 
              WHERE "Name"='{}' 
@@ -86,14 +66,7 @@ def week(rdb, patient):
 
 
 def min_max_date(rdb, patient):
-    """
-        min and max date for selected patient
-
-        :param rdb: connection with database
-        :param patient: patient id/numer
-        :return min_date
-        :return max_date
-    """
+    """ Returns min and max date for selected patient """
 
     sql = """SELECT min_date,max_date FROM patient WHERE "Name"='{}'""".format(patient)
 
@@ -106,32 +79,8 @@ def min_max_date(rdb, patient):
     return min_date, max_date
 
 
-def min_max_date_workout(rdb, patient):
-    """
-        min and max date for selected patient
-
-        :param rdb: connection with database
-        :param patient: patient id/numer
-        :return min_date
-        :return max_date
-    """
-
-    sql = """SELECT min_date_workout,max_date_workout FROM workout WHERE "Name" ='{}'""".format(patient)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-        min_date, max_date = df['min_date_workout'].iloc[0].date(), df['max_date_workout'].iloc[0].date()
-    except:
-        min_date, max_date = '', ''
-
-    return min_date, max_date
-
-
 def age_sex(rdb, patient):
-    """
-    :param rdb: connection with database
-    :return: df: list patients
-    """
+    """ Returns age and gender for selected patient"""
 
     sql = """SELECT "Age","Sex" from patient where "Name"='{}' """.format(patient)
 
@@ -143,11 +92,8 @@ def age_sex(rdb, patient):
     return age, sex
 
 
-def irregular_ecg(rdb, patient):
-    """
-    :param rdb: connection with database
-    :return: df: list patients
-    """
+def classification_ecg(rdb, patient):
+    """ Returns ecg classification for patient information card """
 
     sql = """SELECT "Classification",count(*) FROM ecg WHERE "Patient"='{}' GROUP BY "Classification" """.format(patient)
 
@@ -159,17 +105,15 @@ def irregular_ecg(rdb, patient):
 
 
 def number_of_days_more_6(rdb, patient):
-    """
-    :param rdb: connection with database
-    :return: df: list patients
-    """
+    """ Returns number of days the patient had the Apple Watch on their hand for more than 6 hours"""
+
     sql = """SELECT count (*) 
-             FROM (SELECT dat
+             FROM (SELECT "Date"::date
                    FROM applewatch_categorical 
                    WHERE "Name" = '{}'
                    AND "type" = 'Apple Stand Hour' 
-                   GROUP BY dat
-                   HAVING count(dat) > 6) days  """.format(patient)
+                   GROUP BY "Date"::date
+                   HAVING count("Date"::date) > 6) days  """.format(patient)
     try:
         df = pd.read_sql(sql, rdb)
         df = df.iloc[0]['count']
@@ -180,15 +124,7 @@ def number_of_days_more_6(rdb, patient):
 
 
 def card(rdb, patient, group, date, value):
-    """
-    :param rdb: connection with database
-    :param patient: connection with database
-    :param group: connection with database
-    :param date: connection with database
-    :param value: connection with database
-
-    :return: : list patients
-    """
+    """ Returns DataFrame with resting, working, mean hear rate, step count, exercise time, activity for the cards """
     if group == 'M':
         to_char = """ TO_CHAR("Date",'YYYY-MM') """
         group_by = "month"
@@ -226,15 +162,8 @@ def card(rdb, patient, group, date, value):
 
 
 def table(rdb, patient, group, linear, bar):
-    """
-    :param rdb: connection with database
-    :param patient: connection with database
-    :param group: connection with database
-    :param date: connection with database
-    :param value: connection with database
+    """ Returns a table with the patient and parameters that were selected from drop downs """
 
-    :return: : list patients
-    """
     if isinstance(linear, list):
         linear = "'" + "','".join(linear) + "'"
     else:
@@ -274,18 +203,11 @@ def table(rdb, patient, group, linear, bar):
     except:
         df = pd.DataFrame()
 
-    return df,group_by
+    return df, group_by
 
 
 def day_figure(rdb, patient, bar, date):
-    """
-    :param rdb: connection with database
-    :param patient: connection with database
-    :param bar: connection with database
-    :param date: connection with database
-
-    :return: : list patients
-    """
+    """ Returns DataFrame for day figure with heart rate and selected parameter and patient """
 
     sql = """ SELECT "Date","type","Value" 
               FROM applewatch_numeric 
@@ -303,14 +225,8 @@ def day_figure(rdb, patient, bar, date):
 
 
 def trend_figure(rdb, patient, group, start_date, end_date):
-    """
-    :param rdb: connection with database
-    :param patient: connection with database
-    :param bar: connection with database
-    :param date: connection with database
+    """ Returns DataFrame for trend figure """
 
-    :return: : list patients
-    """
     if group == 'M':
         to_char = """ TO_CHAR("Date",'YYYY-MM')"""
         group_by = "month"
@@ -339,19 +255,12 @@ def trend_figure(rdb, patient, group, start_date, end_date):
         df = pd.DataFrame()
     return df
 
-
-###### ECG_anlayse
+# Query data for ECG_analyse
 
 
 def ecgs(rdb, patient):
-    """
-    :param rdb: connection with database
-    :param patient: connection with database
-    :param bar: connection with database
-    :param date: connection with database
-
-    :return: : list patients
-    """
+    """  Returns DataFrame for table_ecg"""
+    
     sql2 = """SELECT "Day","Date"::time AS Time, "Classification" 
                 FROM ecg  
                 WHERE "Patient"='{}' 
@@ -365,22 +274,7 @@ def ecgs(rdb, patient):
 
 
 def ecg_data(rdb, day, patient, time):
-    """
-    Retreive DataFrame with ECG data
-
-    Parameters:
-    ------------
-    rdb: connection to database
-    day: the day the ECG was taken
-    patient: Patient ID
-    time: the time the ECG was taken
-
-
-    Returns:
-    ---------
-    df : DataFrame with ECG values
-
-    """
+    """ Returns DatFrame to plot  ecg signal   """
 
     sql = """SELECT * FROM ECG where "Day"='{0}' and "Patient"='{1}' and "Date"::time='{2}' """.format(day, patient, time)
 
@@ -392,19 +286,8 @@ def ecg_data(rdb, day, patient, time):
 
 
 def table_hrv(rdb):
-    """
-    Retrieve DataFrame with HRV features calculation
+    """ Returns DataFrame with all information about ecg ann calculate HRV feature for time and frequency domain   """
 
-    Parameters:
-    ------------
-    rdb: connection to database
-
-
-    Returns:
-    ---------
-    df : DataFrame with HRV features
-
-    """
     sql = """ SELECT "Patient","Day","Date"::time as Time, "hrvOwn", "SDNN", "SENN", "SDSD", "pNN20", "pNN50", "lf", 
                 "hf", "lf_hf_ratio","total_power", "vlf", "Classification" FROM ecg ORDER BY "Patient","Day" """
 
@@ -416,21 +299,7 @@ def table_hrv(rdb):
 
 
 def scatter_plot_ecg(rdb, x_axis, y_axis):
-    """
-    Retrieve DataFrame with filtered HRV features
-
-    Parameters:
-    ------------
-    rdb: connection to database
-    x_axis: name of column to select from ECG table
-    y_axis: name of column to select from ECG table
-
-
-    Returns:
-    ---------
-    df : DataFrame with selected HRV features
-
-    """
+    """ Returns DataFrame for scatter plot with patients ids/numbers and selected features """
 
     sql = """ SELECT "Patient","{0}","{1}" FROM ecg """.format(x_axis, y_axis)
 
@@ -442,21 +311,7 @@ def scatter_plot_ecg(rdb, x_axis, y_axis):
 
 
 def box_plot_ecg(rdb, x_axis):
-    """
-    Retrieve DataFrame with filtered HRV features
-
-    Parameters:
-    ------------
-    rdb: connection to database
-    x_axis: name of column to select from ECG table
-
-
-
-    Returns:
-    ---------
-    df : DataFrame with HRV feature
-
-    """
+    """ Returns DataFrame for box plot with patients ids/numbers and selected feature    """
 
     sql = """ SELECT "Patient","{}" FROM ecg """.format(x_axis)
 
@@ -466,10 +321,13 @@ def box_plot_ecg(rdb, x_axis):
         df = pd.DataFrame()
     return df
 
+# Patient Workouts
 
-##### Patient workouts
 
 def workout_activity_data(rdb, patient):
+    """ Returns the DataFrame for table and summary figure on the Workouts Tab. The table is filtered by selected
+        patient in drop down list """
+
     sql = """SELECT type,duration,distance,"EnergyBurned","Start_Date"::date AS date,"Start_Date"::time AS "Start",
                     "End_Date"::time AS "End",TO_CHAR("Start_Date",'YYYY-MM') AS month,
                     TO_CHAR("Start_Date", 'IYYY/IW') as week,TO_CHAR("Start_Date", 'Day') as "DOW"
@@ -485,72 +343,82 @@ def workout_activity_data(rdb, patient):
 
 
 def workout_activity_pie_chart(rdb, patient, value, group, what):
+    """ Returns the DataFrame for pie plot on the Workouts Tab. The table is filtered and grouped by selected
+        patient,day/week/month in drop down list  """
 
     if group == 'M':
+        if value is not None: value = value["points"][0]["x"][:7]
         to_char = """ TO_CHAR("Start_Date",'YYYY-MM')"""
         group_by = "month"
     elif group == 'W':
+        if value is not None: value = value["points"][0]["x"]
         to_char = """ TO_CHAR("Start_Date", 'IYYY/IW') """
         group_by = "week"
     elif group == 'DOW':
+        if value is not None: value = value["points"][0]["x"].replace(" ", "")
         to_char = """TRIM(TO_CHAR("Start_Date", 'Day'))  """
         group_by = """ "DOW" """
     else:
+        if value is not None: value = str(value["points"][0]["x"])
         to_char = """ "Start_Date"::date """
         group_by = "date"
+
+    if value is None:
+        value = """SELECT {}  AS {} 
+                   FROM workout
+                   WHERE "Name"='{}' 
+                   LIMIT 1""".format(to_char, group, patient)
+    else:
+        value = "'"+value+"'"
 
     sql = """SELECT type,"{0}",{1} as {2}
                 FROM workout  
                 WHERE "Name"='{3}' 
-                AND {1} ='{4}' """.format(what, to_char, group_by, patient, value)
-    print(sql)
+                AND duration between 10 and 300 
+                AND {1} in ({4}) """.format(what, to_char, group_by, patient, value)
+
     try:
         df = pd.read_sql(sql, rdb)
-        print(df)
     except:
         df = pd.DataFrame()
-
     return df
 
 
-def heart_rate(rdb, date, patient):
+def heart_rate(rdb, click, patient):
+    """  Returns DataFrames to plot workout figure in Workout tab"""
 
-    if date == None:
-        sql = """SELECT "Name","Date",name,"Value" FROM applewatch_numeric where "Name"='{}' and 
-        date_trunc('day', "Date")='2020-08-01' and type='HKQuantityTypeIdentifierHeartRate' order by "Date" """.format(patient,
-                                                                                                               date)
+    if click is None:
+        click = """SELECT "Start_Date":: date  AS day 
+                   FROM workout
+                   WHERE "Name"='{}' 
+                   LIMIT 1""".format(patient)
     else:
-        sql = """SELECT "Name","Date",name,"Value" FROM applewatch_numeric where "Name"='{}' and 
-        date_trunc('day', "Date")='{}' and type='HKQuantityTypeIdentifierHeartRate' order by "Date" """.format(patient,date)
+        click = "'" + str(click["points"][0]["x"]) + "'"
 
+    sql1 = """SELECT type,"Start_Date","End_Date"
+                FROM workout  
+                WHERE "Name"='{}' 
+                AND duration between 10 and 300 
+                AND "Start_Date":: date in ({}) """.format(patient, click)
+
+    sql2 = """SELECT "Name","Date","Value" 
+                FROM applewatch_numeric 
+                WHERE "Name"='{}' 
+                AND "Date":: date in ({}) 
+                AND type='Heart Rate' 
+                order by "Date" """.format(patient, click)
     try:
-        df = pd.read_sql(sql, rdb)
+        df1 = pd.read_sql(sql1, rdb)
+        df2 = pd.read_sql(sql2, rdb)
     except:
-        df = []
+        df1, df2 = pd.DataFrame(), pd.DataFrame()
 
-    return df
-
-def HRR(rdb, patient,activity):
-    sql = """SELECT "Start_Date",type,duration,"HRR_1_min","HRR_2_min","HR_max","HR_min","HR_average","speed","HR-RS_index" 
-    FROM Workout where "Name"='{}' and type = '{}' order by "Start_Date" """.format(patient,activity)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df=[]
-
-    return df
+    return df1, df2
 
 
-##### Comparison Tab
-
-
+# Comparison Tab
 def activity_type(rdb):
-    """
-    :param rdb: connection with database
-    :return: df: list of workouts type
-
-    """
+    """  Select types of workouts for drop down in Comparison tab"""
 
     sql = """SELECT type FROM activity_type"""
 
@@ -564,14 +432,10 @@ def activity_type(rdb):
 
 
 def plots_comparison(rdb, gr, linear, bar):
-    """
-    :param rdb: connection with database
-    :return: df: list of workouts type
-
-    """
+    """ Returns DataFrame to update box plots, histogram, scatter plot in comparison tab depending on the drop downs """
 
     sql = """SELECT p."{2}",an."Date"::date as date,an."type",
-                CASE WHEN an.type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                CASE WHEN an.type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2 Max',
                                 'Walking Heart Rate Average') THEN AVG("Value") ELSE sum("Value")
                 END as "Value" 
                 FROM applewatch_numeric as an 
@@ -589,20 +453,18 @@ def plots_comparison(rdb, gr, linear, bar):
 
 
 def linear_plot(rdb, gr, linear, bar):
-    """
-    :param rdb: connection with database
-    :return: df: list of workouts type
+    """ Returns DataFrame to update linear plot in comparison tab depending on the drop downs """
 
-    """
     sql = """ SELECT p."{2}",date_trunc('week', an."Date") AS week,an."type",
-                CASE WHEN type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2Max',
+                CASE WHEN type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2 Max',
                                     'Walking Heart Rate Average') THEN AVG("Value") ELSE sum("Value")
                 END AS "Value"
                 FROM applewatch_numeric as an
                 LEFT JOIN patient as p 
                 ON p."Name" = an."Name"                  
                 WHERE an.type in ('{0}','{1}')
-                GROUP BY p."{2}",date_trunc('week', an."Date"),an.type""".format(linear, bar, gr)
+                GROUP BY p."{2}",date_trunc('week', an."Date"),an.type
+                ORDER BY week """.format(linear, bar, gr)
 
     try:
         df = pd.read_sql(sql, rdb)
@@ -616,12 +478,9 @@ def linear_plot(rdb, gr, linear, bar):
     return df_linear, df_bar
 
 
-def workout_hr_comparison(rdb,gr, type):
-    """
-    :param rdb: connection with database
-    :return: df: list of workouts type
+def workout_hr_comparison(rdb, gr, type):
+    """ Returns DataFrame to compare heart rate during workouts in comparison tab """
 
-    """
     sql = """SELECT p."{0}",w."HR_average" 
              FROM workout as w 
              LEFT JOIN patient as p 
@@ -650,11 +509,8 @@ def workout_hr_comparison(rdb,gr, type):
 
 
 def day_night(rdb, gr):
-    """
-    :param rdb: connection with database
-    :return: df: list of workouts type
+    """ Returns DataFrame with heart rate divided for night and day """
 
-    """
     sql = """SELECT p."{0}","Date":: date as date,AVG("Value") as "Heart rate", 
             CASE WHEN "Date"::time BETWEEN '06:00:00' AND '24:00:00' THEN 'day'
             ELSE 'night'

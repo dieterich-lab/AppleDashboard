@@ -107,9 +107,9 @@ def update_scatter_plot_ecg(x_axis, y_axis):
               Input("group", 'value'))
 def update_box_plot_ecg(y_axis):
     if df.empty:
-        fig = px.box(df, x="Patient", y=y_axis, template='plotly_white')
+        fig = {}
     else:
-        fig= {}
+        fig = px.box(df, x="Patient", y=y_axis, template='plotly_white')
     return fig
 
 

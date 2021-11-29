@@ -12,7 +12,8 @@ label_linear, label_bar = ldd.label(rdb)
 
 # selection for first drop downs
 def selection():
-    selection = [
+    """ Drop downs for Comparison tab """
+    selection_health = [
         html.Br(),
         dbc.Row([
             dbc.Col([
@@ -46,15 +47,15 @@ def selection():
                     value=label_linear[1],
                     clearable=False,
                 ))]),
-            dbc.Col([
-                'Show heart rate during',
-                dcc.Dropdown(
-                    id='Bar chart2',
-                    style={'height': '100%'},
-                    options=[{'label': name, 'value': name} for name in label_bar2],
-                    value='Walking',
-                    clearable=False,
-                )]),
         ]),
     ]
-    return selection
+    selection_workout = [html.Br(),
+                         dbc.Row([dbc.Col(['Show heart rate during',
+                                           dcc.Dropdown(
+                                                id='Bar chart2',
+                                                style={'height': '100%'},
+                                                options=[{'label': name, 'value': name} for name in label_bar2],
+                                                value='Walking',
+                                                clearable=False,
+                                            )])])]
+    return selection_health, selection_workout

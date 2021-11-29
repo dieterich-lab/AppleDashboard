@@ -130,7 +130,7 @@ def export_ecg_data_from_apple_watch(directories):
     """
 
     # create DataFrame with all parameters
-    df = pd.DataFrame(columns=['patient', 'Date', 'Day', 'number', 'Classification', 'data', 'hr', 'SDNN', 'SENN',
+    df = pd.DataFrame(columns=['patient', 'Date', 'Day', 'number', 'Classification', 'data', 'hrv', 'SDNN', 'SENN',
                                'SDSD', 'pNN20', 'pNN50', 'lf', 'hf', 'lf_hf_ratio', 'total_power', 'vlf'])
 
     # Loading ECG data to database
@@ -174,7 +174,8 @@ def export_ecg_data_from_apple_watch(directories):
             # calculate parameters for time and frequency domain
             try:
                 RRints = np.array(RRints)
-                frequency_domain_features = frequencydomain(RRints)
+                frequency_domain_features = {'lf': 0, 'hf': 0, 'lf_hf_ratio': 0, 'total_power': 0, 'vlf': 0}
+                #frequency_domain_features = frequencydomain(RRints)
                 time_domain_features = time_domain_analyze(RRints)
             except:
                 time_domain_features = {'hrv': 0, 'SDNN': 0, 'SENN': 0, 'SDSD': 0, 'pNN20': 0, 'pNN50': 0}
@@ -198,8 +199,8 @@ def calculate_HRR(df_hr, df_workout):
     result_1_min, result_2_min, result_max, result_min, HR_average = [], [], [], [], []
 
     # get heart rate values
-    df_HR = df_hr.loc[df_hr['@type'] == 'Heart Rate']
-    df_HR['@value'] = pd.to_numeric(df_HR['@value'])
+    df_HR = df_hr.loc[df_hr['@type'] == 'Heart Rate'].copy(deep=True)
+    df_HR['@value'] = df_HR['@value'].apply(pd.to_numeric)
 
     df_workout['@totalDistance'], df_workout['@duration'] = pd.to_numeric(df_workout['@totalDistance']), \
                                                             pd.to_numeric(df_workout['@duration'])
