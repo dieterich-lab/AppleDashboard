@@ -51,33 +51,39 @@ class ImportSettings():
 def start_import(rdb):
     """ Import data from entities and dataset files"""
     files = []
-    directories = []
+    directories_ecg = []
+    directories_json = []
     settings = ImportSettings()
 
     print('starting import', datetime.now().strftime('%H:%M:%S'))
     for r, d, f in os.walk('./import'):
         if d:
-            directories = d
+            directories_ecg = [directories for directories in d if directories.startswith('electrocardiograms')]
+            directories_json = [directories for directories in d if directories.startswith('data')]
         for file in f:
             if '.xml' in file:
                 files.append(file)
 
-    if not files:
-        print(files)
+    if not files and not directories_json and not directories_ecg:
         return print("Could not import to database missing export file", file=sys.stderr)
-    elif not settings.is_dataset_changed('./import/'+files[0]):
-        return print("Data set not changed", file=sys.stderr)
+    #elif not settings.is_dataset_changed('./import/'+files[0]):
+    #    return print("Data set not changed", file=sys.stderr)
     else:
         print(files)
+        n = len(files)
         # use function from import_dataset to create tables in database
         print("Start import data")
         id.create_database_data(rdb)
-        id.insert_data(rdb, files)
-        id.load_ecg_data_to_database(rdb, directories)
+        if files:
+            id.insert_data(rdb, files)
+        if directories_json:
+            id.load_json_data_to_database(rdb, directories_json, n)
+        if directories_ecg:
+            id.load_ecg_data_to_database(rdb, directories_ecg)
         id.alter_tables(rdb)
-        path = './import/' + files[0]
-        settings.update(files=path)
-        settings.save()
+        #path = './import/' + files[0]
+        #settings.update(files=path)
+        #settings.save()
         print("End load data")
 
 

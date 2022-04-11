@@ -17,11 +17,9 @@ def patient(rdb):
 def label(rdb):
     """ Returns list of parameter for linear and bar drop down """
 
-    sql = """SELECT type FROM name WHERE type IN ('Heart Rate','Heart Rate Variability SDNN', 'Resting Heart Rate',
-                                                    'VO2 Max','Walking Heart Rate Average')"""
+    sql = """SELECT type FROM name """
 
-    sql2 = """SELECT type FROM name WHERE type NOT IN ('Heart Rate','Heart Rate Variability SDNN',
-                                                        'Resting Heart Rate','VO2 Max','Walking Heart Rate Average')"""
+    sql2 = """SELECT type FROM name """
 
     try:
         df, df2 = pd.read_sql(sql, rdb), pd.read_sql(sql2, rdb)

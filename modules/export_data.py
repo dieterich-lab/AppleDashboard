@@ -88,6 +88,7 @@ def export_health_data_from_apple_watch(input_data, n):
     df['@startDate'] = pd.to_datetime(df['@startDate']).map(
         lambda x: x.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT{}'.format(zone))))
 
+
     return df, df2, min_date, max_date
 
 

@@ -1,4 +1,5 @@
 from modules import export_data as ed
+from modules import ZIV_export as ziv
 import xmltodict
 import io
 
@@ -118,6 +119,27 @@ def insert_data(rdb, files):
         cur.copy_from(output, 'applewatch', null="", sep=',')  # null values become ''
         cur.copy_from(output_workout, 'workout', null="", sep=',')  # null values become ''
         rdb.commit()
+
+    return print('done load health and workout data to database')
+
+
+def load_json_data_to_database(rdb, path, n):
+    """
+    Inserting basic information, health and workout data into tables
+    """
+    cur = rdb.cursor()
+    path = './import/{}'.format(path[0])
+
+    data, patient, min_date, max_date = ziv.export_json_data(path)
+    line = [patient, n+1, '', '', '', '', min_date, max_date]
+    cur.execute("INSERT INTO patient VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", line)
+
+    output = io.StringIO()
+    data.to_csv(output, index=False, header=False)
+    output.seek(0)
+
+    cur.copy_from(output, 'applewatch', null="", sep=',')  # null values become ''
+    rdb.commit()
 
     return print('done load health and workout data to database')
 

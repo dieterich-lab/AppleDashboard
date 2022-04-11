@@ -15,7 +15,6 @@ def update_figure(df, group, what):
     df = df.groupby([index, "type"]).sum().reset_index()
 
     if group == 'DOW':
-        print(df['DOW'])
         cats = ['Monday   ', 'Tuesday  ', 'Wednesday', 'Thursday ', 'Friday   ', 'Saturday ', 'Sunday   ']
         df['DOW'] = pd.Categorical(df['DOW'], categories=cats, ordered=True)
         df = df.sort_values('DOW')
