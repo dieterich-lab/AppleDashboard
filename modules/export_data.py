@@ -8,6 +8,7 @@ import numpy as np
 from ecgdetectors import Detectors
 from modules.HRV_frequency_domain_analyze import frequencydomain
 from modules.HRV_time_domain_analyze import time_domain_analyze
+from modules import LSTM as lstm
 from dateutil.relativedelta import relativedelta
 
 
@@ -88,7 +89,6 @@ def export_health_data_from_apple_watch(input_data, n):
     df['@startDate'] = pd.to_datetime(df['@startDate']).map(
         lambda x: x.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Etc/GMT{}'.format(zone))))
 
-
     return df, df2, min_date, max_date
 
 
@@ -131,8 +131,8 @@ def export_ecg_data_from_apple_watch(directories):
     """
 
     # create DataFrame with all parameters
-    df = pd.DataFrame(columns=['patient', 'Date', 'Day', 'number', 'Classification', 'data', 'hrv', 'SDNN', 'SENN',
-                               'SDSD', 'pNN20', 'pNN50', 'lf', 'hf', 'lf_hf_ratio', 'total_power', 'vlf'])
+    df = pd.DataFrame(columns=['patient', 'Date', 'Day', 'number', 'Classification', 'data','r_peaks', 'hrv', 'SDNN', 'SENN',
+                               'SDSD', 'pNN20', 'pNN50', 'lf', 'hf', 'lf_hf_ratio', 'total_power', 'vlf'], dtype=object)
 
     # Loading ECG data to database
     for i in directories:
@@ -167,27 +167,23 @@ def export_ecg_data_from_apple_watch(directories):
             data = ecg["Name"][10:].str.replace(',', '.').astype(float).to_list()
 
             # calculate RR intervals
-            data_array = np.array(data)
-            r_peaks = detect_r_peaks(511, data_array)
+            r_peaks = lstm.detect_r_peaks(data)
             RRints = np.diff(r_peaks)
             RRints = (RRints / 511) * 1000
+            r_peaks = list(map(float, r_peaks))
 
             # calculate parameters for time and frequency domain
             try:
-                RRints = np.array(RRints)
-                frequency_domain_features = {'lf': 0, 'hf': 0, 'lf_hf_ratio': 0, 'total_power': 0, 'vlf': 0}
+                #RRints = np.array(RRints)
+                data = [patient, date, day, number, classification, data, r_peaks,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                 #frequency_domain_features = frequencydomain(RRints)
-                time_domain_features = time_domain_analyze(RRints)
+                #time_domain_features = time_domain_analyze(RRints)
             except:
-                time_domain_features = {'hrv': 0, 'SDNN': 0, 'SENN': 0, 'SDSD': 0, 'pNN20': 0, 'pNN50': 0}
-                frequency_domain_features = {'lf': 0, 'hf': 0, 'lf_hf_ratio': 0, 'total_power': 0, 'vlf': 0}
+                data = [patient, date, day, number, classification, data, r_peaks,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-            ecg_data = {'patient': patient, 'Date': date, 'Day': day, 'number': number,
-                        'Classification': classification, 'data': data}
 
-            merge = {**ecg_data, **time_domain_features, **frequency_domain_features}  # merge all three tables
+            df.loc[df.shape[0]] = data
 
-            df = df.append(merge, ignore_index=True)
 
     return df
 

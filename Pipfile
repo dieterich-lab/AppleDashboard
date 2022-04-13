@@ -8,18 +8,19 @@ flask = "*"
 numpy = "*"
 pandas = "*"
 waitress = "*"
-plotly= "*"
+plotly = "*"
 dash = "*"
-gunicorn="*"
+gunicorn = "*"
 dash_bootstrap_components = "*"
 xmltodict = "*"
 psycopg2-binary = "*"
 apscheduler = "*"
-scipy ="*"
+scipy = "*"
 py-ecg-detectors = "*"
+tensorflow= "*"
 
 [dev-packages]
 pylint = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"

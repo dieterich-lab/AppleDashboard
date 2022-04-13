@@ -3,7 +3,6 @@ from modules import ZIV_export as ziv
 import xmltodict
 import io
 
-
 def create_database_data(rdb):
     """
     CREATE the necessary tables in  a PostgreSQL database
@@ -52,7 +51,8 @@ def create_database_data(rdb):
                                     "Day" text,
                                     "number" text,
                                     "Classification" text,
-                                    "Value" integer [],
+                                    "Value" float [],
+                                    "r_peaks" integer [],
                                     "hrvOwn" integer,
                                     "SDNN" integer,
                                     "SENN" integer,
@@ -152,7 +152,7 @@ def load_ecg_data_to_database(rdb, directories):
     cur = rdb.cursor()
     for index, row in df.iterrows():
         try:
-            cur.execute("INSERT INTO ecg VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", row)
+            cur.execute("INSERT INTO ecg VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", row)
         except:
             print(df['patient'])
     rdb.commit()

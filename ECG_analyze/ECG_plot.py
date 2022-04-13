@@ -7,6 +7,8 @@ from itertools import product
 from ecgdetectors import Detectors
 from modules import export_data as ed
 
+
+
 rdb = connect_db()
 
 
@@ -46,7 +48,7 @@ def update_ecg_figure(day, time, patient, add):
         data = np.array(df['Value'][0])/1000
         time = np.arange(0, len(data) / 511, 1 /511)
         time = time[0:len(data)]
-        r_peaks = ed.detect_r_peaks(511, data)
+        r_peaks = np.array(df['r_peaks'][0])
         df_data = pd.DataFrame()
         df_data['value'] = data
         df_data['time'] = time
@@ -55,7 +57,7 @@ def update_ecg_figure(day, time, patient, add):
 
         # if minor grid or R peaks should be added to ECG plot
         if add == 'R_peaks':
-            fig.add_scatter(x=r_peaks / 511, y=data[r_peaks], mode='markers', name="R_peaks" )
+            fig.add_scatter(x=r_peaks/ 511 , y=data[r_peaks], mode='markers', name="R_peaks" )
         else:
             add_minor_grid(fig, x_range=[0, 30], y_range=[-1.5, 1.5])
             fig.update_xaxes(showgrid=True, gridwidth=1.5, gridcolor='red', nticks=80, range=[0, 10],
