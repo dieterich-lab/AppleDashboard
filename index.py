@@ -3,7 +3,7 @@ from dash import html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 from app import app
-from apps import AppleWatch, Workouts, Comparison, ECG, tutorial
+from apps import AppleWatch, Comparison, tutorial
 
 # change color of background
 colors = {'background': '#f4f4f2', 'text': '#7FDBFF'}
@@ -26,9 +26,7 @@ app.layout = html.Div([
                             # Tabs
                             dbc.Card(html.Div(id="tabs", className="row tabs",
                                               children=[dcc.Link('Patient Health data', href='/'),
-                                                        dcc.Link('Patient Workouts', href='/'),
-                                                        dcc.Link('Patient Comparison', href='/'),
-                                                        dcc.Link('ECG analyze', href='/')])),
+                                                        dcc.Link('Patient Comparison', href='/')])),
 
                             dcc.Location(id='url', refresh=False),
 
@@ -44,19 +42,11 @@ app.layout = html.Div([
 def display_page(pathname):
     dcc.Link("back", href='/apps/tutorial'),
     tabs = [dcc.Link("Patient health data", href='/apps/AppleWatch'),
-            dcc.Link("Patient Workouts", href='/apps/Workouts'),
-            dcc.Link("Patient Comparison", href='/apps/Comparison'),
-            dcc.Link("ECG analyze", href='/apps/ECG')]
+            dcc.Link("Patient Comparison", href='/apps/Comparison')]
 
-    if pathname == "/apps/Workouts":
-        tabs[1] = dcc.Link(dcc.Markdown("**&#9632 Patient Workouts**"), href="/apps/Workouts")
-        return Workouts.layout, tabs
-    elif pathname == "/apps/Comparison":
-        tabs[2] = dcc.Link(dcc.Markdown("**&#9632 Patient comparison**"), href="/apps/Comparison")
+    if pathname == "/apps/Comparison":
+        tabs[1] = dcc.Link(dcc.Markdown("**&#9632 Patient comparison**"), href="/apps/Comparison")
         return Comparison.layout, tabs
-    elif pathname == "/apps/ECG":
-        tabs[3] = dcc.Link(dcc.Markdown("**&#9632 ECG analyze**"), href="/apps/ECG")
-        return ECG.layout, tabs
     elif pathname == "/apps/tutorial":
         return tutorial.layout, tabs
 

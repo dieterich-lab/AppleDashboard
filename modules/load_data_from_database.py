@@ -1,5 +1,4 @@
 import pandas as pd
-import time
 
 
 def patient(rdb):
@@ -19,14 +18,12 @@ def label(rdb):
 
     sql = """SELECT type FROM name """
 
-    sql2 = """SELECT type FROM name """
-
     try:
-        df, df2 = pd.read_sql(sql, rdb), pd.read_sql(sql2, rdb)
-        label_linear, label_bar = df["type"].values.tolist(), df2["type"].values.tolist()
+        df = pd.read_sql(sql, rdb)
+        label_linear = df["type"].values.tolist()
     except:
-        label_linear, label_bar = [], []
-    return label_linear, label_bar
+        label_linear = []
+    return label_linear
 
 
 def month(rdb, patient):
@@ -90,37 +87,6 @@ def age_sex(rdb, patient):
     return age, sex
 
 
-def classification_ecg(rdb, patient):
-    """ Returns ecg classification for patient information card """
-
-    sql = """SELECT "Classification",count(*) FROM ecg WHERE "Patient"='{}' GROUP BY "Classification" """.format(patient)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
-
-
-def number_of_days_more_6(rdb, patient):
-    """ Returns number of days the patient had the Apple Watch on their hand for more than 6 hours"""
-
-    sql = """SELECT count (*) 
-             FROM (SELECT "Date"::date
-                   FROM applewatch_categorical 
-                   WHERE "Name" = '{}'
-                   AND "type" = 'Apple Stand Hour' 
-                   GROUP BY "Date"::date
-                   HAVING count("Date"::date) > 6) days  """.format(patient)
-    try:
-        df = pd.read_sql(sql, rdb)
-        df = df.iloc[0]['count']
-    except:
-        df = '0'
-
-    return df
-
-
 def card(rdb, patient, group, date, value):
     """ Returns DataFrame with resting, working, mean hear rate, step count, exercise time, activity for the cards """
     if group == 'M':
@@ -139,13 +105,12 @@ def card(rdb, patient, group, date, value):
 
     sql = """SELECT {0} AS {3},type,
              CASE 
-                WHEN type in ('Active Energy Burned','Step Count','Apple Exercise Time') THEN SUM("Value")
-                WHEN type in ('Heart Rate','Walking Heart Rate Average','Resting Heart Rate') THEN AVG("Value")
+                WHEN type in ('Walking distance unspecified time Pedometer') THEN SUM("Value")
+                WHEN type in ('Heart rate 1 hour mean','Systolic blood pressure') THEN AVG("Value")
              END AS "Value"
              FROM applewatch_numeric 
              WHERE "Name" = '{1}'
-             AND type in ('Active Energy Burned','Step Count','Apple Exercise Time','Heart Rate',
-                            'Walking Heart Rate Average','Resting Heart Rate')               
+             AND type in ('Walking distance unspecified time Pedometer','Heart rate 1 hour mean','Systolic blood pressure')               
              AND {0}='{2}' 
              GROUP BY {3},type""".format(to_char, patient, value, group_by)
 
@@ -253,181 +218,7 @@ def trend_figure(rdb, patient, group, start_date, end_date):
         df = pd.DataFrame()
     return df
 
-# Query data for ECG_analyse
-
-
-def ecgs(rdb, patient):
-    """  Returns DataFrame for table_ecg"""
-    
-    sql2 = """SELECT "Day","Date"::time AS Time, "Classification" 
-                FROM ecg  
-                WHERE "Patient"='{}' 
-                ORDER BY "Day" """.format(patient)
-
-    try:
-        df = pd.read_sql(sql2, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
-
-
-def ecg_data(rdb, day, patient, time):
-    """ Returns DatFrame to plot  ecg signal   """
-
-    sql = """SELECT * FROM ECG where "Day"='{0}' and "Patient"='{1}' and "Date"::time='{2}' """.format(day, patient, time)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
-
-
-def table_hrv(rdb):
-    """ Returns DataFrame with all information about ecg ann calculate HRV feature for time and frequency domain   """
-
-    sql = """ SELECT "Patient","Day","Date"::time as Time, "hrvOwn", "SDNN", "SENN", "SDSD", "pNN20", "pNN50", "lf", 
-                "hf", "lf_hf_ratio","total_power", "vlf", "Classification" FROM ecg ORDER BY "Patient","Day" """
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
-
-
-def scatter_plot_ecg(rdb, x_axis, y_axis):
-    """ Returns DataFrame for scatter plot with patients ids/numbers and selected features """
-
-    sql = """ SELECT "Patient","{0}","{1}" FROM ecg """.format(x_axis, y_axis)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
-
-
-def box_plot_ecg(rdb, x_axis):
-    """ Returns DataFrame for box plot with patients ids/numbers and selected feature    """
-
-    sql = """ SELECT "Patient","{}" FROM ecg """.format(x_axis)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
-
-# Patient Workouts
-
-
-def workout_activity_data(rdb, patient):
-    """ Returns the DataFrame for table and summary figure on the Workouts Tab. The table is filtered by selected
-        patient in drop down list """
-
-    sql = """SELECT type,duration,distance,"EnergyBurned","Start_Date"::date AS date,"Start_Date"::time AS "Start",
-                    "End_Date"::time AS "End",TO_CHAR("Start_Date",'YYYY-MM') AS month,
-                    TO_CHAR("Start_Date", 'IYYY/IW') as week,TO_CHAR("Start_Date", 'Day') as "DOW"
-             FROM workout  
-             WHERE "Name"='{}' 
-             ORDER BY type,"Start_Date"  """.format(patient)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
-
-
-def workout_activity_pie_chart(rdb, patient, value, group, what):
-    """ Returns the DataFrame for pie plot on the Workouts Tab. The table is filtered and grouped by selected
-        patient,day/week/month in drop down list  """
-
-    if group == 'M':
-        if value is not None: value = value["points"][0]["x"][:7]
-        to_char = """ TO_CHAR("Start_Date",'YYYY-MM')"""
-        group_by = "month"
-    elif group == 'W':
-        if value is not None: value = value["points"][0]["x"]
-        to_char = """ TO_CHAR("Start_Date", 'IYYY/IW') """
-        group_by = "week"
-    elif group == 'DOW':
-        if value is not None: value = value["points"][0]["x"].replace(" ", "")
-        to_char = """TRIM(TO_CHAR("Start_Date", 'Day'))  """
-        group_by = """ "DOW" """
-    else:
-        if value is not None: value = str(value["points"][0]["x"])
-        to_char = """ "Start_Date"::date """
-        group_by = "date"
-
-    if value is None:
-        value = """SELECT {}  AS {} 
-                   FROM workout
-                   WHERE "Name"='{}' 
-                   LIMIT 1""".format(to_char, group, patient)
-    else:
-        value = "'"+value+"'"
-
-    sql = """SELECT type,"{0}",{1} as {2}
-                FROM workout  
-                WHERE "Name"='{3}' 
-                AND duration between 10 and 300 
-                AND {1} in ({4}) """.format(what, to_char, group_by, patient, value)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
-
-
-def heart_rate(rdb, click, patient):
-    """  Returns DataFrames to plot workout figure in Workout tab"""
-
-    if click is None:
-        click = """SELECT "Start_Date":: date  AS day 
-                   FROM workout
-                   WHERE "Name"='{}' 
-                   LIMIT 1""".format(patient)
-    else:
-        click = "'" + str(click["points"][0]["x"]) + "'"
-
-    sql1 = """SELECT type,"Start_Date","End_Date"
-                FROM workout  
-                WHERE "Name"='{}' 
-                AND duration between 10 and 300 
-                AND "Start_Date":: date in ({}) """.format(patient, click)
-
-    sql2 = """SELECT "Name","Date","Value" 
-                FROM applewatch_numeric 
-                WHERE "Name"='{}' 
-                AND "Date":: date in ({}) 
-                AND type='Heart Rate' 
-                order by "Date" """.format(patient, click)
-    try:
-        df1 = pd.read_sql(sql1, rdb)
-        df2 = pd.read_sql(sql2, rdb)
-    except:
-        df1, df2 = pd.DataFrame(), pd.DataFrame()
-
-    return df1, df2
-
-
 # Comparison Tab
-def activity_type(rdb):
-    """  Select types of workouts for drop down in Comparison tab"""
-
-    sql = """SELECT type FROM activity_type"""
-
-    try:
-        df = pd.read_sql(sql, rdb)
-        df = df['type'].to_list()
-    except:
-        df = ['empty']
-
-    return df
-
 
 def plots_comparison(rdb, gr, linear, bar):
     """ Returns DataFrame to update box plots, histogram, scatter plot in comparison tab depending on the drop downs """

@@ -32,13 +32,7 @@ layout = html.Div([
             dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='linear_plot1')), style={'height': '100%'}),lg=6)]),
     dbc.Row([dbc.Col(selection_workout)]),
     html.Br(),
-    dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='workout_plot')), style={'height': '100%'}))]),
 
-    html.Br(),
-    dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='workout_plot2')), style={'height': '100%'}))]),
-
-    html.Br(),
-    dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='during_night_day_plot')), style={'height': '100%'}))]),
 ])
 
 

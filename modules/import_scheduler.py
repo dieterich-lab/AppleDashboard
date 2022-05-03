@@ -4,7 +4,7 @@ import os
 import sys
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
-
+import tzlocal
 
 class ImportSettings():
     """
@@ -51,35 +51,21 @@ class ImportSettings():
 def start_import(rdb):
     """ Import data from entities and dataset files"""
     files = []
-    directories_ecg = []
-    directories_json = []
     settings = ImportSettings()
 
     print('starting import', datetime.now().strftime('%H:%M:%S'))
     for r, d, f in os.walk('./import'):
-        if d:
-            directories_ecg = [directories for directories in d if directories.startswith('electrocardiograms')]
-            directories_json = [directories for directories in d if directories.startswith('data')]
         for file in f:
-            if '.xml' in file:
+            if '.json' in file:
                 files.append(file)
 
-    if not files and not directories_json and not directories_ecg:
+    if not files:
         return print("Could not import to database missing export file", file=sys.stderr)
-    #elif not settings.is_dataset_changed('./import/'+files[0]):
-    #    return print("Data set not changed", file=sys.stderr)
     else:
-        print(files)
-        n = len(files)
-        # use function from import_dataset to create tables in database
         print("Start import data")
         id.create_database_data(rdb)
         if files:
-            id.insert_data(rdb, files)
-        if directories_json:
-            id.load_json_data_to_database(rdb, directories_json, n)
-        if directories_ecg:
-            id.load_ecg_data_to_database(rdb, directories_ecg)
+            id.load_json_data_to_database(rdb, files)
         id.alter_tables(rdb)
         #path = './import/' + files[0]
         #settings.update(files=path)
@@ -94,7 +80,7 @@ class Scheduler():
     """
 
     def __init__(self, rdb, day_of_week, hour, minute):
-        self.bgs = BackgroundScheduler()
+        self.bgs = BackgroundScheduler(timezone=str(tzlocal.get_localzone()))
         start_import(rdb)
         self.bgs.add_job(start_import, 'cron', [rdb], day_of_week=day_of_week, hour=hour, minute=minute)
 

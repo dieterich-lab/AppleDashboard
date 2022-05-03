@@ -5,7 +5,6 @@ import os
 import pandas as pd
 
 
-
 class value:
 	def __init__(self, number, unit):
 		self.number = number
@@ -45,10 +44,10 @@ class item:
 	def print_content(self):
 		for val in self.values:
 			try:
-				data = {'@type': self.name,'@sourceName': val.patient,'@unit': val.unit,'@startDate':  val.time,'@value': val.number}
+				data = {'@type': self.name, '@sourceName': val.patient, '@unit': val.unit, '@startDate':  val.time, '@value': val.number}
 				return data
 			except:
-				data = {'@type': self.name,'@sourceName': val.patient,'@unit': val.unit,'@startDate':  val.time,'@value': val.number}
+				data = {'@type': self.name, '@sourceName': val.patient, '@unit': val.unit, '@startDate':  val.time, '@value': val.number}
 				return data
 
 
@@ -63,14 +62,13 @@ def get_entry_index(entity, input_name):
 
 def export_json_data(path):
 	data = []
-	for file in os.listdir(os.fsencode(path)):
-		with open(os.path.join(path, os.fsdecode(file))) as fp:
-			for line in fp:
-				data.append(json.loads(line))
+	with open(path) as fp:
+		print(open)
+		for line in fp:
+			data.append(json.loads(line))
 
 
 	items = []
-	i = 0
 	for line in data:
 		test_string = line["code"]["coding"][0]["display"]
 
@@ -104,7 +102,7 @@ def export_json_data(path):
 					datetime.fromisoformat(line["effectivePeriod"]["end"])
 				)
 
-	df = pd.DataFrame(columns=['@type','@sourceName','@unit', '@startDate', '@value'], dtype=object)
+	df = pd.DataFrame(columns=['@type', '@sourceName', '@unit', '@startDate', '@value'], dtype=object)
 	for entry in items:
 		if entry.subentries != []:
 			for subentry in entry.subentries:
@@ -113,10 +111,7 @@ def export_json_data(path):
 		else:
 			data = entry.print_content()
 			df = df.append(data, ignore_index=True)
-	patient = df['@sourceName'].unique()
-	min_date = df['@startDate'].max()
-	max_date = df['@startDate'].min()
-	return df, patient[0], min_date, max_date
+	return df
 
 
 

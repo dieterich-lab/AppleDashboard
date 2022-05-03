@@ -2,8 +2,6 @@ from app import app, data_store
 from dash.dependencies import Input, Output, ALL
 import dash_bootstrap_components as dbc
 from dash import dcc, html, dash_table
-import time
-from datetime import date
 import datetime
 from flask import send_file
 import pandas as pd
@@ -16,7 +14,6 @@ from AppleWatch.Card import card_update, cards_view
 from AppleWatch.trend_figure import figure_trend
 from AppleWatch.summary_figure import update_figure
 from AppleWatch.day_figure import day_figure_update
-from ECG_analyze.ECG_plot import update_ecg_figure
 from AppleWatch.selection_card import selection
 from AppleWatch.patient_information import patient_information, info
 
@@ -70,34 +67,11 @@ layout = html.Div([
         dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_summary')), style={'height': '100%'}), lg=8)]),
     html.Br(),
 
-    dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_day', hoverData={'points': [{'customdata': '1'}]}),
-                                          style={'height': '100%'})), lg=6),
-             dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_trend')), style={'height': '100%'}), lg=6)]),
-    html.Br(),
+    #dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_day', hoverData={'points': [{'customdata': '1'}]}),
+    #                                      style={'height': '100%'})), lg=6),
+    #         dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_trend')), style={'height': '100%'}), lg=6)]),
+    #html.Br(),
 
-    dbc.Row([
-        dbc.Col(dbc.Card(dcc.Loading(dash_table.DataTable(
-            id='table_ecg',
-            style_table={'overflowX': 'auto'},
-            page_size=11,
-            filter_action='native',
-            sort_action="native",
-            sort_mode="multi",
-            style_data_conditional=[
-                {
-                    'if': {'row_index': 'odd'},
-                    'backgroundColor': 'rgb(248, 248, 248)'
-                }
-            ],
-            style_header={
-                'backgroundColor': 'rgb(230, 230, 230)',
-                'fontWeight': 'bold'
-            }
-
-        )), style={'height': '100%'}), lg=3),
-        dbc.Col(dbc.Card([html.A('Download ECG', id='my-link'), dcc.Graph(id='figure_ecg')], style={'height': '100%'}),
-                lg=9)]),
-    html.Br(),
 ])
 
 
@@ -158,7 +132,7 @@ def update_selection(click, patient, value):
             clearable=False
         )])
     elif value == 'D':
-        min_date, max_date = ldd.min_max_date(rdb,patient)
+        min_date, max_date = ldd.min_max_date(rdb, patient)
         if click:
             value_day = str(click["points"][0]["x"])
         else:
@@ -188,12 +162,9 @@ def update_information(patient):
 
 # callback for update values in card
 @app.callback(
-    [Output("RestingHeartRate", "children"),
-     Output("WalkingHeartRate", "children"),
-     Output("HeartRate_mean", "children"),
-     Output("step", "children"),
-     Output("Exercise_minute", "children"),
-     Output("ActivitySummary", "children")],
+    [Output("HeartRate", "children"),
+     Output("Walking_distance", "children"),
+     Output("Systolic_blood_pressure", "children")],
     [Input("patient", "value"),
      Input("group by", "value"),
      Input({"index": ALL, 'type': 'filter-drop_down'}, 'date'),
@@ -203,10 +174,10 @@ def update_information(patient):
 def update_card(patient, group, date, value, m):
     df = ldd.card(rdb, patient, group, date[0], value[0])
     if not date or df.empty:
-        resting_hr, walking_hr, hr_mean, step, exercise_minute, activity_summary = 0, 0, 0, 0, 0, 0
+        heart_rate, Walking_distance, SBP = 0, 0, 0
     else:
-        resting_hr, walking_hr, hr_mean, step, exercise_minute, activity_summary = card_update(df)
-    return resting_hr, walking_hr, hr_mean, step, exercise_minute, activity_summary
+        heart_rate, Walking_distance, SBP = card_update(df)
+    return  heart_rate, Walking_distance, SBP
 
 
 # update table and summary_figure depending on the drop-downs
@@ -275,49 +246,9 @@ def update_figure_trend(value, date, group, patient, m):
     return fig
 
 
-# update table_ecg
-@app.callback(
-    [Output('table_ecg', 'data'),
-     Output('table_ecg', 'columns'),
-     Output('table_ecg', 'row_selectable'),
-     Output('table_ecg', 'selected_rows')],
-    Input("patient", "value")
-)
-def update_table_ecg(patient):
-    df = ldd.ecgs(rdb, patient)
-    data = df.to_dict('records')
-    columns = [{"name": i, "id": i} for i in df.columns]
-    return data, columns, 'single', [0]
-
-
-# update ECG figure
-@app.callback(
-    Output('figure_ecg', 'figure'),
-    [Input('table_ecg', "selected_rows"),
-     Input("patient", "value"),
-     Input("table_ecg", 'data')]
-)
-def update_ecg(data, patient, data_tab):
-    if not data_tab:
-        fig = {}
-    else:
-        add = ''
-        day = data_tab[data[0]]['Day']
-        time = data_tab[data[0]]['time']
-
-        fig, df_ecg = update_ecg_figure(day, time, patient, add)
-        data_store.csv_ecg = df_ecg.to_csv(index=False)
-    return fig
-
-
 @app.callback(Output('my-link', 'href'), [Input('table2', 'selected_rows')])
 def update_link(value):
     return '/dash/urlToDownload'
-
-
-@app.callback(Output('my-link2', 'href'), [Input('table2', 'selected_rows')])
-def update_link(value):
-    return '/dash/Download2'
 
 
 @app.server.route('/dash/urlToDownload')
@@ -330,18 +261,3 @@ def download_csv():
                      mimetype='text/csv',
                      attachment_filename='data.csv',
                      as_attachment=True)
-
-
-@app.server.route('/dash/Download2')
-def download2_csv():
-    csv = data_store.csv_apple
-    buf_str = io.StringIO(csv)
-    buf_byt = io.BytesIO(buf_str.read().encode("utf-8"))
-    buf_str.close()
-    return send_file(buf_byt,
-                     mimetype='text/csv',
-                     attachment_filename='data_apple_watch.csv',
-                     as_attachment=True)
-                     
-
-

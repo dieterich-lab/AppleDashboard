@@ -24,23 +24,7 @@ def info(patient):
     """ Change values in information card depend from this what is chosen in drop down """
 
     age, sex = ldd.age_sex(rdb, patient)
-    ecg_classification = ldd.classification_ecg(rdb, patient)
-    days = ldd.number_of_days_more_6(rdb, patient)
 
-    def intersperse(lst, item):
-        result = [item] * (len(lst) * 2 - 1)
-        result[0::2] = lst
-        return result
-
-    ecg_classification.insert(1, 'separator', ':')
-    x = ecg_classification.to_string(header=False,
-                                     index=False,
-                                     index_names=False).split('\n')
-
-    ecg_classification = tuple(intersperse(x, html.Br()))
-
-    text = (html.Br(), 'Age: {}'.format(age), html.Br(), 'Sex: {}'.format(sex), html.Br(), 'Patient disease: None',
-            html.Br()) + ecg_classification + \
-           (html.Br(), 'The number of days the Apple Watch has been worn for at least 6h: {}'.format(days))
+    text = ('Age: {}'.format(age), html.Br(), 'Sex: {}'.format(sex), html.Br(), 'Patient disease: None')
 
     return text
