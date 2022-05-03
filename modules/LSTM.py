@@ -1,11 +1,16 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 from scipy.signal import find_peaks
 
+lstm_model = keras.models.load_model('models/lstm_model')
 
 model_outputs = []
 
-lstm_model = keras.models.load_model('models/lstm_model')
+
 
 
 def normalize(array):
