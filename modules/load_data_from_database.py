@@ -1,31 +1,26 @@
 import pandas as pd
+from modules.models import Patient
+from sqlalchemy import select
 import time
 
 
 def patient(rdb):
-    """ Returns list of patients """
-
+    select(Patient.patient_id).order(Patient.index)
     patients = """SELECT "Name" FROM patient ORDER BY index"""
-    try:
-        patients = pd.read_sql(patients, rdb)
-        patients = patients["Name"].values.tolist()
-    except:
-        patients = ['Patient']
-    return patients
+
+    patients_df = pd.read_sql(patients, rdb)
+    patients_list = patients_df["Name"].values.tolist()
+    return patients_list
 
 
 def label(rdb):
-    """ Returns list of parameter for linear and bar drop down """
-
     sql = """SELECT type FROM name """
 
     sql2 = """SELECT type FROM name """
 
-    try:
-        df, df2 = pd.read_sql(sql, rdb), pd.read_sql(sql2, rdb)
-        label_linear, label_bar = df["type"].values.tolist(), df2["type"].values.tolist()
-    except:
-        label_linear, label_bar = [], []
+    df, df2 = pd.read_sql(sql, rdb), pd.read_sql(sql2, rdb)
+    label_linear, label_bar = df["type"].values.tolist(), df2["type"].values.tolist()
+
     return label_linear, label_bar
 
 

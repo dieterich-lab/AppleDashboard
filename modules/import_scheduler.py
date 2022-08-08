@@ -4,9 +4,10 @@ import os
 import sys
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
+import tzlocal
 
 
-class ImportSettings():
+class ImportSettings:
     """
     Class which create file dev_import necessary to import data.
     Inside the file we have two unique cods for files dataset and entities.
@@ -94,7 +95,7 @@ class Scheduler():
     """
 
     def __init__(self, rdb, day_of_week, hour, minute):
-        self.bgs = BackgroundScheduler()
+        self.bgs = BackgroundScheduler(timezone=str(tzlocal.get_localzone()))
         start_import(rdb)
         self.bgs.add_job(start_import, 'cron', [rdb], day_of_week=day_of_week, hour=hour, minute=minute)
 
