@@ -13,20 +13,24 @@ Export "Health data" from Apple watch:
 5. Choose the method how you want save or share data <br/>
 ![](assets/apple_watch.png)
 
-## Setup ##
-We highly recommend the setup via docker-compose. The installation via pip is only recommended for developers.
-
-### Docker Setup Instructions ###
-Currently setup for deployment and not development
+## Setup production ###
 
 #### Requirements ####
 * [Docker-CE](https://docs.docker.com/install/) >= 20.10.2
 * [docker-compose](https://docs.docker.com/compose/overview/) >= 1.27.0
 
 #### Usage ####
-* `docker-compose up`
+1.Open Terminal (in Windows: Command window(cmd))
 
-### Setup Instructions Development ### 
+2.Go to AppleDashboard directory
+
+3.Build the images and run the containers:
+* `$ docker-compose up -d`
+
+Test it out at http://localhost:600. No mounted folders. To apply changes, the image must be re-built. <br>
+[Data import information](#data-import)
+
+## Setup Development ## 
 Not recommended for pure deployment.
 
 #### Requirements ####
@@ -37,11 +41,17 @@ Not recommended for pure deployment.
 * Linux/MacOS
 
 #### Usage ####
+1.Open Terminal 
+
+2.Go to AppleDashboard directory
+
+3.Run commands:
 * `pipenv install` installs the latest dependencies
 * `pipenv shell` enters the virtual environment
 * `docker-compose up` necessary for creating container for PostgreSQL database
 * `./scripts/start.sh`
-* Develop
+
+Test it out at http://localhost:8050. The "web" folder is mounted into the container and your code changes apply automatically.
 
 
 ## Data Import ##
