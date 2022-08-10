@@ -1,4 +1,4 @@
-from modules import import_data as id
+from modules import models, import_data
 from configparser import ConfigParser
 import os
 import sys
@@ -24,27 +24,38 @@ class ImportSettings:
 
     def create(self):
         self.config.add_section('hashes')
-        self.config.set('hashes', 'dataset', "")
+        self.config.set('hashes', 'exports', "")
+        self.config.set('hashes', 'electrocardiograms', "")
         self.config.set('hashes', 'date', "")
 
     def update(self, files):
-        self.config['hashes']['dataset'] = self.get_hash(files)
+        self.config['hashes']['exports'] = self.get_hash(files)
+        self.config['hashes']['electrocardiograms'] = self.get_hash(files)
         self.config['hashes']['date'] = str(datetime.now())
 
     def save(self):
         with open(self.path, 'w+') as cnfFile:
             self.config.write(cnfFile)
 
-    def get_hash(self, path):
+    @staticmethod
+    def get_hash(path):
         return os.popen(f"sha512sum {path}").read() \
             .split(' ')[0]
 
-    def is_dataset_changed(self, files):
-        hash = self.get_hash(files)
-        return self.config['hashes']['dataset'] != hash
+    def is_export_files_changed(self, files):
+        hash_dict = {}
+        for i in files:
+            hash_dict[i] = self.get_hash('./import/'+i)
+        return self.config['hashes']['exports'] != hash_dict
+
+    def is_electrocardiogram_changed(self, files):
+        hash_dict = {}
+        for i in files:
+            hash_dict[i] = self.get_hash('./import/'+i)
+        return self.config['hashes']['electrocardiograms'] != hash_dict
 
     def is_empty(self):
-        if self.config['hashes']['dataset']:
+        if self.config['hashes']['exports'] and self.config['hashes']['electrocardiograms']:
             return False
         return True
 
@@ -52,43 +63,42 @@ class ImportSettings:
 def start_import(rdb):
     """ Import data from entities and dataset files"""
     files = []
-    directories_ecg = []
-    directories_json = []
+    dict_ecg = []
+
     settings = ImportSettings()
-
     print('starting import', datetime.now().strftime('%H:%M:%S'))
-    for r, d, f in os.walk('./import'):
-        if d:
-            directories_ecg = [directories for directories in d if directories.startswith('electrocardiograms')]
-            directories_json = [directories for directories in d if directories.startswith('data')]
-        for file in f:
-            if '.xml' in file:
-                files.append(file)
+    dict_ecg, files = get_export_files_and_ecg_files(dict_ecg, files)
+    print(dict_ecg, files)
 
-    if not files and not directories_json and not directories_ecg:
+    if not files and not dict_ecg:
+        models.check_if_tables_exists(rdb)
         return print("Could not import to database missing export file", file=sys.stderr)
-    #elif not settings.is_dataset_changed('./import/'+files[0]):
-    #    return print("Data set not changed", file=sys.stderr)
+    elif not settings.is_export_files_changed(files) \
+            and not settings.is_electrocardiogram_changed(dict_ecg):
+        return print("Data set not changed", file=sys.stderr)
     else:
-        print(files)
-        n = len(files)
-        # use function from import_dataset to create tables in database
         print("Start import data")
-        id.create_database_data(rdb)
+        models.drop_tables(rdb)
+        models.create_tables(rdb)
         if files:
-            id.insert_data(rdb, files)
-        if directories_json:
-            id.load_json_data_to_database(rdb, directories_json, n)
-        if directories_ecg:
-            id.load_ecg_data_to_database(rdb, directories_ecg)
-        id.alter_tables(rdb)
-        #path = './import/' + files[0]
-        #settings.update(files=path)
-        #settings.save()
+            import_data.insert_data(rdb, files)
+        if dict_ecg:
+            import_data.load_ecg_data_to_database(rdb, dict_ecg)
+        import_data.create_tables_type(rdb)
         print("End load data")
 
 
-class Scheduler():
+def get_export_files_and_ecg_files(dict_ecg, files):
+    for r, d, f in os.walk('./import'):
+        if d:
+            dict_ecg = [directories for directories in d if directories.startswith('electrocardiograms')]
+        for file in f:
+            if '.xml' in file:
+                files.append(file)
+    return dict_ecg, files
+
+
+class Scheduler:
     """
     BackgroundScheduler runs in a thread inside existing application.
     Importing data check the data. Import data every day at 05.05 if the program see any changes.

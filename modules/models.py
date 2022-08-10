@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, text, DateTime, ARRAY
+from sqlalchemy import Column, Integer, String, Numeric, text, DateTime, ARRAY, Index
 from sqlalchemy.ext.declarative import declarative_base
 
 
@@ -29,27 +29,29 @@ class Patient(Base):
 
 class AppleWatchNumerical(Base):
     __tablename__ = "apple_watch_numerical"
-    id = Column(Integer, primary_key=True)
+    index = Column(Integer, primary_key=True)
     key = Column(String)
     patient_id = Column(String)
     unit = Column(String)
     date = Column(DateTime)
     value = Column(Numeric)
+    __table_args__ = (Index('idx_key_num', 'key'), Index('idx_patient_id_num', 'patient_id'))
 
 
 class AppleWatchCategorical(Base):
     __tablename__ = "apple_watch_categorical"
-    id = Column(Integer, primary_key=True)
+    index = Column(Integer, primary_key=True)
     key = Column(String)
     patient_id = Column(String)
     unit = Column(String)
     date = Column(DateTime)
     value = Column(String)
+    __table_args__ = (Index('idx_key_cat', 'key'), Index('idx_patient_id_cat', 'patient_id'))
 
 
 class OtherSources(Base):
     __tablename__ = "other_source"
-    id = Column(Integer, primary_key=True)
+    index = Column(Integer, primary_key=True)
     key = Column(String)
     source_name = Column(String)
     unit = Column(String)
@@ -60,7 +62,7 @@ class OtherSources(Base):
 
 class Workout(Base):
     __tablename__ = "workout"
-    id = Column(Integer, primary_key=True)
+    index = Column(Integer, primary_key=True)
     key = Column(String)
     duration = Column(Numeric)
     duration_unit = Column(String)
@@ -69,8 +71,8 @@ class Workout(Base):
     energyburned = Column(Numeric)
     energyburnedunit = Column(String)
     patient_id = Column(String)
-    start_date = Column(Numeric)
-    end_date = Column(Numeric)
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
     hrr_1_min = Column(Numeric)
     hrr_2_min = Column(Numeric)
     hr_max = Column(Numeric)
@@ -82,23 +84,19 @@ class Workout(Base):
 
 class ECG(Base):
     __tablename__ = "ecg"
+    index = Column(Integer, primary_key=True)
     patient_id = Column(String)
     date = Column(DateTime)
     day = Column(String)
     number = Column(String)
     classification = Column(String)
-    value = Column(ARRAY(Numeric))
-    hrvOwn = Column(Numeric)
+    data = Column(ARRAY(Numeric))
+    hrv = Column(Numeric)
     sdnn = Column(Numeric)
     senn = Column(Numeric)
     sdsd = Column(Numeric)
     pnn20 = Column(Numeric)
     pnn50 = Column(Numeric)
-    lf = Column(Numeric)
-    hf = Column(Numeric)
-    lf_hf_ratio = Column(Numeric)
-    total_power = Column(Numeric)
-    vlf = Column(Numeric)
 
 
 def drop_tables(rdb):
@@ -112,8 +110,8 @@ def create_tables(rdb):
 def check_if_tables_exists(rdb):
     table = ''
     connection = rdb.connect()
-    result = connection.execute(text("SELECT to_regclass('public.examination_numerical')"))
+    result = connection.execute(text("SELECT to_regclass('public.apple_watch_numerical')"))
     for row in result:
         table = row[0]
-    if table != 'examination_numerical':
+    if table != 'apple_watch_numerical':
         create_tables(rdb)

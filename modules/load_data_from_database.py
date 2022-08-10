@@ -1,99 +1,70 @@
 import pandas as pd
-from modules.models import Patient
+from modules.models import Patient, KeyName
 from sqlalchemy import select
-import time
 
 
 def patient(rdb):
-    select(Patient.patient_id).order(Patient.index)
-    patients = """SELECT "Name" FROM patient ORDER BY index"""
-
-    patients_df = pd.read_sql(patients, rdb)
-    patients_list = patients_df["Name"].values.tolist()
-    return patients_list
+    select_patient_id = select(Patient.patient_id).order(Patient.index)
+    patients_id_df = pd.read_sql(select_patient_id, rdb)
+    patients_id_list = patients_id_df["name"].values.tolist()
+    return patients_id_list
 
 
 def label(rdb):
-    sql = """SELECT type FROM name """
-
-    sql2 = """SELECT type FROM name """
-
-    df, df2 = pd.read_sql(sql, rdb), pd.read_sql(sql2, rdb)
-    label_linear, label_bar = df["type"].values.tolist(), df2["type"].values.tolist()
-
-    return label_linear, label_bar
+    labels = select(KeyName.key)
+    df_labels = pd.read_sql(labels, rdb)
+    labels_list = df_labels["type"].values.tolist()
+    return labels_list
 
 
-def month(rdb, patient):
-    """ Returns list of months in database for selected patient """
+def month(rdb, patients):
 
     sql = """SELECT DISTINCT TO_CHAR("Date",'YYYY-MM')  AS month 
              FROM applewatch_numeric 
              WHERE "Name"='{}' 
              AND type ='Resting Heart Rate' 
-             ORDER BY month""".format(patient)
+             ORDER BY month""".format(patients)
 
-    try:
-        df = pd.read_sql(sql, rdb)
-        months = df['month'].to_list()
-    except:
-        months = []
-    return months
+    df_months = pd.read_sql(sql, rdb)
+    months_list = df_months['month'].to_list()
+    return months_list
 
 
-def week(rdb, patient):
-    """  Returns list of weeks in database for selected patient  """
+def week(rdb, patients):
 
     sql = """SELECT DISTINCT TO_CHAR("Date", 'IYYY/IW') AS week 
              FROM applewatch_numeric 
              WHERE "Name"='{}' 
              AND type ='Resting Heart Rate'
-             ORDER BY week """.format(patient)
+             ORDER BY week """.format(patients)
 
-    try:
-        df = pd.read_sql(sql, rdb)
-        weeks = df['week'].to_list()
-    except:
-        weeks = []
-    return weeks
+    df_weeks = pd.read_sql(sql, rdb)
+    weeks_list = df_weeks['week'].to_list()
+    return weeks_list
 
 
-def min_max_date(rdb, patient):
-    """ Returns min and max date for selected patient """
+def min_max_date(rdb, patients):
+    sql = """SELECT min_date,max_date FROM patient WHERE "Name"='{}'""".format(patients)
 
-    sql = """SELECT min_date,max_date FROM patient WHERE "Name"='{}'""".format(patient)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-        min_date, max_date = df['min_date'].iloc[0].date(), df['max_date'].iloc[0].date()
-    except:
-        min_date, max_date = '', ''
+    df = pd.read_sql(sql, rdb)
+    min_date, max_date = df['min_date'].iloc[0].date(), df['max_date'].iloc[0].date()
 
     return min_date, max_date
 
 
-def age_sex(rdb, patient):
-    """ Returns age and gender for selected patient"""
+def age_sex(rdb, patients):
+    sql = """SELECT "Age","Sex" from patient where "Name"='{}' """.format(patients)
 
-    sql = """SELECT "Age","Sex" from patient where "Name"='{}' """.format(patient)
+    df = pd.read_sql(sql, rdb)
+    age, sex = df['age'][0], df['sex'][0]
 
-    try:
-        df = pd.read_sql(sql, rdb)
-        age, sex = df['Age'][0], df['Sex'][0]
-    except:
-        age, sex = '', ''
     return age, sex
 
 
-def classification_ecg(rdb, patient):
-    """ Returns ecg classification for patient information card """
+def classification_ecg(rdb, patients):
+    sql = """SELECT "Classification",count(*) FROM ecg WHERE "Patient"='{}' GROUP BY "Classification" """.format(patients)
 
-    sql = """SELECT "Classification",count(*) FROM ecg WHERE "Patient"='{}' GROUP BY "Classification" """.format(patient)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
+    df = pd.read_sql(sql, rdb)
     return df
 
 
