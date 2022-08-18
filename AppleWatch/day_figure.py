@@ -1,16 +1,10 @@
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from db import connect_db
-
-# connection with database
-rdb = connect_db()
 
 
 def day_figure_update(df, bar):
     """ Update day figure depends on drop downs """
-
-    df_bar = df[df['key'] == bar]
-    df = df[df['key'] == 'Heart Rate']
+    df_bar, df = df[df['key'] == bar], df[df['key'] == 'Heart Rate']
     if not df_bar.empty:
         df_bar = df_bar.resample('5Min', on='date').sum().reset_index()
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -28,5 +22,4 @@ def day_figure_update(df, bar):
             x=1
         ))
     fig.update_yaxes(title_text='{}'.format(bar), secondary_y=False)
-
     return fig

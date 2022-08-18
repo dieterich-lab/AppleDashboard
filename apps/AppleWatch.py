@@ -246,14 +246,15 @@ def update_figure_day(date, value, group, bar, patient, m):
     if group == 'D': date = date[0]
     elif group == 'M': date = value[0] + '-01'
     elif group == 'W': date = datetime.datetime.strptime(value[0] + '/1', "%Y/%W/%w")
-    elif group == 'DOW': date = value[0]
-    df = ldd.day_figure(rdb, patient, bar, date)
-    if not date or df.empty:
-        fig3 = {}
+    elif group == 'DOW': date = date[0]
+    df = pd.DataFrame()
+    if date:
+        df = ldd.day_figure(rdb, patient, bar, date)
+    if df.empty:
+        fig = {}
     else:
-        fig3 = day_figure_update(df, bar)
-
-    return fig3
+        fig = day_figure_update(df, bar)
+    return fig
 
 
 # update trend figure
@@ -266,12 +267,15 @@ def update_figure_day(date, value, group, bar, patient, m):
      Input('drop_down-container', 'children')],
 )
 def update_figure_trend(value, date, group, patient, m):
-    if date and value:
-        date = pd.to_datetime(date[-1])
-        value = value[-1]
-        fig = figure_trend(date, value,  group, patient)
-    else:
+    if date[0]:
+        date = date[0]
+    if value[0]:
+        value = value[0]
+    df = ldd.trend_figure(rdb, value, date, group, patient)
+    if df.empty:
         fig = {}
+    else:
+        fig = figure_trend(df, group)
     return fig
 
 

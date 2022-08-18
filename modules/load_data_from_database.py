@@ -2,6 +2,9 @@ import pandas as pd
 from modules.models import Patient, KeyName, AppleWatchNumerical, ECG, AppleWatchCategorical
 from sqlalchemy.sql import distinct, select, func, and_, case, extract
 from sqlalchemy import Time, Date
+from datetime import date
+import datetime
+from dateutil.relativedelta import relativedelta
 
 
 def patient(rdb):
@@ -67,8 +70,8 @@ def number_of_days_more_6(rdb, patients):
     return df.iloc[0]['count']
 
 
-def card(rdb, patients, group, date, value):
-    group_by_value, to_char, value = check_by_what_group_by(group, date, value)
+def card(rdb, patients, group, date_value, value):
+    group_by_value, to_char, value = check_by_what_group_by(group, date_value, value)
 
     sql = select(to_char.label(group_by_value), AppleWatchNumerical.key,
                  case((AppleWatchNumerical.key.in_(('Active Energy Burned', 'Step Count', 'Apple Exercise Time')),
@@ -109,7 +112,7 @@ def table(rdb, patients, group, linear, bar):
     return df, group_by_value
 
 
-def check_by_what_group_by(group, date, value):
+def check_by_what_group_by(group, date_value, value):
     if group == 'M':
         to_char = func.to_char(AppleWatchNumerical.date, 'YYYY-MM')
         group_by = "month"
@@ -117,33 +120,49 @@ def check_by_what_group_by(group, date, value):
         to_char = func.to_char(AppleWatchNumerical.date, 'IYYY/IW')
         group_by = "week"
     elif group == 'DOW':
-        to_char = func.to_char(AppleWatchNumerical.date, 'Day')
+        to_char = func.trim(func.to_char(AppleWatchNumerical.date, 'Day'))
         group_by = "DOW"
     else:
         to_char = AppleWatchNumerical.date.cast(Date)
         group_by = "date"
-        value = date
+        value = date_value
     return group_by, to_char, value
 
 
-def day_figure(rdb, patients, bar, date):
+def day_figure(rdb, patients, bar, date_value):
     sql = select(AppleWatchNumerical.date, AppleWatchNumerical.key, AppleWatchNumerical.value).\
-        where(and_(AppleWatchNumerical.patient_id == patients, AppleWatchNumerical.date.cast(Date) == date,
+        where(and_(AppleWatchNumerical.patient_id == patients, AppleWatchNumerical.date.cast(Date) == date_value,
                    AppleWatchNumerical.key.in_(('Heart Rate', bar)))).\
         order_by(AppleWatchNumerical.key, AppleWatchNumerical.date)
     df = pd.read_sql(sql, rdb)
     return df
 
 
-def trend_figure(rdb, patients, group, start_date, end_date):
+def trend_figure(rdb, value, date_, group, patients):
+    if group == 'M':
+        new_value = datetime.datetime.strptime(value + '-01', "%Y-%m-%d")
+        start_date, end_date = new_value - relativedelta(months=3), new_value + relativedelta(months=1)
+    elif group == 'W':
+        new_value = datetime.datetime.strptime(value + '/1', "%G/%V/%w")
+        start_date, end_date = new_value - datetime.timedelta(weeks=3), new_value + datetime.timedelta(weeks=1)
+    elif group == "DOW":
+        start_date, end_date = '1900-01-01', date.today()
+    else:
+        start_date, end_date = (pd.to_datetime(date_) - pd.to_timedelta(3, unit='d')), \
+                               (pd.to_datetime(date_) + pd.to_timedelta(1, unit='d'))
+
     group_by_value, to_char, value = check_by_what_group_by(group, '', '')
-    subquery = select(to_char.label(group_by_value), extract('hour', AppleWatchNumerical.date).label('hour'),
+    subquery = select(to_char.label('group'), extract('hour', AppleWatchNumerical.date).label('hour'),
                       AppleWatchNumerical.value).\
         where(and_(AppleWatchNumerical.patient_id == patients, AppleWatchNumerical.key == 'Heart Rate',
                    AppleWatchNumerical.date.between(start_date, end_date)))
-    sql = select(subquery.c.date, subquery.c.hour, func.avg(subquery.c.value).label("Value")).\
+    sql = select(subquery.c.group.label(group_by_value), subquery.c.hour, func.avg(subquery.c.value).label("Value")).\
         group_by(group_by_value, "hour").order_by(group_by_value, "hour")
     df = pd.read_sql(sql, rdb)
+    if group == 'DOW':
+        cats = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        df['DOW'] = pd.Categorical(df['DOW'], categories=cats, ordered=True)
+        df = df.sort_values(['DOW', "hour"])
     return df
 
 # Query data for ECG_analyse

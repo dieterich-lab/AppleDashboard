@@ -1,9 +1,5 @@
 import dash_bootstrap_components as dbc
 from dash import html
-from db import connect_db
-
-# connection with database
-rdb = connect_db()
 
 
 def cards_view():
