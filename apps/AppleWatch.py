@@ -2,8 +2,6 @@ from app import app, data_store
 from dash.dependencies import Input, Output, ALL
 import dash_bootstrap_components as dbc
 from dash import dcc, html, dash_table
-import time
-from datetime import date
 import datetime
 from flask import send_file
 import pandas as pd
@@ -98,6 +96,7 @@ layout = html.Div([
         dbc.Col(dbc.Card([html.A('Download ECG', id='my-link'), dcc.Graph(id='figure_ecg')], style={'height': '100%'}),
                 lg=9)]),
     html.Br(),
+
 ])
 
 
@@ -158,7 +157,7 @@ def update_selection(click, patient, value):
             clearable=False
         )])
     elif value == 'D':
-        min_date, max_date = ldd.min_max_date(rdb,patient)
+        min_date, max_date = ldd.min_max_date(rdb, patient)
         if click:
             value_day = str(click["points"][0]["x"])
         else:
@@ -221,14 +220,15 @@ def update_card(patient, group, date, value, m):
      Input('Bar chart', 'value')])
 def update_table(group, patient, linear, bar):
     df, group_by = ldd.table(rdb, patient, group, linear, bar)
+    if df.empty:
+        fig, click, columns, data = {}, None, [], [{}]
+    else:
+        click = None
+        data = df.to_dict('records')
+        columns = [{"name": str(i), "id": str(i)} for i in df.columns]
+        fig = update_figure(df, linear, bar, group_by)
 
-    click = None
-    data = df.to_dict('records')
-    columns = [{"name": str(i), "id": str(i)} for i in df.columns]
-
-    fig = update_figure(df, linear, bar, group_by)
-
-    return fig,click, data, columns
+    return fig, click, data, columns
 
 
 # update day figure
@@ -302,7 +302,7 @@ def update_ecg(data, patient, data_tab):
         fig = {}
     else:
         add = ''
-        day = data_tab[data[0]]['Day']
+        day = data_tab[data[0]]['day']
         time = data_tab[data[0]]['time']
 
         fig, df_ecg = update_ecg_figure(day, time, patient, add)

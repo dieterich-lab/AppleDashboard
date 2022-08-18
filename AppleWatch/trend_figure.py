@@ -30,6 +30,7 @@ def figure_trend(date_, value, group, patient):
                                (pd.to_datetime(date_) + pd.to_timedelta(1, unit='d'))
 
     df = ldd.trend_figure(rdb, patient, group, start_date, end_date)
+    print(df)
     if df.empty:
         fig = {}
     else:

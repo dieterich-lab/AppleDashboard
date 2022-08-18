@@ -1,51 +1,43 @@
 import pandas as pd
-from modules.models import Patient, KeyName
-from sqlalchemy import select
+from modules.models import Patient, KeyName, AppleWatchNumerical, ECG, AppleWatchCategorical
+from sqlalchemy.sql import distinct, select, func, and_, case, extract
+from sqlalchemy import Time, Date
 
 
 def patient(rdb):
-    select_patient_id = select(Patient.patient_id).order(Patient.index)
+    select_patient_id = select(Patient.patient_id).order_by(Patient.index)
     patients_id_df = pd.read_sql(select_patient_id, rdb)
-    patients_id_list = patients_id_df["name"].values.tolist()
+    patients_id_list = patients_id_df["patient_id"].values.tolist()
     return patients_id_list
 
 
 def label(rdb):
     labels = select(KeyName.key)
     df_labels = pd.read_sql(labels, rdb)
-    labels_list = df_labels["type"].values.tolist()
+    labels_list = df_labels["key"].values.tolist()
     return labels_list
 
 
 def month(rdb, patients):
-
-    sql = """SELECT DISTINCT TO_CHAR("Date",'YYYY-MM')  AS month 
-             FROM applewatch_numeric 
-             WHERE "Name"='{}' 
-             AND type ='Resting Heart Rate' 
-             ORDER BY month""".format(patients)
-
-    df_months = pd.read_sql(sql, rdb)
+    months = select(distinct(func.to_char(AppleWatchNumerical.date, 'YYYY-MM')).label('month')).\
+        where(AppleWatchNumerical.patient_id == patients).\
+        order_by('month')
+    df_months = pd.read_sql(months, rdb)
     months_list = df_months['month'].to_list()
     return months_list
 
 
 def week(rdb, patients):
-
-    sql = """SELECT DISTINCT TO_CHAR("Date", 'IYYY/IW') AS week 
-             FROM applewatch_numeric 
-             WHERE "Name"='{}' 
-             AND type ='Resting Heart Rate'
-             ORDER BY week """.format(patients)
-
-    df_weeks = pd.read_sql(sql, rdb)
+    weeks = select(distinct(func.to_char(AppleWatchNumerical.date, 'IYYY/IW')).label('week')).\
+        where(AppleWatchNumerical.patient_id == patients).\
+        order_by('week')
+    df_weeks = pd.read_sql(weeks, rdb)
     weeks_list = df_weeks['week'].to_list()
     return weeks_list
 
 
 def min_max_date(rdb, patients):
-    sql = """SELECT min_date,max_date FROM patient WHERE "Name"='{}'""".format(patients)
-
+    sql = select(Patient.min_date, Patient.max_date).where(Patient.patient_id == patients)
     df = pd.read_sql(sql, rdb)
     min_date, max_date = df['min_date'].iloc[0].date(), df['max_date'].iloc[0].date()
 
@@ -53,8 +45,7 @@ def min_max_date(rdb, patients):
 
 
 def age_sex(rdb, patients):
-    sql = """SELECT "Age","Sex" from patient where "Name"='{}' """.format(patients)
-
+    sql = select(Patient.age, Patient.sex).where(Patient.patient_id == patients)
     df = pd.read_sql(sql, rdb)
     age, sex = df['age'][0], df['sex'][0]
 
@@ -62,228 +53,128 @@ def age_sex(rdb, patients):
 
 
 def classification_ecg(rdb, patients):
-    sql = """SELECT "Classification",count(*) FROM ecg WHERE "Patient"='{}' GROUP BY "Classification" """.format(patients)
+    sql = select(ECG.classification, func.count(ECG.index)).where(ECG.patient_id == patients).\
+        group_by(ECG.classification)
+    return pd.read_sql(sql, rdb)
 
+
+def number_of_days_more_6(rdb, patients):
+    sql = select(AppleWatchCategorical.date.cast(Date).label("date")).\
+        where(and_(AppleWatchCategorical.patient_id == patients, AppleWatchCategorical.key == 'Apple Stand Hour')).\
+        group_by(AppleWatchCategorical.date.cast(Date)).having(func.count("date") > 6)
+    sql_number_of_days_standing_more_6_h = select(func.count(sql.c.date).label("count"))
+    df = pd.read_sql(sql_number_of_days_standing_more_6_h, rdb)
+    return df.iloc[0]['count']
+
+
+def card(rdb, patients, group, date, value):
+    group_by_value, to_char, value = check_by_what_group_by(group, date, value)
+
+    sql = select(to_char.label(group_by_value), AppleWatchNumerical.key,
+                 case((AppleWatchNumerical.key.in_(('Active Energy Burned', 'Step Count', 'Apple Exercise Time')),
+                       func.sum(AppleWatchNumerical.value)),
+                      (AppleWatchNumerical.key.in_(('Heart Rate', 'Walking Heart Rate Average', 'Resting Heart Rate')),
+                       func.avg(AppleWatchNumerical.value))).label("Value")). \
+        where(and_(AppleWatchNumerical.patient_id == patients,
+                   AppleWatchNumerical.key.in_(('Active Energy Burned', 'Step Count', 'Apple Exercise Time',
+                                               'Heart Rate', 'Walking Heart Rate Average', 'Resting Heart Rate')),
+                   to_char == value)). \
+        group_by(to_char, AppleWatchNumerical.key).order_by(AppleWatchNumerical.key, group_by_value)
+    df = pd.read_sql(sql, rdb)
+    df["Value"] = df["Value"].round(2)
+
+    return df
+
+
+def table(rdb, patients, group, linear, bar):
+    if isinstance(linear, list):
+        key_list = linear + [bar]
+    else:
+        key_list = [linear, bar]
+    group_by_value, to_char, value = check_by_what_group_by(group, '', '')
+    sql = select(to_char.label(group_by_value), AppleWatchNumerical.key,
+                 case((AppleWatchNumerical.key.in_(('Heart Rate', 'Heart Rate Variability SDNN', 'Resting Heart Rate',
+                                                   'VO2 Max', 'Walking Heart Rate Average')),
+                       func.avg(AppleWatchNumerical.value)),
+                      else_=func.sum(AppleWatchNumerical.value)).label("Value")).\
+        where(and_(AppleWatchNumerical.patient_id == patients, AppleWatchNumerical.key.in_(key_list))).\
+        group_by(to_char, AppleWatchNumerical.key).order_by(AppleWatchNumerical.key, group_by_value)
+    df = pd.read_sql(sql, rdb)
+    if group == 'DOW':
+        cats = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        df['DOW'] = pd.Categorical(df['DOW'], categories=cats, ordered=True)
+        df = df.sort_values('DOW')
+        group_by_value = "DOW"
+    df = df.pivot(index=group_by_value, columns='key', values='Value').reset_index()
+    return df, group_by_value
+
+
+def check_by_what_group_by(group, date, value):
+    if group == 'M':
+        to_char = func.to_char(AppleWatchNumerical.date, 'YYYY-MM')
+        group_by = "month"
+    elif group == 'W':
+        to_char = func.to_char(AppleWatchNumerical.date, 'IYYY/IW')
+        group_by = "week"
+    elif group == 'DOW':
+        to_char = func.to_char(AppleWatchNumerical.date, 'Day')
+        group_by = "DOW"
+    else:
+        to_char = AppleWatchNumerical.date.cast(Date)
+        group_by = "date"
+        value = date
+    return group_by, to_char, value
+
+
+def day_figure(rdb, patients, bar, date):
+    sql = select(AppleWatchNumerical.date, AppleWatchNumerical.key, AppleWatchNumerical.value).\
+        where(and_(AppleWatchNumerical.patient_id == patients, AppleWatchNumerical.date.cast(Date) == date,
+                   AppleWatchNumerical.key.in_(('Heart Rate', bar)))).\
+        order_by(AppleWatchNumerical.key, AppleWatchNumerical.date)
     df = pd.read_sql(sql, rdb)
     return df
 
 
-def number_of_days_more_6(rdb, patient):
-    """ Returns number of days the patient had the Apple Watch on their hand for more than 6 hours"""
-
-    sql = """SELECT count (*) 
-             FROM (SELECT "Date"::date
-                   FROM applewatch_categorical 
-                   WHERE "Name" = '{}'
-                   AND "type" = 'Apple Stand Hour' 
-                   GROUP BY "Date"::date
-                   HAVING count("Date"::date) > 6) days  """.format(patient)
-    try:
-        df = pd.read_sql(sql, rdb)
-        df = df.iloc[0]['count']
-    except:
-        df = '0'
-
-    return df
-
-
-def card(rdb, patient, group, date, value):
-    """ Returns DataFrame with resting, working, mean hear rate, step count, exercise time, activity for the cards """
-    if group == 'M':
-        to_char = """ TO_CHAR("Date",'YYYY-MM') """
-        group_by = "month"
-    elif group == 'W':
-        to_char = """ TO_CHAR("Date", 'IYYY/IW') """
-        group_by = "week"
-    elif group == 'DOW':
-        to_char = """ TRIM(TO_CHAR("Date", 'Day')) """
-        group_by = "DOW"
-    else:
-        to_char = """ "Date"::date """
-        group_by = "date"
-        value = date
-
-    sql = """SELECT {0} AS {3},type,
-             CASE 
-                WHEN type in ('Active Energy Burned','Step Count','Apple Exercise Time') THEN SUM("Value")
-                WHEN type in ('Heart Rate','Walking Heart Rate Average','Resting Heart Rate') THEN AVG("Value")
-             END AS "Value"
-             FROM applewatch_numeric 
-             WHERE "Name" = '{1}'
-             AND type in ('Active Energy Burned','Step Count','Apple Exercise Time','Heart Rate',
-                            'Walking Heart Rate Average','Resting Heart Rate')               
-             AND {0}='{2}' 
-             GROUP BY {3},type""".format(to_char, patient, value, group_by)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-        df["Value"] = df["Value"].round(2)
-
-    except:
-        df = pd.DataFrame()
-
-    return df
-
-
-def table(rdb, patient, group, linear, bar):
-    """ Returns a table with the patient and parameters that were selected from drop downs """
-
-    if isinstance(linear, list):
-        linear = "'" + "','".join(linear) + "'"
-    else:
-        linear = "'" + linear + "'"
-
-    if group == 'M':
-        to_char = """ TO_CHAR("Date",'YYYY-MM')"""
-        group_by = "month"
-    elif group == 'W':
-        to_char = """ TO_CHAR("Date", 'IYYY/IW') """
-        group_by = "week"
-    elif group == 'DOW':
-        to_char = """ TRIM(TO_CHAR("Date",'Day'))  """
-        group_by = ' "DOW" '
-    else:
-        to_char = """ "Date"::date """
-        group_by = "date"
-
-    sql = """SELECT {0} as {4},"type",
-                CASE WHEN type IN ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2 Max',
-                                    'Walking Heart Rate Average') THEN AVG("Value") ELSE SUM("Value")
-                END AS "Value"
-                FROM applewatch_numeric 
-                WHERE "Name" = '{1}' 
-                AND "type" in ({2},'{3}') 
-                GROUP BY {0},type
-                ORDER BY "type",{4} """.format(to_char, patient, linear, bar, group_by)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-        if group == 'DOW':
-            cats = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-            df['DOW'] = pd.Categorical(df['DOW'], categories=cats, ordered=True)
-            df = df.sort_values('DOW')
-            group_by = "DOW"
-        df = df.pivot(index=group_by, columns='type', values='Value').reset_index()
-    except:
-        df = pd.DataFrame()
-
-    return df, group_by
-
-
-def day_figure(rdb, patient, bar, date):
-    """ Returns DataFrame for day figure with heart rate and selected parameter and patient """
-
-    sql = """ SELECT "Date","type","Value" 
-              FROM applewatch_numeric 
-              WHERE "Name" = '{}'
-              AND "Date"::date='{}' 
-              AND "type" in ('Heart Rate','{}') 
-              ORDER BY "type","Date" """.format(patient, date, bar)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-
-    return df
-
-
-def trend_figure(rdb, patient, group, start_date, end_date):
-    """ Returns DataFrame for trend figure """
-
-    if group == 'M':
-        to_char = """ TO_CHAR("Date",'YYYY-MM')"""
-        group_by = "month"
-    elif group == 'W':
-        to_char = """ TO_CHAR("Date", 'IYYY/IW') """
-        group_by = "week"
-    elif group == 'DOW':
-        to_char = """TRIM(TO_CHAR("Date", 'Day'))  """
-        group_by = """ "DOW" """
-    else:
-        to_char = """ "Date"::date """
-        group_by = "date"
-
-        """ TRIM(TO_CHAR("Date", 'Day')) in ()"""
-
-    sql = """SELECT {0} as {1},extract('hour' from "Date") as hour,AVG("Value") AS "Value"
-             FROM applewatch_numeric 
-             WHERE "Name" = '{2}' 
-             AND type='Heart Rate' 
-             AND "Date" BETWEEN '{3}' AND '{4}' 
-             GROUP BY {0},extract('hour' from "Date") 
-             ORDER BY {1},hour """.format(to_char, group_by, patient, start_date, end_date)
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
+def trend_figure(rdb, patients, group, start_date, end_date):
+    group_by_value, to_char, value = check_by_what_group_by(group, '', '')
+    subquery = select(to_char.label(group_by_value), extract('hour', AppleWatchNumerical.date).label('hour'),
+                      AppleWatchNumerical.value).\
+        where(and_(AppleWatchNumerical.patient_id == patients, AppleWatchNumerical.key == 'Heart Rate',
+                   AppleWatchNumerical.date.between(start_date, end_date)))
+    sql = select(subquery.c.date, subquery.c.hour, func.avg(subquery.c.value).label("Value")).\
+        group_by(group_by_value, "hour").order_by(group_by_value, "hour")
+    df = pd.read_sql(sql, rdb)
     return df
 
 # Query data for ECG_analyse
 
 
-def ecgs(rdb, patient):
-    """  Returns DataFrame for table_ecg"""
-    
-    sql2 = """SELECT "Day","Date"::time AS Time, "Classification" 
-                FROM ecg  
-                WHERE "Patient"='{}' 
-                ORDER BY "Day" """.format(patient)
-
-    try:
-        df = pd.read_sql(sql2, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
+def ecgs(rdb, patients):
+    sql = select(ECG.day, ECG.date.cast(Time).label("time"), ECG.classification).\
+        where(ECG.patient_id == patients).order_by(ECG.day)
+    return pd.read_sql(sql, rdb)
 
 
-def ecg_data(rdb, day, patient, time):
-    """ Returns DatFrame to plot  ecg signal   """
-
-    sql = """SELECT * FROM ECG where "Day"='{0}' and "Patient"='{1}' and "Date"::time='{2}' """.format(day, patient, time)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
+def ecg_data(rdb, day, patients, time):
+    sql = select(ECG).where(and_(ECG.day == day, ECG.patient_id == patients,
+                                 ECG.date.cast(Time) == time))
+    return pd.read_sql(sql, rdb)
 
 
 def table_hrv(rdb):
-    """ Returns DataFrame with all information about ecg ann calculate HRV feature for time and frequency domain   """
-
-    sql = """ SELECT "Patient","Day","Date"::time as Time, "hrvOwn", "SDNN", "SENN", "SDSD", "pNN20", "pNN50", "lf", 
-                "hf", "lf_hf_ratio","total_power", "vlf", "Classification" FROM ecg ORDER BY "Patient","Day" """
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
+    sql = select(ECG).order_by(ECG.patient_id, ECG.day)
+    return pd.read_sql(sql, rdb)
 
 
 def scatter_plot_ecg(rdb, x_axis, y_axis):
-    """ Returns DataFrame for scatter plot with patients ids/numbers and selected features """
+    print(x_axis)
 
-    sql = """ SELECT "Patient","{0}","{1}" FROM ecg """.format(x_axis, y_axis)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
+    return {}
 
 
 def box_plot_ecg(rdb, x_axis):
-    """ Returns DataFrame for box plot with patients ids/numbers and selected feature    """
 
-    sql = """ SELECT "Patient","{}" FROM ecg """.format(x_axis)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-    return df
+    return {}
 
 # Patient Workouts
 

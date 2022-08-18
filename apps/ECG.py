@@ -11,7 +11,7 @@ from db import connect_db
 from ECG_analyze.selection_card import selection
 from ECG_analyze.ECG_plot import update_ecg_figure
 
-hrv_features = ['hrvOwn', 'SDNN', 'SENN', 'SDSD', 'pNN20', 'pNN50', 'lf', 'hf', 'lf_hf_ratio', 'total_power', 'vlf']
+hrv_features = ['hrv', 'SDNN', 'SENN', 'SDSD', 'pNN20', 'pNN50', 'lf', 'hf', 'lf_hf_ratio', 'total_power', 'vlf']
 
 # Selection
 selection = selection()
@@ -98,7 +98,7 @@ def update_scatter_plot_ecg(x_axis, y_axis):
     if df.empty:
         fig = {}
     else:
-        fig = px.scatter(df, x=x_axis, y=y_axis, template='plotly_white', color="Patient")
+        fig = px.scatter(df, x='ECG.'+f'{x_axis}', y='ECG.'+f'{y_axis}', template='plotly_white', color="Patient")
     return fig
 
 
@@ -109,7 +109,7 @@ def update_box_plot_ecg(y_axis):
     if df.empty:
         fig = {}
     else:
-        fig = px.box(df, x="Patient", y=y_axis, template='plotly_white')
+        fig = px.box(df, x="Patient", y='ECG.'+f'{y_axis}', template='plotly_white')
     return fig
 
 

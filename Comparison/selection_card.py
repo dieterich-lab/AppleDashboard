@@ -7,7 +7,7 @@ import modules.load_data_from_database as ldd
 # connection with database
 rdb = connect_db()
 patient, label_bar2 = ldd.patient(rdb), ldd.activity_type(rdb)
-label_linear, label_bar = ldd.label(rdb)
+labels = ldd.label(rdb)
 
 
 # selection for first drop downs
@@ -34,8 +34,8 @@ def selection():
                     dcc.Dropdown(
                         id='Bar chart',
                         style={'height': '100%'},
-                        options=[{'label': name, 'value': name} for name in label_bar],
-                        value=label_bar[0],
+                        options=[{'label': name, 'value': name} for name in labels],
+                        value=labels,
                         clearable=False,
                     ))]),
             dbc.Col([
@@ -43,8 +43,8 @@ def selection():
                 dbc.Card(dcc.Dropdown(
                     id='linear plot',
                     style={'height': '100%'},
-                    options=[{'label': name, 'value': name} for name in label_linear],
-                    value=label_linear[1],
+                    options=[{'label': name, 'value': name} for name in labels],
+                    value=labels,
                     clearable=False,
                 ))]),
         ]),
