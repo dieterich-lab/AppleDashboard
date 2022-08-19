@@ -6,8 +6,8 @@ import time
 
 def figure_box_hist(df, group, linear, bar):
     """ Update box plot and histogram in comparison tab depending on drop downs """
-    df_linear = df[df['type'] == linear]
-    df_bar = df[df['type'] == bar]
+    df_linear = df[df['key'] == linear]
+    df_bar = df[df['key'] == bar]
     name = df[group].unique()
 
     colors = px.colors.qualitative.Plotly
@@ -60,7 +60,7 @@ def figure_linear_plot(df1, df2, gr, linear, bar):
 def figure_workout_plot(df_box, df_scatter, gr, bar):
     """ Update workouts plot and histogram in comparison tab depending on drop downs """
 
-    fig_box_plot = px.box(df_box, x=gr, y="HR_average", template='plotly_white')
+    fig_box_plot = px.box(df_box, x=gr, y="hr_average", template='plotly_white')
     fig_box_plot.update_layout(
         title={
             'text': "Average Heart Rate during {}".format(bar),
@@ -69,7 +69,7 @@ def figure_workout_plot(df_box, df_scatter, gr, bar):
             'xanchor': 'center',
             'yanchor': 'top'})
 
-    fig_scatter_plot = px.scatter(df_scatter, x="date", y="HR_average", color=gr,
+    fig_scatter_plot = px.scatter(df_scatter, x="date", y="hr_average", color=gr,
                                   template='plotly_white').update_traces(mode='lines+markers')
     fig_scatter_plot.update_layout(
         title={

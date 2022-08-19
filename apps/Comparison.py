@@ -1,9 +1,8 @@
 from app import app
-from dash.dependencies import Input, Output, ALL
+from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 import modules.load_data_from_database as ldd
-import time
 import plotly.express as px
 
 from db import connect_db
@@ -53,21 +52,20 @@ layout = html.Div([
      Input('linear plot', 'value'),
      Input('Bar chart', 'value')]
 )
-def update_figures(gr, linear, bar):
+def update_figures(group, linear, bar):
 
-    df = ldd.plots_comparison(rdb, gr, linear, bar)
+    df, df_linear, df_bar = ldd.plots_comparison(rdb, group, linear, bar)
     if df.empty:
         fig_scatter, fig_box_plot, fig_histogram = {}, {}, {}
     else:
-        df_scatter = df.pivot(index=[gr, 'date'], columns='type', values='Value').reset_index()
-        fig_scatter = px.scatter(df_scatter, x=bar, y=linear, color=gr, template='plotly_white')
-        fig_box_plot, fig_histogram = p.figure_box_hist(df, gr, linear, bar)
+        df_scatter = df.pivot(index=[group, 'date'], columns='key', values='Value').reset_index()
+        fig_scatter = px.scatter(df_scatter, x=bar, y=linear, color=group, template='plotly_white')
+        fig_box_plot, fig_histogram = p.figure_box_hist(df, group, linear, bar)
 
-    df_linear, df_bar = ldd.linear_plot(rdb, gr, linear, bar)
     if df_linear.empty:
         fig1, fig2 = {}, {}
     else:
-        fig1, fig2 = p.figure_linear_plot(df_linear, df_bar, gr, linear, bar)
+        fig1, fig2 = p.figure_linear_plot(df_linear, df_bar, group, linear, bar)
 
     return fig_scatter, fig_box_plot, fig_histogram,  fig1, fig2
 
@@ -100,7 +98,7 @@ def update_day_night_box(gr):
     if df.empty:
         fig = {}
     else:
-        fig = px.box(df, x='day_night', y="Heart rate", color=gr, template='plotly_white')
+        fig = px.box(df, x='day_night', y="Heart Rate", color=gr, template='plotly_white')
 
     return fig
 

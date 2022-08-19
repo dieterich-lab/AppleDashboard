@@ -6,7 +6,7 @@ import modules.load_data_from_database as ldd
 
 # connection with database
 rdb = connect_db()
-patient, label_bar2 = ldd.patient(rdb), ldd.activity_type(rdb)
+patient, label_bar = ldd.patient(rdb), ldd.activity_type(rdb)
 labels = ldd.label(rdb)
 
 
@@ -22,29 +22,29 @@ def selection():
                     dcc.Dropdown(
                         style={'height': '40px'},
                         id='group',
-                        options=[{'label': 'Patient', 'value': 'Name'},
-                                 {'label': 'Age', 'value': 'Age'},
-                                 {'label': 'Sex', 'value': 'Sex'}],
-                        value='Name',
+                        options=[{'label': 'Patient', 'value': 'patient_id'},
+                                 {'label': 'Age', 'value': 'age'},
+                                 {'label': 'Sex', 'value': 'sex'}],
+                        value='patient_id',
                         clearable=False
                     ))], style={'height': '100%'}),
             dbc.Col([
-                'First plot(x axis)',
+                'X axis',
                 dbc.Card(
                     dcc.Dropdown(
                         id='Bar chart',
                         style={'height': '100%'},
                         options=[{'label': name, 'value': name} for name in labels],
-                        value=labels,
+                        value=labels[0],
                         clearable=False,
                     ))]),
             dbc.Col([
-                'Second plot(y axis)',
+                'Y axis',
                 dbc.Card(dcc.Dropdown(
                     id='linear plot',
                     style={'height': '100%'},
                     options=[{'label': name, 'value': name} for name in labels],
-                    value=labels,
+                    value=labels[0],
                     clearable=False,
                 ))]),
         ]),
@@ -54,7 +54,7 @@ def selection():
                                            dcc.Dropdown(
                                                 id='Bar chart2',
                                                 style={'height': '100%'},
-                                                options=[{'label': name, 'value': name} for name in label_bar2],
+                                                options=[{'label': name, 'value': name} for name in label_bar],
                                                 value='Walking',
                                                 clearable=False,
                                             )])])]

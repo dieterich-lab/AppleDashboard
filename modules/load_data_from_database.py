@@ -1,5 +1,5 @@
 import pandas as pd
-from modules.models import Patient, KeyName, AppleWatchNumerical, ECG, AppleWatchCategorical, Workout
+from modules.models import Patient, KeyName, AppleWatchNumerical, ECG, AppleWatchCategorical, Workout, ActivityName
 from sqlalchemy.sql import distinct, select, func, and_, case, extract, text
 from sqlalchemy import Time, Date
 from datetime import date
@@ -171,37 +171,6 @@ def calculate_start_and_end_date_for_trend_figure(date_, group, value):
     return end_date, start_date
 
 
-# Query data for ECG_analyse
-
-
-def ecgs(rdb, patients):
-    sql = select(ECG.day, ECG.date.cast(Time).label("time"), ECG.classification).\
-        where(ECG.patient_id == patients).order_by(ECG.day)
-    return pd.read_sql(sql, rdb)
-
-
-def ecg_data(rdb, day, patients, time):
-    sql = select(ECG).where(and_(ECG.day == day, ECG.patient_id == patients,
-                                 ECG.date.cast(Time) == time))
-    return pd.read_sql(sql, rdb)
-
-
-def table_hrv(rdb):
-    sql = select(ECG).order_by(ECG.patient_id, ECG.day)
-    return pd.read_sql(sql, rdb)
-
-
-def scatter_plot_ecg(rdb, x_axis, y_axis):
-    print(x_axis)
-
-    return {}
-
-
-def box_plot_ecg(rdb, x_axis):
-
-    return {}
-
-
 # Patient Workouts
 def workout_activity_data(rdb, patients):
     sql = select(Workout.key, Workout.distance, Workout.duration, Workout.energyburned,
@@ -257,127 +226,111 @@ def heart_rate(rdb, click, patients):
     else:
         click = "'" + str(click["points"][0]["x"]) + "'"
 
-    sql1 = select(Workout.key, Workout.start_date, Workout.end_date).\
+    sql_workout = select(Workout.key, Workout.start_date, Workout.end_date).\
         where(and_(Workout.patient_id == patients, Workout.duration.between(10, 300),
                    Workout.start_date.cast(Date) == click))
 
-    sql2 = select(AppleWatchNumerical.patient_id, AppleWatchNumerical.date, AppleWatchNumerical.value).\
+    sql_heart_rate = select(AppleWatchNumerical.patient_id, AppleWatchNumerical.date, AppleWatchNumerical.value).\
         where(and_(AppleWatchNumerical.patient_id == patients, AppleWatchNumerical.key == 'Heart Rate',
                    AppleWatchNumerical.date.cast(Date) == click)).\
         order_by(AppleWatchNumerical.date)
 
-    df1 = pd.read_sql(sql1, rdb)
-    df2 = pd.read_sql(sql2, rdb)
-    return df1, df2
+    df_workout = pd.read_sql(sql_workout, rdb)
+    df_heart_rate = pd.read_sql(sql_heart_rate, rdb)
+    return df_workout, df_heart_rate
 
 
 # Comparison Tab
 def activity_type(rdb):
-    """  Select types of workouts for drop down in Comparison tab"""
+    sql = select(ActivityName.key)
 
-    sql = """SELECT type FROM activity_type"""
-
-    try:
-        df = pd.read_sql(sql, rdb)
-        df = df['type'].to_list()
-    except:
-        df = ['empty']
-
+    df = pd.read_sql(sql, rdb)
+    df = df['key'].to_list()
     return df
 
 
-def plots_comparison(rdb, gr, linear, bar):
-    """ Returns DataFrame to update box plots, histogram, scatter plot in comparison tab depending on the drop downs """
+def plots_comparison(rdb, group, linear, bar):
+    sql1 = select(text('patient.'+f'{group}'), AppleWatchNumerical.date.cast(Date), AppleWatchNumerical.key,
+                 case((AppleWatchNumerical.key.in_(('Heart Rate', 'Heart Rate Variability SDNN', 'Resting Heart Rate',
+                                                    'VO2 Max', 'Walking Heart Rate Average')),
+                       func.avg(AppleWatchNumerical.value)),
+                      else_=func.sum(AppleWatchNumerical.value)).label("Value")).\
+        where(and_(Patient.patient_id == AppleWatchNumerical.patient_id, AppleWatchNumerical.key.in_([linear, bar]))).\
+        group_by(text('patient.'+f'{group}'), AppleWatchNumerical.date.cast(Date), AppleWatchNumerical.key)
 
-    sql = """SELECT p."{2}",an."Date"::date as date,an."type",
-                CASE WHEN an.type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2 Max',
-                                'Walking Heart Rate Average') THEN AVG("Value") ELSE sum("Value")
-                END as "Value" 
-                FROM applewatch_numeric as an 
-                LEFT JOIN patient as p 
-                ON p."Name" = an."Name"
-                WHERE an.type in ('{0}','{1}')
-                GROUP BY p."{2}",(an."Date"::date),an.type""".format(linear, bar, gr)
+    sql2 = select(text('patient.'+f'{group}'), func.to_char(AppleWatchNumerical.date, 'IYYY/IW').label('week'),
+                  AppleWatchNumerical.key,
+                  case((AppleWatchNumerical.key.in_(('Heart Rate', 'Heart Rate Variability SDNN', 'Resting Heart Rate',
+                                                    'VO2 Max', 'Walking Heart Rate Average')),
+                       func.avg(AppleWatchNumerical.value)),
+                       else_=func.sum(AppleWatchNumerical.value)).label("Value")).\
+        where(and_(Patient.patient_id == AppleWatchNumerical.patient_id, AppleWatchNumerical.key.in_([linear, bar]))).\
+        group_by(text('patient.'+f'{group}'), 'week', AppleWatchNumerical.key).\
+        order_by('week')
 
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-
-    return df
-
-
-def linear_plot(rdb, gr, linear, bar):
-    """ Returns DataFrame to update linear plot in comparison tab depending on the drop downs """
-
-    sql = """ SELECT p."{2}",date_trunc('week', an."Date") AS week,an."type",
-                CASE WHEN type in ('Heart Rate','Heart Rate Variability SDNN','Resting Heart Rate','VO2 Max',
-                                    'Walking Heart Rate Average') THEN AVG("Value") ELSE sum("Value")
-                END AS "Value"
-                FROM applewatch_numeric as an
-                LEFT JOIN patient as p 
-                ON p."Name" = an."Name"                  
-                WHERE an.type in ('{0}','{1}')
-                GROUP BY p."{2}",date_trunc('week', an."Date"),an.type
-                ORDER BY week """.format(linear, bar, gr)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-        if gr == 'Age':
-            df[gr] = df[gr].astype(str)
-        df_linear = df[df['type'] == linear]
-        df_bar = df[df['type'] == bar]
-    except:
-        df_linear, df_bar = pd.DataFrame(), pd.DataFrame()
-
-    return df_linear, df_bar
+    df = pd.read_sql(sql1, rdb)
+    df2 = pd.read_sql(sql2, rdb)
+    if group == 'Age':
+        df2[group] = df2[group].astype(str)
+    df_linear = df2[df2['key'] == linear]
+    df_bar = df2[df2['key'] == bar]
+    return df, df_linear, df_bar
 
 
-def workout_hr_comparison(rdb, gr, type):
-    """ Returns DataFrame to compare heart rate during workouts in comparison tab """
+def workout_hr_comparison(rdb, group, key):
+    sql = select(text('patient.'+f'{group}'), Workout.hr_average).\
+        where(and_(Patient.patient_id == Workout.patient_id, Workout.duration.between(10, 300), Workout.hr_average != 0,
+                   Workout.key == key)).order_by(text('patient.'+f'{group}'), Workout.start_date)
 
-    sql = """SELECT p."{0}",w."HR_average" 
-             FROM workout as w 
-             LEFT JOIN patient as p 
-             ON p."Name" = w."Name"
-             WHERE w."duration" > 10 AND w."duration" < 300 
-             AND "HR_average" !='0' 
-             AND w.type = '{1}' 
-             ORDER BY p."{0}",w."Start_Date" """.format(gr, type)
+    sql2 = select(text('patient.'+f'{group}'), Workout.start_date.cast(Date).label('date'),
+                  func.avg(Workout.hr_average).label("hr_average")).\
+        where(and_(Patient.patient_id == Workout.patient_id, Workout.duration.between(10, 300), Workout.hr_average != 0,
+                   Workout.key == key)).group_by(text('patient.'+f'{group}'), 'date').\
+        order_by(text('patient.'+f'{group}'), 'date')
 
-    sql2 = """SELECT p."{0}","Start_Date"::date as date,AVG(w."HR_average") as "HR_average" 
-                FROM workout as w 
-                LEFT JOIN patient as p 
-                ON p."Name" = w."Name"
-                WHERE w."duration" > 10 and w."duration" < 300 
-                AND "HR_average" !='0' 
-                AND w.type = '{1}' 
-                GROUP BY p."{0}",date
-                ORDER BY p."{0}",date""".format(gr, type)
-    try:
-        df_box = pd.read_sql(sql, rdb)
-        df_scatter = pd.read_sql(sql2, rdb)
-    except:
-        df_box, df_scatter = pd.DataFrame(), pd.DataFrame()
+    df_box = pd.read_sql(sql, rdb)
+    df_scatter = pd.read_sql(sql2, rdb)
 
     return df_box, df_scatter
 
 
-def day_night(rdb, gr):
-    """ Returns DataFrame with heart rate divided for night and day """
+def day_night(rdb, group):
+    sql = select(text('patient.'+f'{group}'), AppleWatchNumerical.date.cast(Date).label('date'),
+                 func.avg(AppleWatchNumerical.value).label('Heart Rate'),
+                 case((AppleWatchNumerical.date.cast(Time).between('06:00:00', '24:00:00'), 'day'),
+                      else_='night').label("day_night")).\
+        where(and_(Patient.patient_id == AppleWatchNumerical.patient_id, AppleWatchNumerical.key == 'Heart Rate')).\
+        group_by(text('patient.'+f'{group}'), 'date', 'day_night')
 
-    sql = """SELECT p."{0}","Date":: date as date,AVG("Value") as "Heart rate", 
-            CASE WHEN "Date"::time BETWEEN '06:00:00' AND '24:00:00' THEN 'day'
-            ELSE 'night'
-            END as day_night
-            FROM applewatch_numeric as an
-            LEFT JOIN patient as p 
-            ON p."Name" = an."Name"     
-            WHERE type='Heart Rate' 
-            GROUP BY p."{0}",date,day_night""".format(gr)
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
-
+    df = pd.read_sql(sql, rdb)
     return df
+
+
+# Query data for ECG_analyse
+
+def ecgs(rdb, patients):
+    sql = select(ECG.day, ECG.date.cast(Time).label("time"), ECG.classification).\
+        where(ECG.patient_id == patients).order_by(ECG.day)
+    return pd.read_sql(sql, rdb)
+
+
+def ecg_data(rdb, day, patients, time):
+    sql = select(ECG).where(and_(ECG.day == day, ECG.patient_id == patients,
+                                 ECG.date.cast(Time) == time))
+    return pd.read_sql(sql, rdb)
+
+
+def table_hrv(rdb):
+    sql = select(ECG).order_by(ECG.patient_id, ECG.day)
+    return pd.read_sql(sql, rdb)
+
+
+def scatter_plot_ecg(rdb, x_axis, y_axis):
+    print(x_axis)
+
+    return {}
+
+
+def box_plot_ecg(rdb, x_axis):
+
+    return {}
