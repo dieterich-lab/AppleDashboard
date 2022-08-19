@@ -1,6 +1,6 @@
 import pandas as pd
-from modules.models import Patient, KeyName, AppleWatchNumerical, ECG, AppleWatchCategorical
-from sqlalchemy.sql import distinct, select, func, and_, case, extract
+from modules.models import Patient, KeyName, AppleWatchNumerical, ECG, AppleWatchCategorical, Workout
+from sqlalchemy.sql import distinct, select, func, and_, case, extract, text
 from sqlalchemy import Time, Date
 from datetime import date
 import datetime
@@ -139,17 +139,7 @@ def day_figure(rdb, patients, bar, date_value):
 
 
 def trend_figure(rdb, value, date_, group, patients):
-    if group == 'M':
-        new_value = datetime.datetime.strptime(value + '-01', "%Y-%m-%d")
-        start_date, end_date = new_value - relativedelta(months=3), new_value + relativedelta(months=1)
-    elif group == 'W':
-        new_value = datetime.datetime.strptime(value + '/1', "%G/%V/%w")
-        start_date, end_date = new_value - datetime.timedelta(weeks=3), new_value + datetime.timedelta(weeks=1)
-    elif group == "DOW":
-        start_date, end_date = '1900-01-01', date.today()
-    else:
-        start_date, end_date = (pd.to_datetime(date_) - pd.to_timedelta(3, unit='d')), \
-                               (pd.to_datetime(date_) + pd.to_timedelta(1, unit='d'))
+    end_date, start_date = calculate_start_and_end_date_for_trend_figure(date_, group, value)
 
     group_by_value, to_char, value = check_by_what_group_by(group, '', '')
     subquery = select(to_char.label('group'), extract('hour', AppleWatchNumerical.date).label('hour'),
@@ -164,6 +154,22 @@ def trend_figure(rdb, value, date_, group, patients):
         df['DOW'] = pd.Categorical(df['DOW'], categories=cats, ordered=True)
         df = df.sort_values(['DOW', "hour"])
     return df
+
+
+def calculate_start_and_end_date_for_trend_figure(date_, group, value):
+    if group == 'M':
+        new_value = datetime.datetime.strptime(value + '-01', "%Y-%m-%d")
+        start_date, end_date = new_value - relativedelta(months=3), new_value + relativedelta(months=1)
+    elif group == 'W':
+        new_value = datetime.datetime.strptime(value + '/1', "%G/%V/%w")
+        start_date, end_date = new_value - datetime.timedelta(weeks=3), new_value + datetime.timedelta(weeks=1)
+    elif group == "DOW":
+        start_date, end_date = '1900-01-01', date.today()
+    else:
+        start_date, end_date = (pd.to_datetime(date_) - pd.to_timedelta(3, unit='d')), \
+                               (pd.to_datetime(date_) + pd.to_timedelta(1, unit='d'))
+    return end_date, start_date
+
 
 # Query data for ECG_analyse
 
@@ -195,98 +201,73 @@ def box_plot_ecg(rdb, x_axis):
 
     return {}
 
+
 # Patient Workouts
-
-
-def workout_activity_data(rdb, patient):
-    """ Returns the DataFrame for table and summary figure on the Workouts Tab. The table is filtered by selected
-        patient in drop down list """
-
-    sql = """SELECT type,duration,distance,"EnergyBurned","Start_Date"::date AS date,"Start_Date"::time AS "Start",
-                    "End_Date"::time AS "End",TO_CHAR("Start_Date",'YYYY-MM') AS month,
-                    TO_CHAR("Start_Date", 'IYYY/IW') as week,TO_CHAR("Start_Date", 'Day') as "DOW"
-             FROM workout  
-             WHERE "Name"='{}' 
-             ORDER BY type,"Start_Date"  """.format(patient)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
+def workout_activity_data(rdb, patients):
+    sql = select(Workout.key, Workout.distance, Workout.duration, Workout.energyburned,
+                 Workout.start_date.cast(Date).label('date'),
+                 Workout.start_date.cast(Time).label("Start"), Workout.end_date.cast(Time).label("End"),
+                 func.to_char(Workout.start_date, 'YYYY-MM').label('month'),
+                 func.to_char(Workout.start_date, 'IYYY/IW').label('week'),
+                 func.trim(func.to_char(Workout.start_date, 'Day')).label("DOW")).\
+        where(Workout.patient_id == patients).order_by(Workout.key, Workout.start_date)
+    df = pd.read_sql(sql, rdb)
     return df
 
 
-def workout_activity_pie_chart(rdb, patient, value, group, what):
-    """ Returns the DataFrame for pie plot on the Workouts Tab. The table is filtered and grouped by selected
-        patient,day/week/month in drop down list  """
-
+def workout_check_by_what_group_by(group):
     if group == 'M':
-        if value is not None: value = value["points"][0]["x"][:7]
-        to_char = """ TO_CHAR("Start_Date",'YYYY-MM')"""
+        to_char = func.to_char(Workout.start_date, 'YYYY-MM')
         group_by = "month"
     elif group == 'W':
-        if value is not None: value = value["points"][0]["x"]
-        to_char = """ TO_CHAR("Start_Date", 'IYYY/IW') """
+        to_char = func.to_char(Workout.start_date, 'IYYY/IW')
         group_by = "week"
     elif group == 'DOW':
-        if value is not None: value = value["points"][0]["x"].replace(" ", "")
-        to_char = """TRIM(TO_CHAR("Start_Date", 'Day'))  """
-        group_by = """ "DOW" """
+        to_char = func.trim(func.to_char(Workout.start_date, 'Day'))
+        group_by = "DOW"
     else:
-        if value is not None: value = str(value["points"][0]["x"])
-        to_char = """ "Start_Date"::date """
+        to_char = Workout.start_date.cast(Date)
         group_by = "date"
 
-    if value is None:
-        value = """SELECT {}  AS {} 
-                   FROM workout
-                   WHERE "Name"='{}' 
-                   LIMIT 1""".format(to_char, group, patient)
+    return group_by, to_char
+
+
+def workout_activity_pie_chart(rdb, patients, value, group, what):
+    group_by_value, to_char = workout_check_by_what_group_by(group)
+    if value:
+        if group == 'M': value = value["points"][0]["x"][:7]
+        elif group == 'W': value = value["points"][0]["x"]
+        elif group == 'DOW': value = value["points"][0]["x"]
+        else: value = str(value["points"][0]["x"])
+        sql = select(Workout.key, text("Workout."+f'{what}'), to_char.label(group_by_value)).\
+            where(and_(Workout.patient_id == patients, Workout.duration.between(10, 300), to_char == value))
+
     else:
-        value = "'"+value+"'"
-
-    sql = """SELECT type,"{0}",{1} as {2}
-                FROM workout  
-                WHERE "Name"='{3}' 
-                AND duration between 10 and 300 
-                AND {1} in ({4}) """.format(what, to_char, group_by, patient, value)
-
-    try:
-        df = pd.read_sql(sql, rdb)
-    except:
-        df = pd.DataFrame()
+        sql = select(Workout.key, to_char.label(group_by_value), text("Workout."+f'{what}')).\
+            where(Workout.patient_id == patients).limit(1)
+    df = pd.read_sql(sql, rdb)
     return df
 
 
-def heart_rate(rdb, click, patient):
+def heart_rate(rdb, click, patients):
     """  Returns DataFrames to plot workout figure in Workout tab"""
 
     if click is None:
-        click = """SELECT "Start_Date":: date  AS day 
-                   FROM workout
-                   WHERE "Name"='{}' 
-                   LIMIT 1""".format(patient)
+        click = select(Workout.start_date.cast(Date)).where(Workout.patient_id == patients).limit(1).scalar_subquery()
     else:
         click = "'" + str(click["points"][0]["x"]) + "'"
 
-    sql1 = """SELECT type,"Start_Date","End_Date"
-                FROM workout  
-                WHERE "Name"='{}' 
-                AND duration between 10 and 300 
-                AND "Start_Date":: date in ({}) """.format(patient, click)
+    sql1 = select(Workout.key, Workout.start_date, Workout.end_date).\
+        where(and_(Workout.patient_id == patients, Workout.duration.between(10, 300),
+                   Workout.start_date.cast(Date) == click))
 
-    sql2 = """SELECT "Name","Date","Value" 
-                FROM applewatch_numeric 
-                WHERE "Name"='{}' 
-                AND "Date":: date in ({}) 
-                AND type='Heart Rate' 
-                order by "Date" """.format(patient, click)
-    try:
-        df1 = pd.read_sql(sql1, rdb)
-        df2 = pd.read_sql(sql2, rdb)
-    except:
-        df1, df2 = pd.DataFrame(), pd.DataFrame()
+    sql2 = select(AppleWatchNumerical.patient_id, AppleWatchNumerical.date, AppleWatchNumerical.value).\
+        where(and_(AppleWatchNumerical.patient_id == patients, AppleWatchNumerical.key == 'Heart Rate',
+                   AppleWatchNumerical.date.cast(Date) == click)).\
+        order_by(AppleWatchNumerical.date)
 
+    df1 = pd.read_sql(sql1, rdb)
+    df2 = pd.read_sql(sql2, rdb)
     return df1, df2
 
 

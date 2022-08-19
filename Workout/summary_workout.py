@@ -12,14 +12,14 @@ def update_figure(df, group, what):
     else: index = 'date'
 
     df = df[(df['duration'] > 10) & (df['duration'] < 300)]
-    df = df.groupby([index, "type"]).sum().reset_index()
+    df = df.groupby([index, "key"]).sum().reset_index()
 
     if group == 'DOW':
-        cats = ['Monday   ', 'Tuesday  ', 'Wednesday', 'Thursday ', 'Friday   ', 'Saturday ', 'Sunday   ']
+        cats = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         df['DOW'] = pd.Categorical(df['DOW'], categories=cats, ordered=True)
         df = df.sort_values('DOW')
 
-    fig = px.bar(x=df[index],  y=df[what], color=df["type"])
+    fig = px.bar(x=df[index],  y=df[what], color=df["key"])
     fig.update_layout(
         height=400,
         template='plotly_white',
