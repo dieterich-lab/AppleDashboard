@@ -41,7 +41,7 @@ def selection():
                     style={'height': '40px'},
                     options=[{'label': 'duration', 'value': 'duration'},
                              {'label': 'distance', 'value': 'distance'},
-                             {'label': 'totalEnergy', 'value': 'EnergyBurned'},
+                             {'label': 'totalEnergy', 'value': 'energyburned'},
                              ],
                     value='duration',
                     clearable=False

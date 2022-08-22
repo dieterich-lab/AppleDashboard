@@ -30,7 +30,7 @@ Export "Health data" from Apple watch:
 Test it out at http://localhost:600. No mounted folders. To apply changes, the image must be re-built. <br>
 [Data import information](#data-import)
 
-## Setup Development ## 
+## Setup Development ## [detailed documentation](https://github.com/dieterich-lab/AppleDashboard/tree/master/Documentation)
 Not recommended for pure deployment.
 
 #### Requirements ####
