@@ -11,7 +11,7 @@ from db import connect_db
 from ECG_analyze.selection_card import selection
 from ECG_analyze.ECG_plot import update_ecg_figure
 
-hrv_features = ['hrv', 'SDNN', 'SENN', 'SDSD', 'pNN20', 'pNN50', 'lf', 'hf', 'lf_hf_ratio', 'total_power', 'vlf']
+hrv_features = ['hrv', 'sdnn', 'senn', 'sdsd', 'pnn20', 'pnn50']
 
 # Selection
 selection = selection()
@@ -21,6 +21,7 @@ rdb = connect_db()
 
 # get data from database
 df = ldd.table_hrv(rdb)
+
 data_store.csv_hrv = df.to_csv(index=False)  # data to csv file
 
 layout = html.Div([
@@ -53,10 +54,9 @@ layout = html.Div([
 
         )], style={'height': '100%'}))]),
     html.Br(),
-
     dbc.Row(dbc.Col(dbc.Card([dbc.Row([
-                                       dbc.Col(dbc.Card(selection), lg=2),
-                                       dbc.Col(dbc.Card(dcc.Graph(id='scatter_plot_hrv')), lg=10)])]))),
+        dbc.Col(dbc.Card(selection), lg=2),
+        dbc.Col(dbc.Card(dcc.Graph(id='scatter_plot_hrv')), lg=10)])]))),
     html.Br(),
 
     dbc.Row(dbc.Col(dbc.Card([dbc.Col(html.Br()),
@@ -66,6 +66,7 @@ layout = html.Div([
                                                    value=hrv_features[1],
                                                    clearable=False)),
                               dbc.Col(dcc.Graph(id='box_plot_hrv'))], style={'height': '100%'}))),
+
 
 ])
 
@@ -81,8 +82,8 @@ def update_ecg(data, data_tab):
         fig = {}
     else:
         add = 'R_peaks'
-        patient = data_tab[data[0]]['Patient']
-        day = data_tab[data[0]]['Day']
+        patient = data_tab[data[0]]['patient_id']
+        day = data_tab[data[0]]['day']
         time = data_tab[data[0]]['time']
         fig, df_data = update_ecg_figure(day, time, patient, add)
     return fig
@@ -95,10 +96,11 @@ def update_ecg(data, data_tab):
      Input("y axis", 'value')]
 )
 def update_scatter_plot_ecg(x_axis, y_axis):
+    df = ldd.scatter_plot_ecg(rdb, x_axis, y_axis)
     if df.empty:
         fig = {}
     else:
-        fig = px.scatter(df, x='ECG.'+f'{x_axis}', y='ECG.'+f'{y_axis}', template='plotly_white', color="Patient")
+        fig = px.scatter(df, x=x_axis, y=y_axis, template='plotly_white', color="patient_id")
     return fig
 
 
@@ -106,10 +108,11 @@ def update_scatter_plot_ecg(x_axis, y_axis):
 @app.callback(Output('box_plot_hrv', 'figure'),
               Input("group", 'value'))
 def update_box_plot_ecg(y_axis):
+    df = ldd.box_plot_ecg(rdb, y_axis)
     if df.empty:
         fig = {}
     else:
-        fig = px.box(df, x="Patient", y='ECG.'+f'{y_axis}', template='plotly_white')
+        fig = px.box(df, x="patient_id", y=y_axis, template='plotly_white')
     return fig
 
 

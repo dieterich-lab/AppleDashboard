@@ -43,7 +43,8 @@ def update_ecg_figure(day, time, patient, add):
     if len(df) == 0:
         fig = {}
     else:
-        data = np.array(df['data'][0])/1000
+
+        data = np.array(list(map(float, df['data'][0])))/1000
         time = np.arange(0, len(data) / 511, 1 /511)
         time = time[0:len(data)]
         df_data = pd.DataFrame()
@@ -54,7 +55,7 @@ def update_ecg_figure(day, time, patient, add):
 
         # if minor grid or R peaks should be added to ECG plot
         if add == 'R_peaks':
-            r_peaks = ed.detect_r_peaks(511, data)
+            r_peaks = ed.detect_r_peaks(511, df_data['value'])
             fig.add_scatter(x=r_peaks / 511, y=data[r_peaks], mode='markers', name="R_peaks")
         else:
             add_minor_grid(fig, x_range=[0, 30], y_range=[-1.5, 1.5])

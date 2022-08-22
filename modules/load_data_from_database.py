@@ -321,16 +321,17 @@ def ecg_data(rdb, day, patients, time):
 
 
 def table_hrv(rdb):
-    sql = select(ECG).order_by(ECG.patient_id, ECG.day)
+    sql = select(ECG.patient_id, ECG.date.cast(Time).label("time"), ECG.day, ECG.number, ECG.classification).\
+        order_by(ECG.patient_id, ECG.day)
     return pd.read_sql(sql, rdb)
 
 
 def scatter_plot_ecg(rdb, x_axis, y_axis):
-    print(x_axis)
+    sql = select(ECG.patient_id, text('ECG.' + f'{x_axis}'), text('ECG.' + f'{y_axis}'))
 
-    return {}
+    return pd.read_sql(sql, rdb)
 
 
 def box_plot_ecg(rdb, x_axis):
-
-    return {}
+    sql = select(ECG.patient_id, text('ECG.' + f'{x_axis}'))
+    return pd.read_sql(sql, rdb)

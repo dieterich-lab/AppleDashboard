@@ -8,7 +8,7 @@ import modules.load_data_from_database as ldd
 rdb = connect_db()
 patient = ldd.patient(rdb)
 
-hrv_features = ['hrvOwn', 'SDNN', 'SENN', 'SDSD', 'pNN20', 'pNN50', 'lf', 'hf', 'lf_hf_ratio', 'total_power', 'vlf']
+hrv_features = ['hrv', 'sdnn', 'senn', 'sdsd', 'pnn20', 'pnn50']
 
 
 # selection for first drop downs

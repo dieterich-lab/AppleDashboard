@@ -122,7 +122,8 @@ def export_ecg_data_from_apple_watch(files, directory, patient):
         data = ecg["Name"][10:].str.replace(',', '.').astype(float).to_list()
 
         try:
-            rr_intervals = detect_r_peaks(511, data)
+            RRints = detect_r_peaks(511, data)
+            rr_intervals = (RRints / 511) * 1000
             if len(rr_intervals) > 1:
                 time_domain_features_dict = time_domain_analyze(rr_intervals)
             else:
@@ -203,4 +204,4 @@ def detect_r_peaks(sample_rate, data):
     data_array = np.array(data)
     detectors = Detectors(sample_rate)  # use library for peak detection to get array of r peak positions
     r_peaks = detectors.engzee_detector(data_array)
-    return (np.diff(np.array(r_peaks)) / 511) * 1000
+    return np.array(r_peaks)
