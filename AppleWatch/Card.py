@@ -3,7 +3,6 @@ from dash import html
 
 
 def cards_view():
-    """ card layout """
     cards = [
         dbc.Row([dbc.Col(dbc.Card(
             [

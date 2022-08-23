@@ -79,8 +79,8 @@ def create_tables_type(rdb):
     rdb_connection = rdb.raw_connection()
     cur = rdb_connection.cursor()
 
-    name_table = """INSERT INTO key_name (SELECT DISTINCT key FROM apple_watch_numerical)"""
-    activity_type = """INSERT INTO activity_name (SELECT DISTINCT key FROM workout WHERE key is not NULL)"""
+    name_table = """INSERT INTO key_name (SELECT DISTINCT key,unit FROM apple_watch_numerical)"""
+    activity_type = """INSERT INTO activity_name (SELECT DISTINCT key FROM workout WHERE key is not NULL )"""
     cur.execute(name_table)
     cur.execute(activity_type)
     rdb_connection.commit()

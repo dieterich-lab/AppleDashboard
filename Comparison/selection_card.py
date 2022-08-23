@@ -34,8 +34,8 @@ def selection():
                     dcc.Dropdown(
                         id='Bar chart',
                         style={'height': '100%'},
-                        options=[{'label': name, 'value': name} for name in labels],
-                        value=labels[0],
+                        options=[{'label': name, 'value': name} for name in list(labels.keys())],
+                        value=list(labels.keys())[0],
                         clearable=False,
                     ))]),
             dbc.Col([
@@ -44,7 +44,7 @@ def selection():
                     id='linear plot',
                     style={'height': '100%'},
                     options=[{'label': name, 'value': name} for name in labels],
-                    value=labels[0],
+                    value=list(labels.keys())[0],
                     clearable=False,
                 ))]),
         ]),

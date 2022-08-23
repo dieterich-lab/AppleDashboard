@@ -21,7 +21,7 @@ from AppleWatch.patient_information import patient_information, info
 
 # connection with database
 rdb = connect_db()
-
+labels = ldd.label(rdb)
 
 day_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -226,7 +226,7 @@ def update_table(group, patient, linear, bar):
         click = None
         data = df.to_dict('records')
         columns = [{"name": str(i), "id": str(i)} for i in df.columns]
-        fig = update_figure(df, linear, bar, group_by)
+        fig = update_figure(df, linear, bar, group_by, labels)
 
     return fig, click, data, columns
 
@@ -253,7 +253,7 @@ def update_figure_day(date, value, group, bar, patient, m):
     if df.empty:
         fig = {}
     else:
-        fig = day_figure_update(df, bar)
+        fig = day_figure_update(df, bar, date, labels)
     return fig
 
 

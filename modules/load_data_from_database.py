@@ -15,10 +15,9 @@ def patient(rdb):
 
 
 def label(rdb):
-    labels = select(KeyName.key)
+    labels = select(KeyName.key, KeyName.unit)
     df_labels = pd.read_sql(labels, rdb)
-    labels_list = df_labels["key"].values.tolist()
-    return labels_list
+    return dict(zip(df_labels.key, df_labels.unit))
 
 
 def month(rdb, patients):
@@ -109,6 +108,7 @@ def table(rdb, patients, group, linear, bar):
         df = df.sort_values('DOW')
         group_by_value = "DOW"
     df = df.pivot(index=group_by_value, columns='key', values='Value').reset_index()
+    df = df.round(2)
     return df, group_by_value
 
 
@@ -210,12 +210,13 @@ def workout_activity_pie_chart(rdb, patients, value, group, what):
         else: value = str(value["points"][0]["x"])
         sql = select(Workout.key, text("Workout."+f'{what}'), to_char.label(group_by_value)).\
             where(and_(Workout.patient_id == patients, Workout.duration.between(10, 300), to_char == value))
-
     else:
-        sql = select(Workout.key, to_char.label(group_by_value), text("Workout."+f'{what}')).\
+        sql = select(Workout.key, to_char.label(group_by_value), text("Workout."+f'{what}'), Workout.start_date.cast(Date)).\
             where(Workout.patient_id == patients).limit(1)
     df = pd.read_sql(sql, rdb)
-    return df
+    if not value:
+        value = df['start_date'].values[0]
+    return df, value
 
 
 def heart_rate(rdb, click, patients):

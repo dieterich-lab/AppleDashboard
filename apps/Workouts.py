@@ -98,11 +98,11 @@ def summary_workout(patient, group, what):
      Input("what", "value")]
 )
 def pie_figure(patient, group, value, what):
-    data = ldd.workout_activity_pie_chart(rdb, patient, value, group, what)
+    data, value = ldd.workout_activity_pie_chart(rdb, patient, value, group, what)
     if data.empty:
         fig = {}
     else:
-        fig = update_pie(data, group, what)
+        fig = update_pie(data, group, what, value)
     return fig
 
 

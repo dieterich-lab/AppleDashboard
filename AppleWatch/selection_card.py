@@ -11,6 +11,7 @@ patient = ldd.patient(rdb)
 labels = ldd.label(rdb)
 
 
+
 # selection for first drop downs
 def selection():
     """ Drop downs for AppleWatch tab """
@@ -44,16 +45,16 @@ def selection():
                         dcc.Dropdown(
                             id='Bar chart',
                             style={'height': '100%'},
-                            options=[{'label': name, 'value': name} for name in labels],
-                            value=labels[0],
+                            options=[{'label': name, 'value': name} for name in list(labels.keys())],
+                            value=list(labels.keys())[0],
                             clearable=False,
                         ))]),
             dbc.Col(['Linear plot:',
                     dbc.Card(dcc.Dropdown(
                         id='linear plot',
                         style={'height': '100%'},
-                        options=[{'label': name, 'value': name} for name in labels],
-                        value=labels[0],
+                        options=[{'label': name, 'value': name} for name in list(labels.keys())],
+                        value=list(labels.keys())[0],
                         clearable=False,
                         multi=True
                     ))]),
