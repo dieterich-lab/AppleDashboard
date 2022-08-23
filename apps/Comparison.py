@@ -4,17 +4,16 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 import modules.load_data_from_database as ldd
 import plotly.express as px
-
 from db import connect_db
-
 from Comparison import plots as p
 from Comparison.selection_card import selection
 
+
 # Selection
 selection_health, selection_workout = selection()
-
-# connection with database
 rdb = connect_db()
+
+labels = ldd.label(rdb)
 
 layout = html.Div([
     dbc.Row([dbc.Col(selection_health)]),
@@ -27,8 +26,8 @@ layout = html.Div([
              dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='histogram_plot')), style={'height': '100%'}), lg=6)]),
 
     html.Br(),
-    dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='linear_plot')), style={'height': '100%'}),lg=6),
-            dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='linear_plot1')), style={'height': '100%'}),lg=6)]),
+    dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='linear_plot')), style={'height': '100%'}), lg=6),
+            dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='linear_plot1')), style={'height': '100%'}), lg=6)]),
     dbc.Row([dbc.Col(selection_workout)]),
     html.Br(),
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='workout_plot')), style={'height': '100%'}))]),
@@ -56,16 +55,14 @@ def update_figures(group, linear, bar):
 
     df, df_linear, df_bar = ldd.plots_comparison(rdb, group, linear, bar)
     if df.empty:
-        fig_scatter, fig_box_plot, fig_histogram = {}, {}, {}
+        fig_scatter, fig_box_plot, fig_histogram, fig1, fig2 = {}, {}, {}, {}, {}
     else:
         df_scatter = df.pivot(index=[group, 'date'], columns='key', values='Value').reset_index()
-        fig_scatter = px.scatter(df_scatter, x=bar, y=linear, color=group, template='plotly_white')
-        fig_box_plot, fig_histogram = p.figure_box_hist(df, group, linear, bar)
-
-    if df_linear.empty:
-        fig1, fig2 = {}, {}
-    else:
-        fig1, fig2 = p.figure_linear_plot(df_linear, df_bar, group, linear, bar)
+        fig_scatter = px.scatter(df_scatter, x=bar, y=linear, color=group, template='plotly_white',
+                                 labels={bar: bar + ' [' + labels[bar] + ']',
+                                         linear: linear + ' [' + labels[linear] + ']'})
+        fig_box_plot, fig_histogram = p.figure_box_hist(df, group, linear, bar, labels)
+        fig1, fig2 = p.figure_linear_plot(df_linear, df_bar, group, linear, bar, labels)
 
     return fig_scatter, fig_box_plot, fig_histogram,  fig1, fig2
 
@@ -98,8 +95,7 @@ def update_day_night_box(gr):
     if df.empty:
         fig = {}
     else:
-        fig = px.box(df, x='day_night', y="Heart Rate", color=gr, template='plotly_white')
+        fig = px.box(df, x='day_night', y="Heart Rate", labels={"Heart Rate": "Average Heart Rate [bpm]"}, color=gr,
+                     template='plotly_white', title='Comparison Heart Rate  during day and night')
 
     return fig
-
-

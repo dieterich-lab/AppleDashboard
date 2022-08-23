@@ -11,11 +11,9 @@ patient = ldd.patient(rdb)
 labels = ldd.label(rdb)
 
 
-
-# selection for first drop downs
 def selection():
     """ Drop downs for AppleWatch tab """
-    selection = [
+    selection_layout = [
         html.Br(),
         dbc.Row([
             dbc.Col([
@@ -62,5 +60,4 @@ def selection():
                     html.Div(id='drop_down-container', children=[])]),
         ]),
     ]
-    return selection
-
+    return selection_layout

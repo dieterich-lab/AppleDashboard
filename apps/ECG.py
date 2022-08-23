@@ -2,7 +2,7 @@ import dash_bootstrap_components as dbc
 import modules.load_data_from_database as ldd
 import plotly.express as px
 import io
-from dash.dependencies import Input, Output, ALL
+from dash.dependencies import Input, Output
 from dash import dcc, html, dash_table
 from app import app, data_store
 from flask import send_file
@@ -96,11 +96,11 @@ def update_ecg(data, data_tab):
      Input("y axis", 'value')]
 )
 def update_scatter_plot_ecg(x_axis, y_axis):
-    df = ldd.scatter_plot_ecg(rdb, x_axis, y_axis)
+    df_scatter = ldd.scatter_plot_ecg(rdb, x_axis, y_axis)
     if df.empty:
         fig = {}
     else:
-        fig = px.scatter(df, x=x_axis, y=y_axis, template='plotly_white', color="patient_id")
+        fig = px.scatter(df_scatter, x=x_axis, y=y_axis, template='plotly_white', color="patient_id")
     return fig
 
 
@@ -108,11 +108,11 @@ def update_scatter_plot_ecg(x_axis, y_axis):
 @app.callback(Output('box_plot_hrv', 'figure'),
               Input("group", 'value'))
 def update_box_plot_ecg(y_axis):
-    df = ldd.box_plot_ecg(rdb, y_axis)
+    df_box_plot = ldd.box_plot_ecg(rdb, y_axis)
     if df.empty:
         fig = {}
     else:
-        fig = px.box(df, x="patient_id", y=y_axis, template='plotly_white')
+        fig = px.box(df_box_plot, x="patient_id", y=y_axis, template='plotly_white')
     return fig
 
 

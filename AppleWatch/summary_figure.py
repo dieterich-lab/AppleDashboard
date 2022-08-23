@@ -5,7 +5,6 @@ import numpy as np
 
 def update_figure(df, linear, bar, index, labels):
     """ Update the "summary figure" in the Patient tab depending on drop downs """
-
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     if bar in df.columns:
         fig.add_trace(go.Bar(x=df[index], y=df[bar], name=F'{bar}'), secondary_y=False)
@@ -16,7 +15,6 @@ def update_figure(df, linear, bar, index, labels):
             fig.add_trace(go.Scatter(x=df_linear[index], y=df_linear[i], name=F'{i}', mode='lines+markers'),
                           secondary_y=True)
     fig = update_figure_summary(bar, fig, index, labels)
-
     return fig
 
 

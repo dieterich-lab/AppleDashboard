@@ -6,7 +6,6 @@ import datetime
 from flask import send_file
 import pandas as pd
 import io
-
 import modules.load_data_from_database as ldd
 from db import connect_db
 
@@ -108,55 +107,21 @@ layout = html.Div([
      Input('group by', "value")],
 )
 def update_selection(click, patient, value):
-
     if value == 'M':
         month = ldd.month(rdb, patient)
         if click:
             value_m = click["points"][0]["x"][:7]
         else:
             value_m = month[0]
-        drop_down = html.Div([dcc.Dropdown(
-            style={'height': '40px'},
-            id={
-                'type': 'filter-drop_down',
-                'index': 0
-            },
-            options=[{'label': name, 'value': name} for name in month],
-            value=value_m,
-            clearable=False
-        )])
+        drop_down = create_drop_down_for_selection(month, value_m)
     elif value == 'W':
         week = ldd.week(rdb, patient)
-        if click:
-            value_w = click["points"][0]["x"]
-        else:
-            value_w = week[0]
-        drop_down = html.Div([dcc.Dropdown(
-            style={'height': '40px'},
-            id={
-                'type': 'filter-drop_down',
-                'index': 0
-            },
-            options=[{'label': name, 'value': name} for name in week],
-            value=value_w,
-            clearable=False
-        )])
+        value_w = check_if_click_is_none(click, week)
+        drop_down = create_drop_down_for_selection(week, value_w)
     elif value == 'DOW':
-        if click:
-            value_dow = click["points"][0]["x"].replace(" ", "")
-        else:
-            value_dow = day_of_week[0]
-        drop_down = html.Div([dcc.Dropdown(
-            style={'height': '40px'},
-            id={
-                'type': 'filter-drop_down',
-                'index': 1
-            },
-            options=[{'label': name, 'value': name} for name in day_of_week],
-            value=value_dow,
-            clearable=False
-        )])
-    elif value == 'D':
+        value_dow = check_if_click_is_none(click, day_of_week)
+        drop_down = create_drop_down_for_selection(day_of_week, value_dow)
+    else:
         min_date, max_date = ldd.min_max_date(rdb, patient)
         if click:
             value_day = str(click["points"][0]["x"])
@@ -172,6 +137,28 @@ def update_selection(click, patient, value):
             max_date_allowed=max_date,
             display_format='D/M/Y',
             date=value_day)])
+    return drop_down
+
+
+def check_if_click_is_none(click, week):
+    if click:
+        value_w = click["points"][0]["x"]
+    else:
+        value_w = week[0]
+    return value_w
+
+
+def create_drop_down_for_selection(group, value):
+    drop_down = html.Div([dcc.Dropdown(
+        style={'height': '40px'},
+        id={
+            'type': 'filter-drop_down',
+            'index': 0
+        },
+        options=[{'label': name, 'value': name} for name in group],
+        value=value,
+        clearable=False
+    )])
     return drop_down
 
 
@@ -239,8 +226,7 @@ def update_table(group, patient, linear, bar):
      Input("group by", "value"),
      Input('Bar chart', 'value'),
      Input("patient", "value"),
-     Input('drop_down-container', 'children')
-     ]
+     Input('drop_down-container', 'children')]
 )
 def update_figure_day(date, value, group, bar, patient, m):
     if group == 'D': date = date[0]
@@ -315,12 +301,12 @@ def update_ecg(data, patient, data_tab):
 
 
 @app.callback(Output('my-link', 'href'), [Input('table2', 'selected_rows')])
-def update_link(value):
+def update_link():
     return '/dash/urlToDownload'
 
 
 @app.callback(Output('my-link2', 'href'), [Input('table2', 'selected_rows')])
-def update_link(value):
+def update_link():
     return '/dash/Download2'
 
 
