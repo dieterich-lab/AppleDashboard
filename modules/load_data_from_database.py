@@ -11,13 +11,18 @@ def patient(rdb):
     select_patient_id = select(Patient.patient_id).order_by(Patient.index)
     patients_id_df = pd.read_sql(select_patient_id, rdb)
     patients_id_list = patients_id_df["patient_id"].values.tolist()
+    if not patients_id_list:
+        patients_id_list = ['']
     return patients_id_list
 
 
 def label(rdb):
     labels = select(KeyName.key, KeyName.unit)
     df_labels = pd.read_sql(labels, rdb)
-    return dict(zip(df_labels.key, df_labels.unit))
+    dict_labels = dict(zip(df_labels.key, df_labels.unit))
+    if not dict_labels:
+        dict_labels = {'empty': 'empty'}
+    return dict_labels
 
 
 def month(rdb, patients):
@@ -26,6 +31,8 @@ def month(rdb, patients):
         order_by('month')
     df_months = pd.read_sql(months, rdb)
     months_list = df_months['month'].to_list()
+    if not months_list:
+        months_list = ['2022-01']
     return months_list
 
 
@@ -35,21 +42,28 @@ def week(rdb, patients):
         order_by('week')
     df_weeks = pd.read_sql(weeks, rdb)
     weeks_list = df_weeks['week'].to_list()
+    if not weeks_list:
+        weeks_list = ['2022/04']
     return weeks_list
 
 
 def min_max_date(rdb, patients):
     sql = select(Patient.min_date, Patient.max_date).where(Patient.patient_id == patients)
     df = pd.read_sql(sql, rdb)
-    min_date, max_date = df['min_date'].iloc[0].date(), df['max_date'].iloc[0].date()
-
+    if df.empty:
+        min_date, max_date = datetime.datetime.now(), datetime.datetime.now()
+    else:
+        min_date, max_date = df['min_date'].iloc[0].date(), df['max_date'].iloc[0].date()
     return min_date, max_date
 
 
 def age_sex(rdb, patients):
     sql = select(Patient.age, Patient.sex).where(Patient.patient_id == patients)
     df = pd.read_sql(sql, rdb)
-    age, sex = df['age'][0], df['sex'][0]
+    if df.empty:
+        age, sex = '', ''
+    else:
+        age, sex = df['age'][0], df['sex'][0]
 
     return age, sex
 
@@ -214,7 +228,7 @@ def workout_activity_pie_chart(rdb, patients, value, group, what):
         sql = select(Workout.key, to_char.label(group_by_value), text("Workout."+f'{what}'), Workout.start_date.cast(Date)).\
             where(Workout.patient_id == patients).limit(1)
     df = pd.read_sql(sql, rdb)
-    if not value:
+    if not value and not df.empty:
         value = df['start_date'].values[0]
     return df, value
 

@@ -39,8 +39,7 @@ class ImportSettings:
 
     @staticmethod
     def get_hash(path):
-        return os.popen(f"sha512sum {path}").read() \
-            .split(' ')[0]
+        return os.popen(f"sha512sum {path}").read().split(' ')[0]
 
     def is_export_files_changed(self, files):
         hash_dict = {}

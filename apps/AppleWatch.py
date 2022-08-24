@@ -3,9 +3,7 @@ from dash.dependencies import Input, Output, ALL
 import dash_bootstrap_components as dbc
 from dash import dcc, html, dash_table
 import datetime
-from flask import send_file
 import pandas as pd
-import io
 import modules.load_data_from_database as ldd
 from db import connect_db
 
@@ -21,12 +19,14 @@ from AppleWatch.patient_information import patient_information, info
 # connection with database
 rdb = connect_db()
 labels = ldd.label(rdb)
+patient = ldd.patient(rdb)
+
 
 day_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 # Selection
-selection = selection()
+selection = selection(labels, patient)
 cards = cards_view()
 information = patient_information()
 
@@ -49,12 +49,9 @@ layout = html.Div([
                 filter_action='native',
                 sort_action="native",
                 sort_mode="multi",
-                style_data_conditional=[
-                    {
+                style_data_conditional=[{
                         'if': {'row_index': 'odd'},
-                        'backgroundColor': 'rgb(248, 248, 248)'
-                    }
-                ],
+                        'backgroundColor': 'rgb(248, 248, 248)'}],
                 style_cell={
                     'whiteSpace': 'normal',
                     'height': 'auto',
@@ -62,16 +59,13 @@ layout = html.Div([
                 style_header={
                     'backgroundColor': 'rgb(230, 230, 230)',
                     'fontWeight': 'bold'
-                }
-            )), style={'height': '100%'}), lg=4),
+                })), style={'height': '100%'}), lg=4),
         dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_summary')), style={'height': '100%'}), lg=8)]),
     html.Br(),
-
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_day', hoverData={'points': [{'customdata': '1'}]}),
                                           style={'height': '100%'})), lg=6),
              dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_trend')), style={'height': '100%'}), lg=6)]),
     html.Br(),
-
     dbc.Row([
         dbc.Col(dbc.Card(dcc.Loading(dash_table.DataTable(
             id='table_ecg',
@@ -80,22 +74,17 @@ layout = html.Div([
             filter_action='native',
             sort_action="native",
             sort_mode="multi",
-            style_data_conditional=[
-                {
+            style_data_conditional=[{
                     'if': {'row_index': 'odd'},
                     'backgroundColor': 'rgb(248, 248, 248)'
-                }
-            ],
+                }],
             style_header={
                 'backgroundColor': 'rgb(230, 230, 230)',
                 'fontWeight': 'bold'
-            }
-
-        )), style={'height': '100%'}), lg=3),
-        dbc.Col(dbc.Card([html.A('Download ECG', id='my-link'), dcc.Graph(id='figure_ecg')], style={'height': '100%'}),
+            })), style={'height': '100%'}), lg=3),
+        dbc.Col(dbc.Card([dcc.Graph(id='figure_ecg')], style={'height': '100%'}),
                 lg=9)]),
     html.Br(),
-
 ])
 
 
@@ -106,37 +95,40 @@ layout = html.Div([
      Input('patient', "value"),
      Input('group by', "value")],
 )
-def update_selection(click, patient, value):
+def update_selection(click, patients, value):
     if value == 'M':
-        month = ldd.month(rdb, patient)
+        month = ldd.month(rdb, patients)
         if click:
             value_m = click["points"][0]["x"][:7]
         else:
             value_m = month[0]
         drop_down = create_drop_down_for_selection(month, value_m)
     elif value == 'W':
-        week = ldd.week(rdb, patient)
+        week = ldd.week(rdb, patients)
         value_w = check_if_click_is_none(click, week)
         drop_down = create_drop_down_for_selection(week, value_w)
     elif value == 'DOW':
         value_dow = check_if_click_is_none(click, day_of_week)
         drop_down = create_drop_down_for_selection(day_of_week, value_dow)
     else:
-        min_date, max_date = ldd.min_max_date(rdb, patient)
+        min_date, max_date = ldd.min_max_date(rdb, patients)
         if click:
             value_day = str(click["points"][0]["x"])
         else:
             value_day = max_date
-        drop_down = html.Div([dcc.DatePickerSingle(
-            style={'height': '40px'},
-            id={
-                'type': 'filter-drop_down',
-                'index': 0
-            },
-            min_date_allowed=min_date,
-            max_date_allowed=max_date,
-            display_format='D/M/Y',
-            date=value_day)])
+        drop_down = create_datepicksingle_for_selection(max_date, min_date, value_day)
+    return drop_down
+
+
+def create_datepicksingle_for_selection(max_date, min_date, value_day):
+    drop_down = html.Div([dcc.DatePickerSingle(
+        style={'height': '40px'},
+        id={'type': 'filter-drop_down',
+            'index': 0},
+        min_date_allowed=min_date,
+        max_date_allowed=max_date,
+        display_format='D/M/Y',
+        date=value_day)])
     return drop_down
 
 
@@ -151,10 +143,8 @@ def check_if_click_is_none(click, week):
 def create_drop_down_for_selection(group, value):
     drop_down = html.Div([dcc.Dropdown(
         style={'height': '40px'},
-        id={
-            'type': 'filter-drop_down',
-            'index': 0
-        },
+        id={'type': 'filter-drop_down',
+            'index': 0},
         options=[{'label': name, 'value': name} for name in group],
         value=value,
         clearable=False
@@ -226,8 +216,7 @@ def update_table(group, patient, linear, bar):
      Input("group by", "value"),
      Input('Bar chart', 'value'),
      Input("patient", "value"),
-     Input('drop_down-container', 'children')]
-)
+     Input('drop_down-container', 'children')])
 def update_figure_day(date, value, group, bar, patient, m):
     if group == 'D': date = date[0]
     elif group == 'M': date = value[0] + '-01'
@@ -250,8 +239,7 @@ def update_figure_day(date, value, group, bar, patient, m):
      Input({'index': ALL, 'type': 'filter-drop_down'}, 'date'),
      Input("group by", "value"),
      Input("patient", "value"),
-     Input('drop_down-container', 'children')],
-)
+     Input('drop_down-container', 'children')])
 def update_figure_trend(value, date, group, patient, m):
     if date[0]:
         date = date[0]
@@ -271,8 +259,7 @@ def update_figure_trend(value, date, group, patient, m):
      Output('table_ecg', 'columns'),
      Output('table_ecg', 'row_selectable'),
      Output('table_ecg', 'selected_rows')],
-    Input("patient", "value")
-)
+    Input("patient", "value"))
 def update_table_ecg(patient):
     df = ldd.ecgs(rdb, patient)
     data = df.to_dict('records')
@@ -285,53 +272,14 @@ def update_table_ecg(patient):
     Output('figure_ecg', 'figure'),
     [Input('table_ecg', "selected_rows"),
      Input("patient", "value"),
-     Input("table_ecg", 'data')]
-)
+     Input("table_ecg", 'data')])
 def update_ecg(data, patient, data_tab):
     if not data_tab:
         fig = {}
     else:
-        add = ''
+        add_r_peaks = ''
         day = data_tab[data[0]]['day']
         time = data_tab[data[0]]['time']
-
-        fig, df_ecg = update_ecg_figure(day, time, patient, add)
+        fig, df_ecg = update_ecg_figure(day, time, patient, add_r_peaks)
         data_store.csv_ecg = df_ecg.to_csv(index=False)
     return fig
-
-
-@app.callback(Output('my-link', 'href'), [Input('table2', 'selected_rows')])
-def update_link():
-    return '/dash/urlToDownload'
-
-
-@app.callback(Output('my-link2', 'href'), [Input('table2', 'selected_rows')])
-def update_link():
-    return '/dash/Download2'
-
-
-@app.server.route('/dash/urlToDownload')
-def download_csv():
-    csv = data_store.csv_ecg
-    buf_str = io.StringIO(csv)  # Create a string buffer
-    buf_byt = io.BytesIO(buf_str.read().encode("utf-8"))  # Create a bytes buffer from the string buffer
-    buf_str.close()
-    return send_file(buf_byt,
-                     mimetype='text/csv',
-                     attachment_filename='data.csv',
-                     as_attachment=True)
-
-
-@app.server.route('/dash/Download2')
-def download2_csv():
-    csv = data_store.csv_apple
-    buf_str = io.StringIO(csv)
-    buf_byt = io.BytesIO(buf_str.read().encode("utf-8"))
-    buf_str.close()
-    return send_file(buf_byt,
-                     mimetype='text/csv',
-                     attachment_filename='data_apple_watch.csv',
-                     as_attachment=True)
-                     
-
-

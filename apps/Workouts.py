@@ -25,7 +25,6 @@ rdb = connect_db()
 layout = html.Div([
     dbc.Row([dbc.Col(selection)]),
     html.Br(),
-
     dbc.Row([
         dbc.Col(dbc.Card(dcc.Loading(
             dash_table.DataTable(
@@ -47,11 +46,9 @@ layout = html.Div([
                 }
             ), style={'height': '100%'})))]),
     html.Br(),
-
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='summary_workout')), style={'height': '100%'}), lg=7),
              dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='pie_graph')), style={'height': '100%'}), lg=5)]),
     html.Br(),
-
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(html.Div(id='graph', children=[])), style={'height': '100%'}))]),
     html.Br(),
 ])
@@ -61,8 +58,7 @@ layout = html.Div([
 @app.callback(
     [Output('table_workout', 'data'),
      Output('table_workout', 'columns')],
-    [Input("patient", "value")]
-)
+    [Input("patient", "value")])
 def update_table(patient):
     df = ldd.workout_activity_data(rdb, patient)
     df = df[['key', 'date', 'Start', 'End', 'duration', 'distance', 'energyburned']].round(2)
@@ -77,8 +73,7 @@ def update_table(patient):
      Output("summary_workout", "clickData")],
     [Input("patient", "value"),
      Input('group by', "value"),
-     Input("what", "value")]
-)
+     Input("what", "value")])
 def summary_workout(patient, group, what):
     df = ldd.workout_activity_data(rdb, patient)
     click = None
@@ -95,8 +90,7 @@ def summary_workout(patient, group, what):
     [Input("patient", "value"),
      Input('group by', "value"),
      Input("summary_workout", "clickData"),
-     Input("what", "value")]
-)
+     Input("what", "value")])
 def pie_figure(patient, group, value, what):
     data, value = ldd.workout_activity_pie_chart(rdb, patient, value, group, what)
     if data.empty:
@@ -111,8 +105,7 @@ def pie_figure(patient, group, value, what):
     Output('graph', 'children'),
     [Input('group by', "value"),
      Input("summary_workout", "clickData"),
-     Input("patient", "value")]
-)
+     Input("patient", "value")])
 def hr_figure(group, click, patient):
     if group == 'D':
         df1, df2 = ldd.heart_rate(rdb, click, patient)
@@ -123,5 +116,4 @@ def hr_figure(group, click, patient):
             graph = html.Div([dcc.Graph(figure=fig)])
     else:
         graph = html.Div()
-
     return graph

@@ -1,17 +1,9 @@
 import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
-from db import connect_db
-import modules.load_data_from_database as ldd
-
-# connection with database
-rdb = connect_db()
-
-patient = ldd.patient(rdb)
-labels = ldd.label(rdb)
 
 
-def selection():
+def selection(labels, patient):
     """ Drop downs for AppleWatch tab """
     selection_layout = [
         html.Br(),

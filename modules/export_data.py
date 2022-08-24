@@ -107,7 +107,7 @@ def export_ecg_data_from_apple_watch(files, directory, patient):
     df = pd.DataFrame(columns=['patient', 'Date', 'Day', 'number', 'Classification', 'data', 'hrv', 'sdnn', 'senn',
                                'sdsd', 'pnn20', 'pnn50'])
 
-    for i,ecg_file in enumerate(files):
+    for i, ecg_file in enumerate(files):
         path = './import/{0}/{1}'.format(directory, ecg_file)
         ecg = pd.read_csv(path, sep=";", names=['Name'])
         ecg_file = ecg_file.replace('ecg_', '').replace('.csv', '')
@@ -200,7 +200,6 @@ def detect_r_peaks(sample_rate, data):
     """
     R peaks detection and RR intervals calculation
     """
-
     data_array = np.array(data)
     detectors = Detectors(sample_rate)  # use library for peak detection to get array of r peak positions
     r_peaks = detectors.engzee_detector(data_array)

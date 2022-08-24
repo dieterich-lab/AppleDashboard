@@ -25,7 +25,6 @@ def figure_box_hist(df, group, linear, bar, labels):
                                       marker_color=colors[name]), row=1, col=1)
         fig_box_plot.add_trace(go.Box(y=df_b['Value'], name=i, legendgroup=i, marker_color=colors[name]), row=1, col=2)
 
-    # Overlay both histograms
     fig_histogram.update_layout(barmode='stack', template='plotly_white')
     fig_histogram['layout']['yaxis1'].update(title='count')
     fig_histogram['layout']['xaxis1'].update(title=linear + ' [' + labels[linear] + ']')
@@ -46,14 +45,14 @@ def figure_linear_plot(df1, df2, gr, linear, bar, labels):
                       template='plotly_white').update_traces(mode='lines+markers')
     fig1.update_layout(
         title={
-            'text': "{}".format(linear),
+            'text': F"{linear}",
             'y': 0.9,
             'x': 0.5,
             'xanchor': 'center',
             'yanchor': 'top'})
     fig2.update_layout(
         title={
-            'text': "{}".format(bar),
+            'text': F"{bar}",
             'y': 0.9,
             'x': 0.5,
             'xanchor': 'center',

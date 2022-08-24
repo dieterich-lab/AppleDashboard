@@ -3,11 +3,11 @@ import plotly.graph_objects as go
 
 
 def day_figure_update(df, bar, date, labels):
-    df_bar, df = df[df['key'] == bar], df[df['key'] == 'Heart Rate']
+    df_bar, df_heart_rate = df[df['key'] == bar], df[df['key'] == 'Heart Rate']
     if not df_bar.empty:
         df_bar = df_bar.resample('5Min', on='date').sum().reset_index()
     fig = make_subplots(specs=[[{"secondary_y": True}]])
-    fig.add_trace(go.Scatter(x=df['date'], y=df["value"], name="Heart Rate"), secondary_y=False)
+    fig.add_trace(go.Scatter(x=df_heart_rate['date'], y=df_heart_rate["value"], name="Heart Rate"), secondary_y=False)
     fig.add_trace(go.Bar(x=df_bar['date'], y=df_bar["value"], name='{}'.format(bar)), secondary_y=True)
     fig.update_layout(
         height=400,

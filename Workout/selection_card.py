@@ -3,7 +3,6 @@ from dash import dcc
 from dash import html
 from db import connect_db
 import modules.load_data_from_database as ldd
-from datetime import date
 
 # connection with database
 rdb = connect_db()
@@ -13,7 +12,7 @@ patient = ldd.patient(rdb)
 # selection for first drop downs
 def selection():
     """ Drop downs for Workout tab """
-    selection = [
+    selection_layout = [
         html.Br(),
         dbc.Row([
             dbc.Col(['Patient selection:',
@@ -49,4 +48,4 @@ def selection():
         ]),
 
     ]
-    return selection
+    return selection_layout

@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from db import connect_db
 from itertools import product
-from ecgdetectors import Detectors
 from modules import export_data as ed
 
 rdb = connect_db()
@@ -39,15 +38,13 @@ def add_minor_grid(fig, x_range, y_range, major_step_x=0.4, major_step_y=1, mino
 def update_ecg_figure(day, time, patient, add):
     """ Update ECG graph in Patient and ECG tab depending on drop downs"""
     df = ldd.ecg_data(rdb, day, patient, time)
-
+    df_data = pd.DataFrame()
     if len(df) == 0:
         fig = {}
     else:
-
         data = np.array(list(map(float, df['data'][0])))/1000
-        time = np.arange(0, len(data) / 511, 1 /511)
+        time = np.arange(0, len(data) / 511, 1 / 511)
         time = time[0:len(data)]
-        df_data = pd.DataFrame()
         df_data['value'] = data
         df_data['time'] = time
 
@@ -74,4 +71,3 @@ def update_ecg_figure(day, time, patient, add):
                 'yanchor': 'top'})
 
     return fig, df_data
-
