@@ -14,7 +14,7 @@ app.layout = html.Div([
     dbc.Container(style={'backgroundColor': colors['background']},
                   children=[dbc.Card(html.Div(className="row header",
                                               children=[dbc.Col(html.Img(src=app.get_asset_url("logo.jpg"),
-                                                                         style={'width':'60%', 'margin-left': '15px'}),
+                                                                         style={'width': '60%', 'margin-left': '15px'}),
                                                                 lg=1),
                                                         dbc.Col(html.H1('HiGHmed Patient Dashboard',
                                                                         style={"font-size": "3rem",

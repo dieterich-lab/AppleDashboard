@@ -4,9 +4,8 @@ import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
 from dash import dash_table
-
-
-import modules.load_data_from_database as ldd
+import modules.load_dat_to_workout_tab as ld
+import modules.load_data_to_tab_health_data as ldd
 from db import connect_db
 
 from Workout.selection_card import selection
@@ -15,12 +14,9 @@ from Workout.pie import update_pie
 from Workout.workout_figure import workout_figure
 
 day_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
-# Selection
-selection = selection()
-
-# connection with database
 rdb = connect_db()
+patients = ldd.patient(rdb)
+selection = selection(patients)
 
 layout = html.Div([
     dbc.Row([dbc.Col(selection)]),
@@ -60,8 +56,7 @@ layout = html.Div([
      Output('table_workout', 'columns')],
     [Input("patient", "value")])
 def update_table(patient):
-    df = ldd.workout_activity_data(rdb, patient)
-    df = df[['key', 'date', 'Start', 'End', 'duration', 'distance', 'energyburned']].round(2)
+    df = ld.workout_activity_data(rdb, patient)
     data = df.to_dict('records')
     columns = [{"name": str(i), "id": str(i)} for i in df.columns]
     return data, columns
@@ -75,7 +70,7 @@ def update_table(patient):
      Input('group by', "value"),
      Input("what", "value")])
 def summary_workout(patient, group, what):
-    df = ldd.workout_activity_data(rdb, patient)
+    df = ld.workout_activity_data(rdb, patient)
     click = None
     if df.empty:
         fig = {}
@@ -92,7 +87,7 @@ def summary_workout(patient, group, what):
      Input("summary_workout", "clickData"),
      Input("what", "value")])
 def pie_figure(patient, group, value, what):
-    data, value = ldd.workout_activity_pie_chart(rdb, patient, value, group, what)
+    data, value = ld.workout_activity_pie_chart(rdb, patient, value, group, what)
     if data.empty:
         fig = {}
     else:
@@ -107,8 +102,8 @@ def pie_figure(patient, group, value, what):
      Input("summary_workout", "clickData"),
      Input("patient", "value")])
 def hr_figure(group, click, patient):
-    if group == 'D':
-        df1, df2 = ldd.heart_rate(rdb, click, patient)
+    if group == 'date':
+        df1, df2 = ld.heart_rate(rdb, click, patient)
         if df1.empty or df2.empty:
             graph = html.Div()
         else:

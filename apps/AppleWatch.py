@@ -1,10 +1,10 @@
-from app import app, data_store
+from app import app
 from dash.dependencies import Input, Output, ALL
 import dash_bootstrap_components as dbc
 from dash import dcc, html, dash_table
 import datetime
 import pandas as pd
-import modules.load_data_from_database as ldd
+import modules.load_data_to_tab_health_data as ld
 from db import connect_db
 
 from AppleWatch.Card import card_update, cards_view
@@ -18,27 +18,24 @@ from AppleWatch.patient_information import patient_information, info
 
 # connection with database
 rdb = connect_db()
-labels = ldd.label(rdb)
-patient = ldd.patient(rdb)
-
+labels = ld.label(rdb)
+patients = ld.patient(rdb)
 
 day_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 # Selection
-selection = selection(labels, patient)
+selection = selection(labels, patients)
 cards = cards_view()
 information = patient_information()
 
 
 layout = html.Div([
     dbc.Row(dbc.Col(selection)),
-
     html.Br(),
     dbc.Row([
         dbc.Col(dbc.Card(information, style={'height': '100%'}), lg=4),
         dbc.Col([dcc.Loading(dbc.Row([dbc.Col([card for card in cards])]))], lg=8)]),
-
     html.Br(),
     dbc.Row([
         dbc.Col(dbc.Card(
@@ -95,23 +92,23 @@ layout = html.Div([
      Input('patient', "value"),
      Input('group by', "value")],
 )
-def update_selection(click, patients, value):
+def update_selection(click, patient, value):
     if value == 'M':
-        month = ldd.month(rdb, patients)
+        month = ld.month(rdb, patient)
         if click:
             value_m = click["points"][0]["x"][:7]
         else:
             value_m = month[0]
         drop_down = create_drop_down_for_selection(month, value_m)
     elif value == 'W':
-        week = ldd.week(rdb, patients)
+        week = ld.week(rdb, patient)
         value_w = check_if_click_is_none(click, week)
         drop_down = create_drop_down_for_selection(week, value_w)
     elif value == 'DOW':
         value_dow = check_if_click_is_none(click, day_of_week)
         drop_down = create_drop_down_for_selection(day_of_week, value_dow)
     else:
-        min_date, max_date = ldd.min_max_date(rdb, patients)
+        min_date, max_date = ld.min_max_date(rdb, patient)
         if click:
             value_day = str(click["points"][0]["x"])
         else:
@@ -158,7 +155,10 @@ def create_drop_down_for_selection(group, value):
     [Input("patient", "value")],
 )
 def update_information(patient):
-    text = info(patient)
+    age, sex = ld.age_sex(rdb, patient)
+    ecg_classification = ld.classification_ecg(rdb, patient)
+    days = ld.number_of_days_more_6(rdb, patient)
+    text = info(age, sex, ecg_classification, days)
     return text
 
 
@@ -177,7 +177,7 @@ def update_information(patient):
      Input('drop_down-container', 'children')],
 )
 def update_card(patient, group, date, value, m):
-    df = ldd.card(rdb, patient, group, date[0], value[0])
+    df = ld.card(rdb, patient, group, date[0], value[0])
     if not date or df.empty:
         resting_hr, walking_hr, hr_mean, step, exercise_minute, activity_summary = 0, 0, 0, 0, 0, 0
     else:
@@ -196,7 +196,7 @@ def update_card(patient, group, date, value, m):
      Input('linear plot', 'value'),
      Input('Bar chart', 'value')])
 def update_table(group, patient, linear, bar):
-    df, group_by = ldd.table(rdb, patient, group, linear, bar)
+    df, group_by = ld.table(rdb, patient, group, linear, bar)
     if df.empty:
         fig, click, columns, data = {}, None, [], [{}]
     else:
@@ -204,7 +204,6 @@ def update_table(group, patient, linear, bar):
         data = df.to_dict('records')
         columns = [{"name": str(i), "id": str(i)} for i in df.columns]
         fig = update_figure(df, linear, bar, group_by, labels)
-
     return fig, click, data, columns
 
 
@@ -224,7 +223,7 @@ def update_figure_day(date, value, group, bar, patient, m):
     elif group == 'DOW': date = date[0]
     df = pd.DataFrame()
     if date:
-        df = ldd.day_figure(rdb, patient, bar, date)
+        df = ld.day_figure(rdb, patient, bar, date)
     if df.empty:
         fig = {}
     else:
@@ -245,7 +244,7 @@ def update_figure_trend(value, date, group, patient, m):
         date = date[0]
     if value[0]:
         value = value[0]
-    df = ldd.trend_figure(rdb, value, date, group, patient)
+    df = ld.trend_figure(rdb, value, date, group, patient)
     if df.empty:
         fig = {}
     else:
@@ -261,7 +260,7 @@ def update_figure_trend(value, date, group, patient, m):
      Output('table_ecg', 'selected_rows')],
     Input("patient", "value"))
 def update_table_ecg(patient):
-    df = ldd.ecgs(rdb, patient)
+    df = ld.ecgs(rdb, patient)
     data = df.to_dict('records')
     columns = [{"name": i, "id": i} for i in df.columns]
     return data, columns, 'single', [0]
@@ -277,9 +276,5 @@ def update_ecg(data, patient, data_tab):
     if not data_tab:
         fig = {}
     else:
-        add_r_peaks = ''
-        day = data_tab[data[0]]['day']
-        time = data_tab[data[0]]['time']
-        fig, df_ecg = update_ecg_figure(day, time, patient, add_r_peaks)
-        data_store.csv_ecg = df_ecg.to_csv(index=False)
+        fig, df_ecg = update_ecg_figure(data_tab[data[0]]['day'], data_tab[data[0]]['time'], patient, '')
     return fig

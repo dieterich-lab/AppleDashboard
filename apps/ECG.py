@@ -1,11 +1,9 @@
 import dash_bootstrap_components as dbc
-import modules.load_data_from_database as ldd
+import modules.load_data_to_ecg_tab as ld
 import plotly.express as px
-import io
 from dash.dependencies import Input, Output
 from dash import dcc, html, dash_table
-from app import app, data_store
-from flask import send_file
+from app import app
 from db import connect_db
 
 from ECG_analyze.selection_card import selection
@@ -13,13 +11,9 @@ from ECG_analyze.ECG_plot import update_ecg_figure
 
 hrv_features = ['hrv', 'sdnn', 'senn', 'sdsd', 'pnn20', 'pnn50']
 
-# Selection
-selection = selection()
-
 rdb = connect_db()
-df = ldd.table_hrv(rdb)
-
-data_store.csv_hrv = df.to_csv(index=False)  # data to csv file
+df = ld.table_hrv(rdb)
+selection = selection(hrv_features)
 
 layout = html.Div([
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='ecg_plot')), style={'height': '100%'}))]),
@@ -82,7 +76,7 @@ def update_ecg(data, data_tab):
     [Input("x axis", "value"),
      Input("y axis", 'value')])
 def update_scatter_plot_ecg(x_axis, y_axis):
-    df_scatter = ldd.scatter_plot_ecg(rdb, x_axis, y_axis)
+    df_scatter = ld.scatter_plot_ecg(rdb, x_axis, y_axis)
     if df.empty:
         fig = {}
     else:
@@ -94,7 +88,7 @@ def update_scatter_plot_ecg(x_axis, y_axis):
 @app.callback(Output('box_plot_hrv', 'figure'),
               Input("group", 'value'))
 def update_box_plot_ecg(y_axis):
-    df_box_plot = ldd.box_plot_ecg(rdb, y_axis)
+    df_box_plot = ld.box_plot_ecg(rdb, y_axis)
     if df.empty:
         fig = {}
     else:

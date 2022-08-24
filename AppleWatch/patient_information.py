@@ -1,9 +1,5 @@
 from dash import dcc
 from dash import html
-from db import connect_db
-import modules.load_data_from_database as ldd
-
-rdb = connect_db()
 
 
 def patient_information():
@@ -17,11 +13,8 @@ def patient_information():
     return information
 
 
-def info(patient):
+def info(age, sex, ecg_classification, days):
     """ Change values in information card depend from this what is chosen in drop down """
-    age, sex = ldd.age_sex(rdb, patient)
-    ecg_classification = ldd.classification_ecg(rdb, patient)
-    days = ldd.number_of_days_more_6(rdb, patient)
 
     ecg_classification.insert(1, 'separator', ':')
     x = ecg_classification.to_string(header=False, index=False, index_names=False).split('\n')

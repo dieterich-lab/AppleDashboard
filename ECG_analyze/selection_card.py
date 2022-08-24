@@ -1,18 +1,10 @@
 import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
-from db import connect_db
-import modules.load_data_from_database as ldd
-
-# connection with database
-rdb = connect_db()
-patient = ldd.patient(rdb)
-
-hrv_features = ['hrv', 'sdnn', 'senn', 'sdsd', 'pnn20', 'pnn50']
 
 
 # selection for first drop downs
-def selection():
+def selection(hrv_features):
     """ Drop downs for ECG tab """
     selection_layout = [
         html.Br(),

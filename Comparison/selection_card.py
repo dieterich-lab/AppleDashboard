@@ -1,17 +1,10 @@
 import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
-from db import connect_db
-import modules.load_data_from_database as ldd
-
-# connection with database
-rdb = connect_db()
-patient, label_bar = ldd.patient(rdb), ldd.activity_type(rdb)
-labels = ldd.label(rdb)
 
 
 # selection for first drop downs
-def selection():
+def selection(labels, label_activity):
     """ Drop downs for Comparison tab """
     selection_health = [
         html.Br(),
@@ -54,7 +47,7 @@ def selection():
                                            dcc.Dropdown(
                                                 id='Bar chart2',
                                                 style={'height': '100%'},
-                                                options=[{'label': name, 'value': name} for name in label_bar],
+                                                options=[{'label': name, 'value': name} for name in label_activity],
                                                 value='Walking',
                                                 clearable=False,
                                             )])])]
