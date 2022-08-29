@@ -1,8 +1,6 @@
 from datetime import date, datetime
 import pytz
 import re
-from os import listdir
-from os.path import isfile, join
 import numpy as np
 import pandas as pd
 from ecgdetectors import Detectors
@@ -38,10 +36,13 @@ def extract_basic_information_from_export_file(input_data):
 
 
 def calculate_patient_age(birth):
-    today = date.today()
-    birth = datetime.fromisoformat(birth)
-    time_difference = relativedelta(today, birth)
-    age = time_difference.years
+    if birth != '':
+        today = date.today()
+        birth = datetime.fromisoformat(birth)
+        time_difference = relativedelta(today, birth)
+        age = time_difference.years
+    else:
+        age = birth
     return age
 
 
