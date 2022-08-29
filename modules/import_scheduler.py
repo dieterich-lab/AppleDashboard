@@ -5,6 +5,8 @@ import sys
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 import tzlocal
+from os import listdir
+from os.path import isfile, join
 
 
 class ImportSettings:
@@ -28,9 +30,18 @@ class ImportSettings:
         self.config.set('hashes', 'electrocardiograms', "")
         self.config.set('hashes', 'date', "")
 
-    def update(self, files):
-        self.config['hashes']['exports'] = self.get_hash(files)
-        self.config['hashes']['electrocardiograms'] = self.get_hash(files)
+    def update(self, exports, ecgs_dict):
+        hash_dict_exports = ''
+        for i in exports:
+            hash_dict_exports += self.get_hash('./import/' + i)
+
+        hash_ecg = 0
+        for directory in ecgs_dict:
+            number_of_ecg_files = len([f for f in listdir('./import/{}/'.format(directory))
+                                       if isfile(join('./import/{}/'.format(directory), f))])
+            hash_ecg += number_of_ecg_files
+        self.config['hashes']['exports'] = hash_dict_exports
+        self.config['hashes']['electrocardiograms'] = str(hash(hash_ecg))
         self.config['hashes']['date'] = str(datetime.now())
 
     def save(self):
@@ -42,16 +53,18 @@ class ImportSettings:
         return os.popen(f"sha512sum {path}").read().split(' ')[0]
 
     def is_export_files_changed(self, files):
-        hash_dict = {}
+        hash_dict = ''
         for i in files:
-            hash_dict[i] = self.get_hash('./import/'+i)
+            hash_dict += self.get_hash('./import/'+i)
         return self.config['hashes']['exports'] != hash_dict
 
-    def is_electrocardiogram_changed(self, files):
-        hash_dict = {}
-        for i in files:
-            hash_dict[i] = self.get_hash('./import/'+i)
-        return self.config['hashes']['electrocardiograms'] != hash_dict
+    def is_electrocardiogram_changed(self, ecgs_dict):
+        hash_ecg = 0
+        for directory in ecgs_dict:
+            number_of_ecg_files = len([f for f in listdir('./import/{}/'.format(directory))
+                                       if isfile(join('./import/{}/'.format(directory), f))])
+            hash_ecg += number_of_ecg_files
+        return self.config['hashes']['electrocardiograms'] != str(hash(hash_ecg))
 
     def is_empty(self):
         if self.config['hashes']['exports'] and self.config['hashes']['electrocardiograms']:
@@ -84,6 +97,8 @@ def start_import(rdb):
         if dict_ecg:
             import_data.load_ecg_data_to_database(rdb, dict_ecg)
         import_data.create_tables_type(rdb)
+        settings.update(exports=files, ecgs_dict=dict_ecg)
+        settings.save()
         print("End load data")
 
 

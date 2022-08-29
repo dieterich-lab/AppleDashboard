@@ -14,7 +14,7 @@ def workout_activity_data(rdb, patients):
         where(Workout.patient_id == patients).order_by(Workout.key, Workout.start_date,
                                                        Workout.duration.between(10, 300))
     df = pd.read_sql(sql, rdb)
-    df = df[['key', 'date', 'Start', 'End', 'duration', 'distance', 'energyburned']].round(2)
+    df = df[['key', 'distance', 'duration', 'energyburned', 'date', 'Start', 'End', 'month', 'week', 'DOW']].round(2)
     return df
 
 

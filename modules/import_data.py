@@ -61,7 +61,8 @@ def load_ecg_data_to_database(rdb, directories):
     last_value_ecg_df = 0
     # Loading ECG data to database
     for directory in directories:
-        files = [f for f in listdir('./import/{}/'.format(directory)) if isfile(join('./import/{}/'.format(directory), f))]
+        files = [f for f in listdir('./import/{}/'.format(directory))
+                 if isfile(join('./import/{}/'.format(directory), f))]
 
         n = int(''.join(filter(str.isdigit, directory)))
         patient = 'Patient {}'.format(n)
@@ -84,6 +85,3 @@ def create_tables_type(rdb):
     cur.execute(name_table)
     cur.execute(activity_type)
     rdb_connection.commit()
-
-
-

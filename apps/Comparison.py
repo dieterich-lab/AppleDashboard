@@ -46,7 +46,7 @@ layout = html.Div([
      Input('Bar chart', 'value')])
 def update_figures(group, linear, bar):
     df = ld.plots_comparison(rdb, group, linear, bar)
-    df_linear = ld.plots_comparison(rdb, group, linear, bar)
+    df_linear = ld.plots_linear(rdb, group, linear, bar)
     if df.empty:
         fig_scatter, fig_box_plot, fig_histogram, fig1, fig2 = {}, {}, {}, {}, {}
     else:

@@ -4,7 +4,7 @@ import pandas as pd
 
 def update_figure(df, group, what):
     """ Update summary workout figure in Workout tab depending on drop downs"""
-    df = df.groupby([group, "key"]).sum().reset_group()
+    df = df.groupby([group, "key"]).sum().reset_index()
     if group == 'DOW':
         cats = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         df['DOW'] = pd.Categorical(df['DOW'], categories=cats, ordered=True)
