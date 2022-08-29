@@ -87,6 +87,8 @@ def export_workout_data_from_apple_watch(input_data, n):
 
     # import workout data
     workouts_list = input_data['HealthData']['Workout']
+    if not isinstance(workouts_list, list):
+        workouts_list = [workouts_list]
     df = pd.DataFrame(workouts_list)
     df['@sourceName'] = df['@sourceName'].apply(lambda x: 'Patient {}'.format(n))
 
