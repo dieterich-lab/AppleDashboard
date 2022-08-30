@@ -8,7 +8,8 @@ Base = declarative_base()
 class KeyName(Base):
     __tablename__ = "key_name"
     key = Column(String, primary_key=True)
-    unit = Column(String)
+    unit = Column(String, primary_key=True)
+    __table_args__ = (Index('idx_key_id_', 'key'), Index('idx_unit_id', 'unit'))
 
 
 class ActivityName(Base):
