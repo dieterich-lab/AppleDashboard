@@ -14,18 +14,20 @@ def figure_box_hist(df, group, linear, bar, labels):
     return fig_box_plot, fig_histogram
 
 
-def fig_add_traces(colors, df_bar, df_linear, fig_box_plot, fig_histogram, group, name):
-    for name, i in enumerate(name):
-        df_l = df_linear[df_linear[group] == i]
-        df_b = df_bar[df_bar[group] == i]
-        i = str(i)
-        fig_histogram.add_trace(go.Histogram(x=df_l['Value'], name=i, showlegend=False, legendgroup=i,
-                                             marker_color=colors[name]), row=1, col=1)
-        fig_histogram.add_trace(go.Histogram(x=df_b['Value'], name=i, legendgroup=i, marker_color=colors[name]),
+def fig_add_traces(colors, df_bar, df_linear, fig_box_plot, fig_histogram, group, i):
+    for i, name in enumerate(i):
+        if i > 10:
+            i -= 10
+        df_l = df_linear[df_linear[group] == name]
+        df_b = df_bar[df_bar[group] == name]
+        name = str(name)
+        fig_histogram.add_trace(go.Histogram(x=df_l['Value'], name=name, showlegend=False, legendgroup=name,
+                                             marker_color=colors[i]), row=1, col=1)
+        fig_histogram.add_trace(go.Histogram(x=df_b['Value'], name=name, legendgroup=name, marker_color=colors[i]),
                                 row=1, col=2)
-        fig_box_plot.add_trace(go.Box(y=df_l['Value'], name=i, showlegend=False, legendgroup=i,
-                                      marker_color=colors[name]), row=1, col=1)
-        fig_box_plot.add_trace(go.Box(y=df_b['Value'], name=i, legendgroup=i, marker_color=colors[name]), row=1, col=2)
+        fig_box_plot.add_trace(go.Box(y=df_l['Value'], name=name, showlegend=False, legendgroup=name,
+                                      marker_color=colors[i]), row=1, col=1)
+        fig_box_plot.add_trace(go.Box(y=df_b['Value'], name=name, legendgroup=name, marker_color=colors[i]), row=1, col=2)
 
 
 def fig_update_layout(bar, fig_box_plot, fig_histogram, labels, linear):
