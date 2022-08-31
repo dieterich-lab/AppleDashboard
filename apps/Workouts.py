@@ -1,12 +1,11 @@
 from app import app
-from dash.dependencies import Input, Output, ALL
+from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
 from dash import dash_table
-from datetime import date
-
-import modules.load_data_from_database as ldd
+import modules.load_dat_to_workout_tab as ld
+import modules.load_data_to_tab_health_data as ldd
 from db import connect_db
 
 from Workout.selection_card import selection
@@ -15,17 +14,13 @@ from Workout.pie import update_pie
 from Workout.workout_figure import workout_figure
 
 day_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
-# Selection
-selection = selection()
-
-# connection with database
 rdb = connect_db()
+patients = ldd.patient(rdb)
+selection = selection(patients)
 
 layout = html.Div([
     dbc.Row([dbc.Col(selection)]),
     html.Br(),
-
     dbc.Row([
         dbc.Col(dbc.Card(dcc.Loading(
             dash_table.DataTable(
@@ -47,11 +42,9 @@ layout = html.Div([
                 }
             ), style={'height': '100%'})))]),
     html.Br(),
-
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='summary_workout')), style={'height': '100%'}), lg=7),
              dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='pie_graph')), style={'height': '100%'}), lg=5)]),
     html.Br(),
-
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(html.Div(id='graph', children=[])), style={'height': '100%'}))]),
     html.Br(),
 ])
@@ -61,12 +54,9 @@ layout = html.Div([
 @app.callback(
     [Output('table_workout', 'data'),
      Output('table_workout', 'columns')],
-    [Input('group by', "value"),
-     Input("patient", "value")]
-)
-def update_table(group, patient):
-    df = ldd.workout_activity_data(rdb, patient)
-    df = df[['type', 'date', 'Start', 'End', 'duration', 'distance', 'EnergyBurned']].round(2)
+    [Input("patient", "value")])
+def update_table(patient):
+    df = ld.workout_activity_data(rdb, patient)
     data = df.to_dict('records')
     columns = [{"name": str(i), "id": str(i)} for i in df.columns]
     return data, columns
@@ -78,10 +68,9 @@ def update_table(group, patient):
      Output("summary_workout", "clickData")],
     [Input("patient", "value"),
      Input('group by', "value"),
-     Input("what", "value")]
-)
+     Input("what", "value")])
 def summary_workout(patient, group, what):
-    df = ldd.workout_activity_data(rdb, patient)
+    df = ld.workout_activity_data(rdb, patient)
     click = None
     if df.empty:
         fig = {}
@@ -96,15 +85,13 @@ def summary_workout(patient, group, what):
     [Input("patient", "value"),
      Input('group by', "value"),
      Input("summary_workout", "clickData"),
-     Input("what", "value")]
-)
+     Input("what", "value")])
 def pie_figure(patient, group, value, what):
-
-    data = ldd.workout_activity_pie_chart(rdb, patient, value, group, what)
+    data, value = ld.workout_activity_pie_chart(rdb, patient, value, group, what)
     if data.empty:
         fig = {}
     else:
-        fig = update_pie(data, group, what)
+        fig = update_pie(data, group, what, value)
     return fig
 
 
@@ -113,12 +100,10 @@ def pie_figure(patient, group, value, what):
     Output('graph', 'children'),
     [Input('group by', "value"),
      Input("summary_workout", "clickData"),
-     Input("patient", "value")]
-)
+     Input("patient", "value")])
 def hr_figure(group, click, patient):
-
-    if group == 'D':
-        df1, df2 = ldd.heart_rate(rdb, click, patient)
+    if group == 'date':
+        df1, df2 = ld.heart_rate(rdb, click, patient)
         if df1.empty or df2.empty:
             graph = html.Div()
         else:
@@ -126,39 +111,4 @@ def hr_figure(group, click, patient):
             graph = html.Div([dcc.Graph(figure=fig)])
     else:
         graph = html.Div()
-
     return graph
-
-"""
-# update table depends what values are chosen in selector
-@app.callback(
-    Output('workout_graph', 'figure'),
-    [Input("patient", "value"),
-     Input('group by', "value"),
-     Input({"index": ALL, 'type': 'filter-drop_down'}, 'date'),
-     Input({"index": ALL, 'type': 'filter-drop_down'}, 'value'),
-     Input('drop_down-container', 'children')]
-)
-def HR_figure(patient, group, date, value, m):
-    date = date[0]
-    value = value[0]
-    df = ldd.Heart_Rate(rdb,date,patient)
-    data = ldd.WorkoutActivity_pie_chart(rdb, patient,group,date, value)
-    data = data[(data['duration'] > 10) & (data['duration'] < 300)]
-
-    if group != 'D' or data.empty:
-        fig = {}
-    else:
-        fig = workout_figure(df,data)
-    graph    
-    return fig
-
-"""
-
-
-
-
-
-
-
-

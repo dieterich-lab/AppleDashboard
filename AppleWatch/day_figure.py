@@ -1,25 +1,17 @@
-import pandas as pd
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import modules.load_data_from_database as ldd
-from db import connect_db
-
-# connection with database
-rdb = connect_db()
 
 
-def day_figure_update(df, bar):
-    """ Update day figure depends on drop downs """
-
-    df_bar = df[df['type'] == bar]
-    df = df[df['type'] == 'Heart Rate']
+def day_figure_update(df, bar, date, labels):
+    df_bar, df_heart_rate = df[df['key'] == bar], df[df['key'] == 'Heart Rate']
     if not df_bar.empty:
-        df_bar = df_bar.resample('5Min', on='Date').sum().reset_index()
+        df_bar = df_bar.resample('5Min', on='date').sum().reset_index()
     fig = make_subplots(specs=[[{"secondary_y": True}]])
-    fig.add_trace(go.Scatter(x=df['Date'], y=df["Value"], name="Heart Rate"), secondary_y=False)
-    fig.add_trace(go.Bar(x=df_bar['Date'], y=df_bar["Value"], name='{}'.format(bar)), secondary_y=True)
+    fig.add_trace(go.Scatter(x=df_heart_rate['date'], y=df_heart_rate["value"], name="Heart Rate"), secondary_y=False)
+    fig.add_trace(go.Bar(x=df_bar['date'], y=df_bar["value"], name='{}'.format(bar)), secondary_y=True)
     fig.update_layout(
         height=400,
+        title=F'Heart Rate and {bar} on {date}',
         template='plotly_white',
         xaxis_title="Time",
         legend=dict(
@@ -29,6 +21,5 @@ def day_figure_update(df, bar):
             xanchor="right",
             x=1
         ))
-    fig.update_yaxes(title_text='{}'.format(bar), secondary_y=False)
-
+    fig.update_yaxes(title_text=F'{bar} [{labels[bar]}]', secondary_y=False)
     return fig

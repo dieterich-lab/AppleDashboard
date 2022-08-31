@@ -25,7 +25,7 @@ AppleDashboard
 This is the main directory of the app. It contains:
 - `app.py` file which is the main app file.
 - `db.py`file contains a function to connect to the database.
-- `index.py` loads different apps/tabs on different urls.
+- `index.py` loads different apps/tabs from different urls.
 
 More about Multi-Page apps with Plotly you can find here https://dash.plotly.com/urls.  
 
@@ -39,7 +39,7 @@ application pipfile need to be update accordingly.
 `AppleDashboard/apps`
 ---------------------
 
-This directory contains apps/tabs with layout and all callbacks for each app/tab:
+This directory contains apps/tabs with layout and callbacks for each app/tab:
 - `AppleWatch.py`
 - `Comparison.py`
 - `ECG.py`
@@ -60,32 +60,32 @@ More  about assets you can find here https://dash.plotly.com/dash-enterprise/sta
 `AppleDashboard/AppleWatch`
 ---------------------------
 
-This directory contains files with functions needed to create graphs and calculations for the AppleWatch tab.
+This directory contains files with functions to create graphs and calculations for the AppleWatch tab.
 These files must be imported into `AppleWatch.py`. 
 
 `AppleDashboard/Comparison`
 ---------------------------
 
-This directory contains files with functions needed to create graphs and calculations for the Comparison tab.
+This directory contains files with functions to create graphs and calculations for the Comparison tab.
 These files must be imported into `Comparison.py`. 
 
 `AppleDashboard/ECG_analyze`
 ----------------------------
 
-This directory contains files with functions needed to create graphs and calculations for the ECG tab.
+This directory contains files with functions to create graphs and calculations for the ECG tab.
 These files must be imported into `ECG.py`. 
 
 `AppleDashboard/Workout`
 ------------------------
 
-This directory contains files with functions needed to create graphs and calculations for the Workout tab.
+This directory contains files with functions to create graphs and calculations for the Workout tab.
 These files must be imported into `Workouts.py`. 
 
 `AppleDashboard/modules`
 ------------------------
 
  This directory contains files for creating a database, importing data into a database and querying data from database into an application.
- More about files and data import in [Data_import.md](https://github.com/dieterich-lab/medex/blob/PostgreSQL/documentation/Data_import.md)
+
 
 `AppleDashboard/scripts`
 ------------------------

@@ -3,6 +3,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 
+
 export POSTGRES_USER=test
 export POSTGRES_PASSWORD=test
 export POSTGRES_DB=example

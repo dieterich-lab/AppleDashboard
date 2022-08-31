@@ -35,11 +35,11 @@ def time_domain_analyze(RRints):
 
     time_domain_features = {
         'hrv': hrv,
-        'SDNN': SDNN,
-        'SENN': SENN,
-        'SDSD': SDSD,
-        'pNN20': pNN20,
-        'pNN50': pNN50
+        'sdnn': SDNN,
+        'senn': SENN,
+        'sdsd': SDSD,
+        'pnn20': pNN20,
+        'pnn50': pNN50
 
     }
 

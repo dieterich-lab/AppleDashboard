@@ -17,10 +17,11 @@ psycopg2-binary = "*"
 apscheduler = "*"
 scipy = "*"
 py-ecg-detectors = "*"
-tensorflow= "*"
+sqlalchemy = "*"
+checksumdir = "*"
 
 [dev-packages]
 pylint = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "*"

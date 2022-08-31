@@ -1,17 +1,10 @@
 import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
-from db import connect_db
-import modules.load_data_from_database as ldd
-
-# connection with database
-rdb = connect_db()
-patient, label_bar2 = ldd.patient(rdb), ldd.activity_type(rdb)
-label_linear, label_bar = ldd.label(rdb)
 
 
 # selection for first drop downs
-def selection():
+def selection(labels, label_activity):
     """ Drop downs for Comparison tab """
     selection_health = [
         html.Br(),
@@ -22,29 +15,29 @@ def selection():
                     dcc.Dropdown(
                         style={'height': '40px'},
                         id='group',
-                        options=[{'label': 'Patient', 'value': 'Name'},
-                                 {'label': 'Age', 'value': 'Age'},
-                                 {'label': 'Sex', 'value': 'Sex'}],
-                        value='Name',
+                        options=[{'label': 'Patient', 'value': 'patient_id'},
+                                 {'label': 'Age', 'value': 'age'},
+                                 {'label': 'Sex', 'value': 'sex'}],
+                        value='patient_id',
                         clearable=False
                     ))], style={'height': '100%'}),
             dbc.Col([
-                'First plot(x axis)',
+                'X axis',
                 dbc.Card(
                     dcc.Dropdown(
                         id='Bar chart',
                         style={'height': '100%'},
-                        options=[{'label': name, 'value': name} for name in label_bar],
-                        value=label_bar[0],
+                        options=[{'label': name, 'value': name} for name in list(labels.keys())],
+                        value=list(labels.keys())[0],
                         clearable=False,
                     ))]),
             dbc.Col([
-                'Second plot(y axis)',
+                'Y axis',
                 dbc.Card(dcc.Dropdown(
                     id='linear plot',
                     style={'height': '100%'},
-                    options=[{'label': name, 'value': name} for name in label_linear],
-                    value=label_linear[1],
+                    options=[{'label': name, 'value': name} for name in labels],
+                    value=list(labels.keys())[0],
                     clearable=False,
                 ))]),
         ]),
@@ -54,7 +47,7 @@ def selection():
                                            dcc.Dropdown(
                                                 id='Bar chart2',
                                                 style={'height': '100%'},
-                                                options=[{'label': name, 'value': name} for name in label_bar2],
+                                                options=[{'label': name, 'value': name} for name in label_activity],
                                                 value='Walking',
                                                 clearable=False,
                                             )])])]
