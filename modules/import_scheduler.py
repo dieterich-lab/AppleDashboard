@@ -108,8 +108,7 @@ def start_import(rdb):
         if dict_ecg:
             import_data.load_ecg_data_to_database(rdb, dict_ecg)
         if files_json:
-            print('yes')
-            import_data.load_json_data_to_database(rdb, files_json, len(files_json))
+            import_data.load_json_data_to_database(rdb, files_json)
         import_data.create_tables_type(rdb)
         settings.update(exports=files, ecgs_dict=dict_ecg, files_json=files_json)
         settings.save()

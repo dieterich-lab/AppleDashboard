@@ -102,14 +102,14 @@ def export_json_data(path):
 				)
 
 	df = pd.DataFrame(columns=['@type', '@sourceName', '@unit', '@startDate', '@value'], dtype=object)
-	for entry in items:
-		if entry.subentries != []:
+	for i, entry in enumerate(items):
+		if entry.subentries:
 			for subentry in entry.subentries:
-				data = subentry.print_content()
-				df = df.append(data, ignore_index=True)
+				data = pd.DataFrame(subentry.print_content(), index=[i])
+				df = pd.concat([df, data])
 		else:
-			data = entry.print_content()
-			df = df.append(data, ignore_index=True)
+			data = pd.DataFrame(entry.print_content(), index=[i])
+			df = pd.concat([df, data])
 	return df
 
 

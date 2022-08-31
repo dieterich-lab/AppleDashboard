@@ -11,7 +11,6 @@ from AppleWatch.Card import card_update, cards_view
 from AppleWatch.trend_figure import figure_trend
 from AppleWatch.summary_figure import update_figure
 from AppleWatch.day_figure import day_figure_update
-from ECG_analyze.ECG_plot import update_ecg_figure
 from AppleWatch.selection_card import selection
 from AppleWatch.patient_information import patient_information, info
 
@@ -62,25 +61,6 @@ layout = html.Div([
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_day', hoverData={'points': [{'customdata': '1'}]}),
                                           style={'height': '100%'})), lg=6),
              dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='figure_trend')), style={'height': '100%'}), lg=6)]),
-    html.Br(),
-    dbc.Row([
-        dbc.Col(dbc.Card(dcc.Loading(dash_table.DataTable(
-            id='table_ecg',
-            style_table={'overflowX': 'auto'},
-            page_size=11,
-            filter_action='native',
-            sort_action="native",
-            sort_mode="multi",
-            style_data_conditional=[{
-                    'if': {'row_index': 'odd'},
-                    'backgroundColor': 'rgb(248, 248, 248)'
-                }],
-            style_header={
-                'backgroundColor': 'rgb(230, 230, 230)',
-                'fontWeight': 'bold'
-            })), style={'height': '100%'}), lg=3),
-        dbc.Col(dbc.Card([dcc.Graph(id='figure_ecg')], style={'height': '100%'}),
-                lg=9)]),
     html.Br(),
 ])
 
@@ -249,32 +229,4 @@ def update_figure_trend(value, date, group, patient, m):
         fig = {}
     else:
         fig = figure_trend(df, group)
-    return fig
-
-
-# update table_ecg
-@app.callback(
-    [Output('table_ecg', 'data'),
-     Output('table_ecg', 'columns'),
-     Output('table_ecg', 'row_selectable'),
-     Output('table_ecg', 'selected_rows')],
-    Input("patient", "value"))
-def update_table_ecg(patient):
-    df = ld.ecgs(rdb, patient)
-    data = df.to_dict('records')
-    columns = [{"name": i, "id": i} for i in df.columns]
-    return data, columns, 'single', [0]
-
-
-# update ECG figure
-@app.callback(
-    Output('figure_ecg', 'figure'),
-    [Input('table_ecg', "selected_rows"),
-     Input("patient", "value"),
-     Input("table_ecg", 'data')])
-def update_ecg(data, patient, data_tab):
-    if not data_tab:
-        fig = {}
-    else:
-        fig, df_ecg = update_ecg_figure(data_tab[data[0]]['day'], data_tab[data[0]]['time'], patient, '')
     return fig

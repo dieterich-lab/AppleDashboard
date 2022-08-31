@@ -7,26 +7,36 @@ from modules import ZIV_export as ziv
 import pandas as pd
 
 
-def load_json_data_to_database(rdb, path, n):
+def load_json_data_to_database(rdb, path_list):
     """
     Inserting basic information, health and workout data into tables
     """
     rdb_connection = rdb.raw_connection()
     cur = rdb_connection.cursor()
-    path = './import/{}'.format(path[0])
+    last_value = 0
+    for path in path_list:
+        path = './import/{}'.format(path)
 
-    data, patient, min_date, max_date = ziv.export_json_data(path)
-    line = [patient, n+1, '', '', '', '', min_date, max_date]
-    cur.execute("INSERT INTO patient VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", line)
+        data = ziv.export_json_data(path)
+        data = data.reset_index(level=0)
+        data['index'] = data.index + last_value
+        last_value = data['index'].iat[-1] + 1
+        df_numerical = data[pd.to_numeric(data['@value'], errors='coerce').notnull()]
+        df_categorical = data[~pd.to_numeric(data['@value'], errors='coerce').notnull()]
+        copy_data_frame_to_database(cur, df_numerical, 'apple_watch_numerical')
+        copy_data_frame_to_database(cur, df_categorical, 'apple_watch_categorical')
+        rdb_connection.commit()
 
-    output = io.StringIO()
-    data.to_csv(output, index=False, header=False)
-    output.seek(0)
-
-    cur.copy_from(output, 'applewatch', null="", sep=',')  # null values become ''
-    rdb_connection.commit()
+    update_patient_table_for_loading_data_from_json(rdb_connection,cur)
 
     return print('done load health and workout data to database')
+
+
+def update_patient_table_for_loading_data_from_json(rdb, cur):
+    update_patient_table = """INSERT INTO patient(patient_id, min_date,max_date) (SELECT patient_id,min(date),max(date) 
+    FROM apple_watch_numerical group by patient_id)"""
+    cur.execute(update_patient_table)
+    rdb.commit()
 
 
 def insert_data(rdb, files):
@@ -48,6 +58,7 @@ def insert_data(rdb, files):
 
         df, df2, min_date, max_date = ed.export_health_data_from_apple_watch(input_data, n)
         df['index'] = df.index + last_value
+        df.insert(0, 'mean', df.pop('mean'))
         last_value = df['index'].iat[-1] + 1
         df_numerical = df[pd.to_numeric(df['@value'], errors='coerce').notnull()]
         df_categorical = df[~pd.to_numeric(df['@value'], errors='coerce').notnull()]
