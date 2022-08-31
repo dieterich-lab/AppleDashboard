@@ -16,7 +16,7 @@ def figure_box_hist(df, group, linear, bar, labels):
 
 def fig_add_traces(colors, df_bar, df_linear, fig_box_plot, fig_histogram, group, i):
     for i, name in enumerate(i):
-        if i > 10:
+        if i > 9:
             i -= 10
         df_l = df_linear[df_linear[group] == name]
         df_b = df_bar[df_bar[group] == name]
