@@ -3,7 +3,30 @@ import xmltodict
 import io
 from os import listdir
 from os.path import isfile, join
+from modules import ZIV_export as ziv
 import pandas as pd
+
+
+def load_json_data_to_database(rdb, path, n):
+    """
+    Inserting basic information, health and workout data into tables
+    """
+    rdb_connection = rdb.raw_connection()
+    cur = rdb_connection.cursor()
+    path = './import/{}'.format(path[0])
+
+    data, patient, min_date, max_date = ziv.export_json_data(path)
+    line = [patient, n+1, '', '', '', '', min_date, max_date]
+    cur.execute("INSERT INTO patient VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", line)
+
+    output = io.StringIO()
+    data.to_csv(output, index=False, header=False)
+    output.seek(0)
+
+    cur.copy_from(output, 'applewatch', null="", sep=',')  # null values become ''
+    rdb_connection.commit()
+
+    return print('done load health and workout data to database')
 
 
 def insert_data(rdb, files):
