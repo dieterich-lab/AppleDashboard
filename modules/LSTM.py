@@ -11,8 +11,6 @@ lstm_model = keras.models.load_model('models/lstm_model')
 model_outputs = []
 
 
-
-
 def normalize(array):
     return (array - array.mean()) / array.std()
 
@@ -56,6 +54,3 @@ def detect_r_peaks(data):
         model_output_max.append(max(r))
     r_peaks = find_peaks(model_output_max, height=0.5, distance=20)
     return r_peaks[0]
-
-
-

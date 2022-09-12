@@ -19,6 +19,7 @@ scipy = "*"
 py-ecg-detectors = "*"
 sqlalchemy = "*"
 checksumdir = "*"
+tensorflow= "*"
 
 [dev-packages]
 pylint = "*"
