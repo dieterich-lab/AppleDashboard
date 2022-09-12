@@ -5,7 +5,7 @@ It was created to enable faster analysis of longitudinal data from Apple Watch w
 
 
 ## Data ##
-The josn files from the ZIV study are used for this branch. The example files are located in the directory
+The json files from the ZIV study are used for this branch. The example files are located in the directory
 [dataset_example](https://github.com/dieterich-lab/AppleDashboard/tree/ZIV_development/dataset_examples) directory.
 
 ## Setup production ###
@@ -52,7 +52,7 @@ Test it out at http://localhost:8050. The "web" folder is mounted into the conta
 ## Data Import ##
 
 ### Importing new data ###
-* To add new data, add the `josn` files to the `.import` folder.
+* To add new data, add the `json` files to the `.import` folder.
 
 To work the files should have the same format as the current example files that are already in the `dataset_examples` directory.
 
