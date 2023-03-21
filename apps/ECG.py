@@ -19,7 +19,7 @@ layout = html.Div([
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='ecg_plot')), style={'height': '100%'}))]),
     html.Br(),
     dbc.Row([dbc.Col(dbc.Card([
-        html.A('Download table', id='link-hrv'),
+        # html.A('Download table', id='link-hrv'),
         dash_table.DataTable(
             id='hrv_table',
             style_table={'overflowX': 'auto'},
@@ -31,6 +31,8 @@ layout = html.Div([
             row_selectable='single',
             data=df.to_dict('records'),
             columns=[{"name": i, "id": i} for i in df.columns],
+            export_format='csv',
+            export_headers='display',
             style_data_conditional=[{
                     'if': {'row_index': 'odd'},
                     'backgroundColor': 'rgb(248, 248, 248)'
