@@ -67,8 +67,8 @@ def update_ecg(data, data_tab):
     if not data_tab:
         fig = {}
     else:
-        patient, day, time = data_tab[data[0]]['patient_id'], data_tab[data[0]]['day'], data_tab[data[0]]['time']
-        fig, df_data = update_ecg_figure(day, time, patient, 'R_peaks')
+        patient, date, time = data_tab[data[0]]['patient_id'], data_tab[data[0]]['date'], data_tab[data[0]]['time']
+        fig, df_data = update_ecg_figure(date, time, patient, 'R_peaks')
     return fig
 
 
