@@ -33,7 +33,7 @@ def add_minor_grid(fig, x_range, y_range, major_step_x=0.4, major_step_y=1, mino
 
 
 def update_ecg_figure(day, time, patient, add):
-    """ Update ECG graph in Patient and ECG tab depending on drop downs"""
+    """ Update ECG graph in ECG analyze tab depending on selected rows from the table"""
     df = ld.ecg_data(rdb, day, patient, time)
     df_data = pd.DataFrame()
     if len(df) == 0:

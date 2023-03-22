@@ -37,7 +37,7 @@ def selection(labels, label_activity):
                     id='linear plot',
                     style={'height': '100%'},
                     options=[{'label': name, 'value': name} for name in labels],
-                    value=list(labels.keys())[0],
+                    value='Heart Rate',
                     clearable=False,
                 ))]),
         ]),
