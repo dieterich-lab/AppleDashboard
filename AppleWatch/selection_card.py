@@ -44,7 +44,7 @@ def selection(labels, patient):
                         id='linear plot',
                         style={'height': '100%'},
                         options=[{'label': name, 'value': name} for name in list(labels.keys())],
-                        value=list(labels.keys())[0],
+                        value=[list(labels.keys())[0]],
                         clearable=False,
                         multi=True
                     ))]),
