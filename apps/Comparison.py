@@ -54,7 +54,7 @@ def update_figures(group, linear, bar):
         fig_scatter = px.scatter(df_scatter, x=bar, y=linear, color=group, template='plotly_white',
                                  labels={bar: bar + ' [' + labels[bar] + ']',
                                          linear: linear + ' [' + labels[linear] + ']'})
-
+        fig_scatter.update_layout(title='Comparison of all Patients based on two entities', title_x=0.5)
         fig_box_plot, fig_histogram = p.figure_box_hist(df, group, linear, bar, labels)
         fig1, fig2 = p.figure_linear_plot(df_linear, group, linear, bar, labels)
     return fig_scatter, fig_box_plot, fig_histogram,  fig1, fig2
@@ -87,5 +87,6 @@ def update_day_night_box(gr):
         fig = {}
     else:
         fig = px.box(df, x='day_night', y="Heart Rate", labels={"Heart Rate": "Average Heart Rate [bpm]"}, color=gr,
-                     template='plotly_white', title='Comparison Heart Rate  during day and night')
+                     template='plotly_white')
+        fig.update_layout(title='Comparison of Heart Rate during day and night', title_x=0.5)
     return fig
