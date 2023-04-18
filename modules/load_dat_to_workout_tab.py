@@ -33,15 +33,19 @@ def workout_check_by_what_group_by(group):
 def workout_activity_pie_chart(rdb, patients, value, group, what):
     to_char = workout_check_by_what_group_by(group)
     if value:
-        if group == 'month': value = value["points"][0]["x"][:7]
-        elif group == 'week': value = value["points"][0]["x"]
-        elif group == 'DOW': value = value["points"][0]["x"]
-        else: value = str(value["points"][0]["x"])
-        sql = select(Workout.key, text("Workout."+f'{what}'), to_char.label(group)).\
+        if group == 'month':
+            value = value["points"][0]["x"][:7]
+        elif group == 'week':
+            value = value["points"][0]["x"]
+        elif group == 'DOW':
+            value = value["points"][0]["x"]
+        else:
+            value = str(value["points"][0]["x"])
+        sql = select(Workout.key, text("Workout." + f'{what}'), to_char.label(group)). \
             where(and_(Workout.patient_id == patients, Workout.duration.between(10, 300), to_char == value))
     else:
-        sql = select(Workout.key, to_char.label(group), text("Workout."+f'{what}'), Workout.start_date.cast(Date)).\
-            where(Workout.patient_id == patients).limit(1)
+        sql = select(Workout.key, to_char.label(group), text("Workout." + f'{what}'), Workout.start_date.cast(Date)). \
+            where(Workout.patient_id == patients)
     df = pd.read_sql(sql, rdb)
     if not value and not df.empty:
         value = df['start_date'].values[0]
@@ -55,13 +59,13 @@ def heart_rate(rdb, click, patients):
     else:
         click = "'" + str(click["points"][0]["x"]) + "'"
 
-    sql_workout = select(Workout.key, Workout.start_date, Workout.end_date).\
+    sql_workout = select(Workout.key, Workout.start_date, Workout.end_date). \
         where(and_(Workout.patient_id == patients, Workout.duration.between(10, 300),
                    Workout.start_date.cast(Date) == click))
 
-    sql_heart_rate = select(AppleWatchNumerical.patient_id, AppleWatchNumerical.date, AppleWatchNumerical.value).\
+    sql_heart_rate = select(AppleWatchNumerical.patient_id, AppleWatchNumerical.date, AppleWatchNumerical.value). \
         where(and_(AppleWatchNumerical.patient_id == patients, AppleWatchNumerical.key == 'Heart Rate',
-                   AppleWatchNumerical.date.cast(Date) == click)).\
+                   AppleWatchNumerical.date.cast(Date) == click)). \
         order_by(AppleWatchNumerical.date)
 
     df_workout = pd.read_sql(sql_workout, rdb)

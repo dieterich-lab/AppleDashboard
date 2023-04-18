@@ -14,7 +14,7 @@ def update_figure(df, group, what):
         title = F'Workout duration grouped by {group}'
         unit = ' [min]'
     elif what == 'distance':
-        title = F'Distance done during workout grouped by {group}'
+        title = F'Distance covered during workout grouped by {group}'
         unit = ' [km]'
     else:
         title = F'Calories burned during workout grouped by {group}'
@@ -26,7 +26,7 @@ def update_figure(df, group, what):
         template='plotly_white',
         legend=dict(
             orientation="h",
-            yanchor="bottom",
+            yanchor="top",
             y=1.02,
             xanchor="right",
             x=1

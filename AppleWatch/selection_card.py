@@ -36,7 +36,7 @@ def selection(labels, patient):
                             id='Bar chart',
                             style={'height': '100%'},
                             options=[{'label': name, 'value': name} for name in list(labels.keys())],
-                            value=list(labels.keys())[0],
+                            value='Distance Walking Running',
                             clearable=False,
                         ))]),
             dbc.Col(['Linear plot:',
@@ -44,7 +44,7 @@ def selection(labels, patient):
                         id='linear plot',
                         style={'height': '100%'},
                         options=[{'label': name, 'value': name} for name in list(labels.keys())],
-                        value=[list(labels.keys())[0]],
+                        value=['VO2 Max'],
                         clearable=False,
                         multi=True
                     ))]),

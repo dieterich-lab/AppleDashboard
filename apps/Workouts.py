@@ -85,13 +85,13 @@ def summary_workout(patient, group, what):
     [Input("patient", "value"),
      Input('group by', "value"),
      Input("summary_workout", "clickData"),
-     Input("what", "value")]) # option for plot dropdown
+     Input("what", "value")])  # option for plot dropdown
 def pie_figure(patient, group, value, what):
     data, value = ld.workout_activity_pie_chart(rdb, patient, value, group, what)
     if data.empty:
         fig = {}
     else:
-        fig = update_pie(data, group, what, value)
+        fig = update_pie(data, group, what, patient)
     return fig
 
 

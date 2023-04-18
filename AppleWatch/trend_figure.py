@@ -3,10 +3,14 @@ import plotly.express as px
 
 def figure_trend(df, group):
     """ Update the "trend figure" in the Patient tab depending on drop downs """
-    if group == 'M': color, trend = "month", "months"
-    elif group == 'W': color, trend = "week", "weeks"
-    elif group == "DOW": color, trend = "DOW", "days"
-    else: color, trend = 'date', 'days'
+    if group == 'M':
+        color, trend = "month", "months"
+    elif group == 'W':
+        color, trend = "week", "weeks"
+    elif group == "DOW":
+        color, trend = "DOW", "days"
+    else:
+        color, trend = 'date', 'days'
 
     fig = px.line(x=df['hour'], y=df['Value'], color=df[color])
     fig.update_layout(
@@ -16,9 +20,9 @@ def figure_trend(df, group):
         xaxis_title="Hour",
         yaxis_title='Heart Rate',
         legend=dict(
-                yanchor="bottom",
-                y=0.9,
-                xanchor="right",
-                x=1))
+            yanchor="bottom",
+            y=0.9,
+            xanchor="right",
+            x=1))
 
     return fig

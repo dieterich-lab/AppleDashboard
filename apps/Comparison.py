@@ -54,7 +54,7 @@ def update_figures(group, linear, bar):
         fig_scatter = px.scatter(df_scatter, x=bar, y=linear, color=group, template='plotly_white',
                                  labels={bar: bar + ' [' + labels[bar] + ']',
                                          linear: linear + ' [' + labels[linear] + ']'})
-        fig_scatter.update_layout(title='Comparison of all Patients based on two entities', title_x=0.5)
+        fig_scatter.update_layout(title='Comparison of all patients based on two entities', title_x=0.5)
         fig_box_plot, fig_histogram = p.figure_box_hist(df, group, linear, bar, labels)
         fig1, fig2 = p.figure_linear_plot(df_linear, group, linear, bar, labels)
     return fig_scatter, fig_box_plot, fig_histogram,  fig1, fig2

@@ -21,5 +21,6 @@ def day_figure_update(df, bar, date, labels):
             xanchor="right",
             x=1
         ))
-    fig.update_yaxes(title_text=F'{bar} [{labels[bar]}]', secondary_y=False)
+    fig.update_yaxes(title_text='Heart Rate', secondary_y=False)
+    fig.update_yaxes(title_text=F'{bar} [{labels[bar]}]', secondary_y=True)
     return fig
