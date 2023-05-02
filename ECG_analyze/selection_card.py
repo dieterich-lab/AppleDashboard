@@ -3,9 +3,9 @@ from dash import dcc
 from dash import html
 
 
-# selection for first drop downs
+# selection for first drop-downs
 def selection(hrv_features):
-    """ Drop downs for ECG tab """
+    """ Drop-downs for ECG tab """
     selection_layout = [
         html.Br(),
         dbc.Row([dbc.Col([

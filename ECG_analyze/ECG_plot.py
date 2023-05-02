@@ -52,6 +52,6 @@ def update_ecg_figure(day, time, patient, add):
             fig.update_xaxes(showgrid=True, gridwidth=1.5, gridcolor='red', nticks=80, range=[0, 10],
                              rangeslider_visible=True, rangeslider_thickness=0.1)
             fig.update_yaxes(showgrid=True, gridwidth=1.5, gridcolor='red', zeroline=False, showticklabels=False)
-        fig.update_layout(xaxis_title="Time(s)", yaxis_title="V",
+        fig.update_layout(xaxis_title="Time [s]", yaxis_title="Amplitude [V]",
                           title="30 sec ECG {}".format(df['classification'].values[0]), title_x=0.5)
     return fig, df_data

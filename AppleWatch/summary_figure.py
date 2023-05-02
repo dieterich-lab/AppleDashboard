@@ -4,7 +4,7 @@ import numpy as np
 
 
 def update_figure(df, linear, bar, index, labels):
-    """ Update the "summary figure" in the Patient tab depending on drop downs """
+    """ Update the "summary figure" in the Patient tab depending on drop-downs """
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     if bar in df.columns:
         fig.add_trace(go.Bar(x=df[index], y=df[bar], name=F'{bar}'), secondary_y=False)
@@ -23,7 +23,7 @@ def update_figure_summary(bar, fig, index, labels):
         height=400,
         title=F'Apple Health data grouped by {index}',
         template='plotly_white',
-        xaxis_title="Time",
+        xaxis_title=index.capitalize(),
         legend=dict(
             orientation="h",
             yanchor="bottom",

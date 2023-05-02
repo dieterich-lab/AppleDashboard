@@ -3,9 +3,9 @@ from dash import dcc
 from dash import html
 
 
-# selection for first drop downs
+# selection for first drop-downs
 def selection(labels, label_activity):
-    """ Drop downs for Comparison tab """
+    """ Drop-downs for Comparison tab """
     selection_health = [
         html.Br(),
         dbc.Row([

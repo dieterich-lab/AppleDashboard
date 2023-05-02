@@ -3,9 +3,9 @@ from dash import dcc
 from dash import html
 
 
-# selection for first drop downs
+# selection for first drop-downs
 def selection(patient):
-    """ Drop downs for Workout tab """
+    """ Drop-downs for Workout tab """
     selection_layout = [
         html.Br(),
         dbc.Row([
@@ -24,7 +24,7 @@ def selection(patient):
                          options=[{'label': 'by month', 'value': 'month'},
                                   {'label': 'by week', 'value': 'week'},
                                   {'label': 'by day of week', 'value': 'DOW'},
-                                  {'label': 'by day', 'value': 'date'}],
+                                  {'label': 'by date', 'value': 'date'}],
                          value='date',
                          clearable=False)]),
             dbc.Col(['Plot:',

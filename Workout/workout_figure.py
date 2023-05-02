@@ -2,7 +2,7 @@ import plotly.express as px
 
 
 def workout_figure(data, df):
-    """ Update workout figure in Workout tab depending on drop downs"""
+    """ Update workout figure in Workout tab depending on drop-downs"""
     fig = px.scatter(x=df['date'], y=df['value'], template="plotly_white")
 
     start_date, end_date = list(map(str, data['start_date'].values)), list(map(str, data['end_date'].values))

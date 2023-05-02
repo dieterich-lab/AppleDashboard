@@ -14,7 +14,7 @@ def patient_information():
 
 
 def info(age, sex, ecg_classification, days):
-    """ Change values in information card depend from this what is chosen in drop down """
+    """ Change values in information card depending on what is chosen in drop down """
 
     ecg_classification.insert(1, 'separator', ':')
     x = ecg_classification.to_string(header=False, index=False, index_names=False).split('\n')

@@ -15,7 +15,6 @@ from ECG_analyze.ECG_plot import update_ecg_figure
 from AppleWatch.selection_card import selection
 from AppleWatch.patient_information import patient_information, info
 
-
 # connection with database
 rdb = connect_db()
 labels = ld.label(rdb)
@@ -23,12 +22,10 @@ patients = ld.patient(rdb)
 
 day_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-
 # Selection
 selection = selection(labels, patients)
 cards = cards_view()
 information = patient_information()
-
 
 layout = html.Div([
     dbc.Row(dbc.Col(selection)),
@@ -47,8 +44,8 @@ layout = html.Div([
                 sort_action="native",
                 sort_mode="multi",
                 style_data_conditional=[{
-                        'if': {'row_index': 'odd'},
-                        'backgroundColor': 'rgb(248, 248, 248)'}],
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'}],
                 style_cell={
                     'whiteSpace': 'normal',
                     'height': 'auto',
@@ -72,9 +69,9 @@ layout = html.Div([
             sort_action="native",
             sort_mode="multi",
             style_data_conditional=[{
-                    'if': {'row_index': 'odd'},
-                    'backgroundColor': 'rgb(248, 248, 248)'
-                }],
+                'if': {'row_index': 'odd'},
+                'backgroundColor': 'rgb(248, 248, 248)'
+            }],
             style_header={
                 'backgroundColor': 'rgb(230, 230, 230)',
                 'fontWeight': 'bold'
@@ -217,10 +214,14 @@ def update_table(group, patient, linear, bar):
      Input("patient", "value"),
      Input('drop_down-container', 'children')])
 def update_figure_day(date, value, group, bar, patient, m):
-    if group == 'D': date = date[0]
-    elif group == 'M': date = value[0] + '-01'
-    elif group == 'W': date = datetime.datetime.strptime(value[0] + '/1', "%Y/%W/%w")
-    elif group == 'DOW': date = date[0]
+    if group == 'D':
+        date = date[0]
+    elif group == 'M':
+        date = value[0] + '-01'
+    elif group == 'W':
+        date = datetime.datetime.strptime(value[0] + '/1', "%Y/%W/%w")
+    elif group == 'DOW':
+        date = date[0]
     df = pd.DataFrame()
     if date:
         df = ld.day_figure(rdb, patient, bar, date)

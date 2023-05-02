@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output
 from dash import dcc, html, dash_table
 from app import app
 from db import connect_db
+import plotly.graph_objects as go
 
 from ECG_analyze.selection_card import selection
 from ECG_analyze.ECG_plot import update_ecg_figure
@@ -81,8 +82,26 @@ def update_scatter_plot_ecg(x_axis, y_axis):
     df_scatter = ld.scatter_plot_ecg(rdb, x_axis, y_axis)
     if df.empty:
         fig = {}
+    elif x_axis == y_axis:
+        fig = go.Figure()
+        fig.update_layout(
+            xaxis={"visible": False},
+            yaxis={"visible": False},
+            annotations=[
+                {
+                    "text": "Please select different x and y axis entities to display the scatter plot",
+                    "xref": "paper",
+                    "yref": "paper",
+                    "showarrow": False,
+                    "font": {
+                        "size": 28
+                    }
+                }
+            ]
+        )
     else:
         fig = px.scatter(df_scatter, x=x_axis, y=y_axis, template='plotly_white', color="patient_id")
+        fig.update_layout(title=F'Correlation between {x_axis} and {y_axis}', title_x=0.5)
     return fig
 
 
@@ -95,4 +114,5 @@ def update_box_plot_ecg(y_axis):
         fig = {}
     else:
         fig = px.box(df_box_plot, x="patient_id", y=y_axis, template='plotly_white')
+        fig.update_layout(title=F'Boxplot of all patients for the {y_axis} ECG feature', title_x=0.5)
     return fig

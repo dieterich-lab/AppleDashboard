@@ -4,7 +4,7 @@ from plotly.subplots import make_subplots
 
 
 def figure_box_hist(df, group, linear, bar, labels):
-    """ Update box plot and histogram in comparison tab depending on drop downs """
+    """ Update box plot and histogram in comparison tab depending on drop-downs """
     df_linear, df_bar, name = df[df['key'] == linear], df[df['key'] == bar], df[group].unique()
     colors = px.colors.qualitative.Plotly
     fig_histogram = make_subplots(rows=1, cols=2, subplot_titles=(linear, bar))
@@ -27,7 +27,8 @@ def fig_add_traces(colors, df_bar, df_linear, fig_box_plot, fig_histogram, group
                                 row=1, col=2)
         fig_box_plot.add_trace(go.Box(y=df_l['Value'], name=name, showlegend=False, legendgroup=name,
                                       marker_color=colors[i]), row=1, col=1)
-        fig_box_plot.add_trace(go.Box(y=df_b['Value'], name=name, legendgroup=name, marker_color=colors[i]), row=1, col=2)
+        fig_box_plot.add_trace(go.Box(y=df_b['Value'], name=name, legendgroup=name, marker_color=colors[i]),
+                               row=1, col=2)
 
 
 def fig_update_layout(bar, fig_box_plot, fig_histogram, labels, linear):
@@ -41,7 +42,7 @@ def fig_update_layout(bar, fig_box_plot, fig_histogram, labels, linear):
 
 
 def figure_linear_plot(df, gr, linear, bar, labels):
-    """ Update linear plot in comparison tab depending on drop downs """
+    """ Update linear plot in comparison tab depending on drop-downs """
     df_linear, df_bar = df[df['key'] == linear], df[df['key'] == bar]
     fig_linear = px.scatter(df_linear, x="week", y="Value", labels={"Value": linear + ' [' + labels[linear] + ']'},
                             color=gr, template='plotly_white').update_traces(mode='lines+markers')
@@ -55,7 +56,7 @@ def figure_linear_plot(df, gr, linear, bar, labels):
 
 
 def figure_workout_plot(df_box, df_scatter, gr, bar):
-    """ Update workouts plot and histogram in comparison tab depending on drop downs """
+    """ Update workouts plot and histogram in comparison tab depending on drop-downs """
     fig_box_plot = px.box(df_box, x=gr, y="hr_average", labels={"hr_average": "Average Heart Rate [bpm]"},
                           template='plotly_white')
     fig_box_plot.update_layout(title=F"Average Heart Rate during {bar}", title_x=0.5)
@@ -66,4 +67,3 @@ def figure_workout_plot(df_box, df_scatter, gr, bar):
     fig_scatter_plot.update_layout(title=F"Average Heart Rate during {bar}", title_x=0.5)
 
     return fig_box_plot, fig_scatter_plot
-

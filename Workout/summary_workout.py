@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def update_figure(df, group, what):
-    """ Update summary workout figure in Workout tab depending on drop downs"""
+    """ Update summary workout figure in Workout tab depending on drop-downs"""
     df = df.groupby([group, "key"]).sum().reset_index()
     if group == 'DOW':
         cats = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -31,7 +31,7 @@ def update_figure(df, group, what):
             xanchor="right",
             x=1
         ))
-    fig.update_xaxes(title_text="Time")
+    fig.update_xaxes(title_text=group.capitalize())
     fig.update_yaxes(title_text=what + unit)
 
     return fig

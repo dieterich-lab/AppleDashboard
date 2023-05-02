@@ -60,7 +60,7 @@ def update_figures(group, linear, bar):
     return fig_scatter, fig_box_plot, fig_histogram,  fig1, fig2
 
 
-# update workouts figures depending on the drop-dwons
+# update workouts figures depending on the drop-downs
 @app.callback(
     [Output('workout_plot', 'figure'),
      Output('workout_plot2', 'figure')],

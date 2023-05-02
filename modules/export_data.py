@@ -62,7 +62,7 @@ def export_health_data_from_apple_watch(input_data, n):
     df = df[df['@sourceName'].str.contains("Watch")]  # DataFrame contain data only from Apple Watch
     df['@sourceName'] = df['@sourceName'].apply(lambda x: 'Patient {}'.format(n))
     df.loc[df['@unit'].str.contains('yd', na=False), '@value'] = \
-        pd.to_numeric(df.loc[df['@unit'].str.contains('yd', na=False), '@value'])*0.9144
+        pd.to_numeric(df.loc[df['@unit'].str.contains('yd', na=False), '@value']) * 0.9144
     df.loc[df['@unit'].str.contains('yd', na=False), '@unit'] = 'm'
 
     # remove not necessary prefix 'HKQuantityTypeIdentifier'

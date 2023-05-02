@@ -2,7 +2,7 @@ import plotly.express as px
 
 
 def figure_trend(df, group):
-    """ Update the "trend figure" in the Patient tab depending on drop downs """
+    """ Update the "trend figure" in the Patient tab depending on drop-downs """
     if group == 'M':
         color, trend = "month", "months"
     elif group == 'W':
@@ -17,7 +17,7 @@ def figure_trend(df, group):
         height=400,
         title='Trend from last 4 {}'.format(trend),
         template='plotly_white',
-        xaxis_title="Hour",
+        xaxis_title="Time [hr]",
         yaxis_title='Heart Rate',
         legend=dict(
             yanchor="bottom",

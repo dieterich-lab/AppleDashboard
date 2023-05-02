@@ -4,7 +4,7 @@ from dash import html
 
 
 def selection(labels, patient):
-    """ Drop downs for AppleWatch tab """
+    """ Drop-downs for Apple Watch tab """
     selection_layout = [
         html.Br(),
         dbc.Row([
@@ -26,7 +26,7 @@ def selection(labels, patient):
                             options=[{'label': 'by month', 'value': 'M'},
                                      {'label': 'by week', 'value': 'W'},
                                      {'label': 'by day of week', 'value': 'DOW'},
-                                     {'label': 'by day', 'value': 'D'}],
+                                     {'label': 'by date', 'value': 'D'}],
                             value='D',
                             clearable=False
                         ))], style={'height': '100%'}),
@@ -44,7 +44,7 @@ def selection(labels, patient):
                         id='linear plot',
                         style={'height': '100%'},
                         options=[{'label': name, 'value': name} for name in list(labels.keys())],
-                        value=['VO2 Max'],
+                        value=['Heart Rate'],
                         clearable=False,
                         multi=True
                     ))]),

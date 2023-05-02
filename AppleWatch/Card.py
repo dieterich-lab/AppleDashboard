@@ -60,7 +60,7 @@ def cards_view():
 
 
 def card_update(df):
-    """ Changing values in cards depending on what is selected in the drop down."""
+    """ Changing values in cards depending on what is selected in the drop-down."""
     if 'Resting Heart Rate' not in df.key.values:
         resting_hr = 'Not measured'
     else:
