@@ -11,8 +11,8 @@ def ecg_data(rdb, day, patients, time):
 
 
 def table_hrv(rdb):
-    sql = select(ECG.patient_id, ECG.day.label('date'), ECG.date.cast(Time).label("time") , ECG.hrv, ECG.classification).\
-        order_by(ECG.patient_id, ECG.day)
+    sql = select(ECG.patient_id, ECG.day.label('date'), ECG.date.cast(Time).label("time"), ECG.hrv, ECG.classification)\
+        .order_by(ECG.patient_id, ECG.day, ECG.date.cast(Time))
     return pd.read_sql(sql, rdb)
 
 
