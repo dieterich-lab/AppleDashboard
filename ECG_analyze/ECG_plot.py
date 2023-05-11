@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 from db import connect_db
 from itertools import product
-from modules import export_data as ed
+# from modules import export_data as ed
+from modules import LSTM_predict as lstm
 
 rdb = connect_db()
 
@@ -45,7 +46,7 @@ def update_ecg_figure(day, time, patient, add):
         df_data['value'], df_data['time'] = data, time
         fig = px.line(x=time, y=data, template='plotly_white')
         if add == 'R_peaks':
-            r_peaks = ed.detect_r_peaks(511, df_data['value'])
+            r_peaks = lstm.detect_r_peaks(df_data['value'])
             fig.add_scatter(x=r_peaks / 511, y=data[r_peaks], mode='markers', name="R_peaks")
         else:
             add_minor_grid(fig, x_range=[0, 30], y_range=[-1.5, 1.5])
