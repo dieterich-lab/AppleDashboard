@@ -1,8 +1,10 @@
 import os
 import tensorflow as tf
+from scipy.signal import find_peaks
 from tensorflow import keras
 import numpy as np
 from matplotlib import pyplot as plt
+import plotly.express as px
 
 
 def normalize(array):
@@ -34,20 +36,18 @@ def get_model_input_data(data):
     return model_input
 
 
-def flatten_and_glue(array, length):
-    array = array.reshape(len(array), -1)
-    array = array.reshape(16000)
-    return array
-
-
 def detect_r_peaks(data):
     lstm_model = keras.models.load_model('models/lstm_model')
     model_input = get_model_input_data(data)
     model_output = lstm_model.predict(model_input)
-    full_ecg_array = flatten_and_glue(model_input, len(data))
-    full_lstm_pred_array = flatten_and_glue(model_output, len(data))
-    plt.plot(full_ecg_array[0])
-    plt.plot(full_lstm_pred_array[0], color='red')
-    plt.imshow()
-
-    return model_output
+    model_output = np.reshape(model_output, (-1))
+    full_lstm_pred_array = model_output[:len(data)]
+    # full_lstm_pred_array[full_lstm_pred_array >= 0.3] = 1
+    # full_lstm_pred_array[full_lstm_pred_array < 0.3] = 0
+    r_peaks = find_peaks(full_lstm_pred_array, height=0.3)
+    # plt.rcParams["figure.figsize"] = (20, 6)
+    # time = np.arange(0, len(data) / 511, 1 / 511)
+    # plt.plot(time[:len(data)], data)
+    # plt.scatter(x=r_peaks[0]/511, y=data[r_peaks[0]], marker='o', c='red')
+    # plt.show()
+    return r_peaks[0]
