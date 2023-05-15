@@ -10,6 +10,11 @@ def ecg_data(rdb, day, patients, time):
     return pd.read_sql(sql, rdb)
 
 
+def ecg_data_summary(rdb, patient):
+    sql = select(ECG).where(ECG.patient_id == patient).order_by(ECG.classification)
+    return pd.read_sql(sql, rdb)
+
+
 def table_hrv(rdb):
     sql = select(ECG.patient_id, ECG.day.label('date'), ECG.date.cast(Time).label("time"), ECG.hrv, ECG.classification)\
         .order_by(ECG.patient_id, ECG.day, ECG.date.cast(Time))

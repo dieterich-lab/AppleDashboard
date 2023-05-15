@@ -1,5 +1,6 @@
 import dash_bootstrap_components as dbc
 import modules.load_data_to_ecg_tab as ld
+import modules.load_data_to_tab_health_data as ldd
 import plotly.express as px
 from dash.dependencies import Input, Output
 from dash import dcc, html, dash_table
@@ -14,48 +15,64 @@ hrv_features = ['hrv', 'sdnn', 'senn', 'sdsd', 'pnn20', 'pnn50']
 
 rdb = connect_db()
 df = ld.table_hrv(rdb)
+df = df.round(2)
 selection = selection(hrv_features)
+patients = ldd.patient(rdb)
 
 layout = html.Div([
     dbc.Row([dbc.Col(dbc.Card(dcc.Loading(dcc.Graph(id='ecg_plot')), style={'height': '100%'}))]),
     html.Br(),
-    dbc.Row([dbc.Col(dbc.Card([
-        # html.A('Download table', id='link-hrv'),
-        dash_table.DataTable(
-            id='hrv_table',
-            style_table={'overflowX': 'auto'},
-            page_size=11,
-            filter_action='native',
-            sort_action="native",
-            sort_mode="multi",
-            selected_rows=[0],
-            row_selectable='single',
-            data=df.to_dict('records'),
-            columns=[{"name": i, "id": i} for i in df.columns],
-            export_format='csv',
-            export_headers='display',
-            style_data_conditional=[{
+    dbc.Row([
+        dbc.Col(dbc.Card([
+            # html.A('Download table', id='link-hrv'),
+            dash_table.DataTable(
+                id='hrv_table',
+                style_table={'overflowX': 'auto'},
+                page_size=11,
+                filter_action='native',
+                sort_action="native",
+                sort_mode="multi",
+                selected_rows=[0],
+                row_selectable='single',
+                data=df.to_dict('records'),
+                columns=[{"name": i, "id": i} for i in df.columns],
+                export_format='csv',
+                export_headers='display',
+                style_data_conditional=[{
                     'if': {'row_index': 'odd'},
                     'backgroundColor': 'rgb(248, 248, 248)'
                 }],
-            style_header={
-                'backgroundColor': 'rgb(230, 230, 230)',
-                'fontWeight': 'bold'
-            })], style={'height': '100%'}))]),
-    html.Br(),
-    dbc.Row(dbc.Col(dbc.Card([dbc.Row([
-        dbc.Col(dbc.Card(selection), lg=2),
-        dbc.Col(dbc.Card(dcc.Graph(id='scatter_plot_hrv')), lg=10)])]))),
-    html.Br(),
-    dbc.Row(dbc.Col(dbc.Card([dbc.Col(html.Br()),
-                              dbc.Col(dcc.Dropdown(id='group',
-                                                   style={'width': '150px'},
-                                                   options=[{'label': name, 'value': name} for name in hrv_features],
-                                                   value=hrv_features[1],
-                                                   clearable=False)),
-                              dbc.Col(dcc.Graph(id='box_plot_hrv'))], style={'height': '100%'}))),
+                style_header={
+                    'backgroundColor': 'rgb(230, 230, 230)',
+                    'fontWeight': 'bold'
+                })], style={'height': '100%'}), lg=4),
+        dbc.Col([
+            html.Div([
+                'Patient selection:',
+                dcc.Dropdown(
+                    style={'height': '40px'},
+                    id='patients',
+                    options=[{'label': name, 'value': name} for name in patients],
+                    value=patients[0],
+                    clearable=False
+                )]),
+            dbc.Row([dbc.Col(dcc.Loading(dcc.Graph(id='bar_chart_ecg_summary')))])
+        ], lg=8),
+        html.Br(),
+        dbc.Row(dbc.Col(dbc.Card([dbc.Row([
+            dbc.Col(dbc.Card(selection), lg=2),
+            dbc.Col(dbc.Card(dcc.Graph(id='scatter_plot_hrv')), lg=10)])]))),
+        html.Br(),
+        dbc.Row(dbc.Col(dbc.Card([dbc.Col(html.Br()),
+                                  dbc.Col(dcc.Dropdown(id='group',
+                                                       style={'width': '150px'},
+                                                       options=[{'label': name, 'value': name} for name in
+                                                                hrv_features],
+                                                       value=hrv_features[1],
+                                                       clearable=False)),
+                                  dbc.Col(dcc.Graph(id='box_plot_hrv'))], style={'height': '100%'}))),
 
-
+    ]),
 ])
 
 
@@ -70,6 +87,22 @@ def update_ecg(data, data_tab):
     else:
         patient, date, time = data_tab[data[0]]['patient_id'], data_tab[data[0]]['date'], data_tab[data[0]]['time']
         fig, df_data = update_ecg_figure(date, time, patient, 'R_peaks')
+    return fig
+
+
+# get an ECG summary figure based on patient selection
+@app.callback(
+    Output('bar_chart_ecg_summary', 'figure'),
+    Input('patients', 'value')
+)
+def ecg_summary_figure(patient):
+    df_ecg_summary = ld.ecg_data_summary(rdb, patient)
+    if df_ecg_summary.empty:
+        fig = {}
+    else:
+        fig = px.bar(df_ecg_summary, x=df_ecg_summary['day'],
+                     color=df_ecg_summary['classification'], template='plotly_white')
+        fig.update_layout(title=F'Summary of ecg classification for {patient}', title_x=0.5)
     return fig
 
 

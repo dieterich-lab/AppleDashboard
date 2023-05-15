@@ -1,6 +1,4 @@
 import numpy
-import tensorflow as tf
-from tensorflow import keras
 import numpy as np
 import onnxruntime as ort
 
@@ -35,7 +33,7 @@ def get_model_input_data(data):
 
 
 def detect_r_peaks(data):
-    # use the tensorflow to onnx converted lstm model for predictions
+    # use the onnx converted lstm model for predictions to lower latency
     sess = ort.InferenceSession('models/lstm_model.onnx')
     input_name = sess.get_inputs()[0].name
     output_name = sess.get_outputs()[0].name
