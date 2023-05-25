@@ -58,21 +58,20 @@ layout = html.Div([
                 )]),
             dbc.Row([dbc.Col(dcc.Loading(dcc.Graph(id='bar_chart_ecg_summary')))])
         ], lg=8),
-        html.Br(),
-        dbc.Row(dbc.Col(dbc.Card([dbc.Row([
-            dbc.Col(dbc.Card(selection), lg=2),
-            dbc.Col(dbc.Card(dcc.Graph(id='scatter_plot_hrv')), lg=10)])]))),
-        html.Br(),
-        dbc.Row(dbc.Col(dbc.Card([dbc.Col(html.Br()),
-                                  dbc.Col(dcc.Dropdown(id='group',
-                                                       style={'width': '150px'},
-                                                       options=[{'label': name, 'value': name} for name in
-                                                                hrv_features],
-                                                       value=hrv_features[1],
-                                                       clearable=False)),
-                                  dbc.Col(dcc.Graph(id='box_plot_hrv'))], style={'height': '100%'}))),
-
     ]),
+    html.Br(),
+    dbc.Row(dbc.Col(dbc.Card([dbc.Row([
+        dbc.Col(dbc.Card(selection), lg=2),
+        dbc.Col(dbc.Card(dcc.Graph(id='scatter_plot_hrv')), lg=10)])]))),
+    html.Br(),
+    dbc.Row(dbc.Col(dbc.Card([dbc.Col(html.Br()),
+                              dbc.Col(dcc.Dropdown(id='group',
+                                                   style={'width': '150px'},
+                                                   options=[{'label': name, 'value': name} for name in
+                                                            hrv_features],
+                                                   value=hrv_features[1],
+                                                   clearable=False)),
+                              dbc.Col(dcc.Graph(id='box_plot_hrv'))], style={'height': '100%'}))),
 ])
 
 
