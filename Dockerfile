@@ -1,4 +1,4 @@
-FROM python:3.8-slim
+FROM python:3.9-slim
 
 WORKDIR /app
 COPY Pipfile Pipfile.lock ./
@@ -8,6 +8,7 @@ RUN apt-get update && \
     apt-get install -y && \
     cd /app/ && \
     pip install --no-cache-dir pipenv && \
+    pipenv lock --clear && \
     pipenv install --ignore-pipfile --deploy --system --clear &&\
     rm -rf /var/lib/apt/lists/*
 
