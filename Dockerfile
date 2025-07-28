@@ -8,6 +8,7 @@ RUN apt-get update && \
     apt-get install -y && \
     cd /app/ && \
     pip install --no-cache-dir pipenv && \
+    pipenv lock --clear && \
     pipenv install --ignore-pipfile --deploy --system --clear &&\
     rm -rf /var/lib/apt/lists/*
 
